@@ -41,3 +41,9 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Prisma generated client
+/src/generated/prisma
+
+# SSL certificates
+*.pem
