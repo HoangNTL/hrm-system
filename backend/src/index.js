@@ -2,12 +2,22 @@ import express from 'express';
 import { config } from 'dotenv';
 import { connectDB, disconnectDB } from './config/db.js';
 import userRoutes from './routes/user.routes.js';
+import employeeRoutes from './routes/employee.routes.js';
+import cors from 'cors';
 
 config();
 connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+const FRONTEND_ORIGIN = process.env.FRONTEND_URL || 'http://localhost:5173';
+app.use(cors({
+  origin: FRONTEND_ORIGIN,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 // Middleware
 app.use(express.json());
@@ -18,6 +28,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/users', userRoutes);
+app.use('/api/employees', employeeRoutes);
 
 const server = app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
