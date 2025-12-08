@@ -18,6 +18,17 @@ function EmployeesPage() {
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [formData, setFormData] = useState({
+    full_name: "",
+    gender: "Male",
+    dob: "",
+    cccd: "",
+    phone: "",
+    email: "",
+    address: "",
+  });
+  const [creating, setCreating] = useState(false);
 
   // Fetch employees
   const fetchEmployees = async () => {
@@ -180,11 +191,105 @@ function EmployeesPage() {
             Manage your organization's employees
           </p>
         </div>
-        <Button variant="primary" onClick={() => console.log("Add employee")}>
+        <Button variant="primary" onClick={() => setShowAddForm(true)}>
           <Icon name="plus" className="w-5 h-5" />
           Add Employee
         </Button>
       </div>
+
+      {/* Add Employee Modal */}
+      {showAddForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowAddForm(false)} />
+
+          <div className="relative bg-white dark:bg-secondary-800 rounded-lg shadow-lg w-full max-w-2xl p-6 z-10">
+            <h2 className="text-xl font-semibold mb-4">Add Employee</h2>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  setCreating(true);
+                  await employeeService.createEmployee(formData);
+                  setShowAddForm(false);
+                  setFormData({ full_name: "", gender: "Male", dob: "", cccd: "", phone: "", email: "", address: "" });
+                  setPagination((prev) => ({ ...prev, page: 1 }));
+                  await fetchEmployees();
+                } catch (err) {
+                  console.error('Create employee error', err);
+                  setError(handleAPIError(err));
+                } finally {
+                  setCreating(false);
+                }
+              }}
+              className="space-y-4"
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  required
+                  placeholder="Full name"
+                  value={formData.full_name}
+                  onChange={(e) => setFormData((s) => ({ ...s, full_name: e.target.value }))}
+                  className="px-3 py-2 border rounded"
+                />
+                <select
+                  value={formData.gender}
+                  onChange={(e) => setFormData((s) => ({ ...s, gender: e.target.value }))}
+                  className="px-3 py-2 border rounded"
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+                <input
+                  required
+                  type="date"
+                  value={formData.dob}
+                  onChange={(e) => setFormData((s) => ({ ...s, dob: e.target.value }))}
+                  className="px-3 py-2 border rounded"
+                />
+                <input
+                  required
+                  placeholder="CCCD / Passport"
+                  value={formData.cccd}
+                  onChange={(e) => setFormData((s) => ({ ...s, cccd: e.target.value }))}
+                  className="px-3 py-2 border rounded"
+                />
+                <input
+                  placeholder="Phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData((s) => ({ ...s, phone: e.target.value }))}
+                  className="px-3 py-2 border rounded"
+                />
+                <input
+                  placeholder="Email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData((s) => ({ ...s, email: e.target.value }))}
+                  className="px-3 py-2 border rounded"
+                />
+              </div>
+
+              <div>
+                <input
+                  placeholder="Address"
+                  value={formData.address}
+                  onChange={(e) => setFormData((s) => ({ ...s, address: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3">
+                <Button type="button" variant="outline" onClick={() => setShowAddForm(false)} disabled={creating}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="primary" disabled={creating}>
+                  {creating ? 'Creating...' : 'Create'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (

@@ -32,10 +32,10 @@ export const getEmployees = async (req, res) => {
 
     if (search) {
       where.OR = [
-        { fullName: { contains: search, mode: 'insensitive' } },
+        { full_name: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
         { phone: { contains: search } },
-        { identityNumber: { contains: search } },
+        { identity_number: { contains: search } },
       ];
     }
 
@@ -114,10 +114,10 @@ export const createEmployee = async (req, res) => {
     }
 
     console.log('[POST /api/employees] Creating employee:', {
-      fullName: full_name,
+      full_name: full_name,
       gender,
       dob: dobDate,
-      identityNumber: cccd,
+      identity_number: cccd,
       phone: phone || null,
       email: email || null,
       address: address || null,
@@ -126,10 +126,10 @@ export const createEmployee = async (req, res) => {
     // Create in DB
     const created = await prisma.employee.create({
       data: {
-        fullName: full_name,
+        full_name: full_name,
         gender,
         dob: dobDate,
-        identityNumber: cccd,
+        identity_number: cccd,
         phone: phone || null,
         email: email || null,
         address: address || null,
