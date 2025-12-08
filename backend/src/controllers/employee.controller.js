@@ -1,68 +1,153 @@
-// In-memory mock dataset (aligns with frontend fields)
-const mockEmployees = [
-  { employee_id: "EMP001", full_name: "Nguyen Van An", gender: "Male", dob: "1990-05-15", cccd: "001234567890", phone: "+84 912 345 678", email: "nguyen.van.an@company.com", address: "123 Nguyen Hue, District 1, Ho Chi Minh City" },
-  { employee_id: "EMP002", full_name: "Tran Thi Binh", gender: "Female", dob: "1992-08-22", cccd: "001234567891", phone: "+84 913 456 789", email: "tran.thi.binh@company.com", address: "456 Le Loi, District 3, Ho Chi Minh City" },
-  { employee_id: "EMP003", full_name: "Le Hoang Cuong", gender: "Male", dob: "1988-03-10", cccd: "001234567892", phone: "+84 914 567 890", email: "le.hoang.cuong@company.com", address: "789 Tran Hung Dao, District 5, Ho Chi Minh City" },
-  { employee_id: "EMP004", full_name: "Pham Thi Dung", gender: "Female", dob: "1995-11-30", cccd: "001234567893", phone: "+84 915 678 901", email: "pham.thi.dung@company.com", address: "321 Vo Van Tan, District 3, Ho Chi Minh City" },
-  { employee_id: "EMP005", full_name: "Hoang Van Em", gender: "Male", dob: "1991-07-18", cccd: "001234567894", phone: "+84 916 789 012", email: "hoang.van.em@company.com", address: "654 Dien Bien Phu, Binh Thanh District, Ho Chi Minh City" },
-  { employee_id: "EMP006", full_name: "Vo Thi Phung", gender: "Female", dob: "1993-01-25", cccd: "001234567895", phone: "+84 917 890 123", email: "vo.thi.phung@company.com", address: "987 Nguyen Thi Minh Khai, District 1, Ho Chi Minh City" },
-  { employee_id: "EMP007", full_name: "Dang Van Giang", gender: "Male", dob: "1989-09-05", cccd: "001234567896", phone: "+84 918 901 234", email: "dang.van.giang@company.com", address: "147 Hai Ba Trung, District 3, Ho Chi Minh City" },
-  { employee_id: "EMP008", full_name: "Bui Thi Huong", gender: "Female", dob: "1994-12-12", cccd: "001234567897", phone: "+84 919 012 345", email: "bui.thi.huong@company.com", address: "258 Le Van Sy, Phu Nhuan District, Ho Chi Minh City" },
-  { employee_id: "EMP009", full_name: "Ngo Van Inh", gender: "Male", dob: "1987-04-20", cccd: "001234567898", phone: "+84 920 123 456", email: "ngo.van.inh@company.com", address: "369 Cach Mang Thang 8, District 10, Ho Chi Minh City" },
-  { employee_id: "EMP010", full_name: "Duong Thi Kim", gender: "Female", dob: "1996-06-08", cccd: "001234567899", phone: "+84 921 234 567", email: "duong.thi.kim@company.com", address: "741 Nguyen Dinh Chieu, District 3, Ho Chi Minh City" },
-  { employee_id: "EMP011", full_name: "Truong Van Long", gender: "Male", dob: "1990-02-14", cccd: "001234567900", phone: "+84 922 345 678", email: "truong.van.long@company.com", address: "852 Pham Ngu Lao, District 1, Ho Chi Minh City" },
-  { employee_id: "EMP012", full_name: "Ly Thi Mai", gender: "Female", dob: "1992-10-03", cccd: "001234567901", phone: "+84 923 456 789", email: "ly.thi.mai@company.com", address: "963 Ba Thang Hai, District 10, Ho Chi Minh City" },
-  { employee_id: "EMP013", full_name: "Phan Van Nam", gender: "Male", dob: "1988-08-27", cccd: "001234567902", phone: "+84 924 567 890", email: "phan.van.nam@company.com", address: "159 Su Van Hanh, District 10, Ho Chi Minh City" },
-  { employee_id: "EMP014", full_name: "Do Thi Oanh", gender: "Female", dob: "1995-03-16", cccd: "001234567903", phone: "+84 925 678 901", email: "do.thi.oanh@company.com", address: "357 Ly Thuong Kiet, District 10, Ho Chi Minh City" },
-  { employee_id: "EMP015", full_name: "Vu Van Phuc", gender: "Male", dob: "1991-11-09", cccd: "001234567904", phone: "+84 926 789 012", email: "vu.van.phuc@company.com", address: "486 Nguyen Trai, District 5, Ho Chi Minh City" },
-];
+import { prisma } from '../config/db.js';
+
+// Helper to map Prisma Employee -> frontend shape
+// Note: DB uses snake_case, Prisma uses camelCase
+const mapEmployee = (e) => {
+  if (!e) return null;
+  return {
+    employee_id: `EMP${String(e.id).padStart(3, '0')}`,
+    full_name: e.full_name || e.fullName || '',
+    gender: e.gender || '',
+    dob: e.dob ? (typeof e.dob === 'string' ? e.dob : e.dob.toISOString().split('T')[0]) : null,
+    cccd: e.identity_number || e.identityNumber || '',
+    phone: e.phone || '',
+    email: e.email || '',
+    address: e.address || '',
+    department_id: e.department_id || e.departmentId || null,
+    position_id: e.position_id || e.positionId || null,
+  };
+};
 
 // GET /api/employees
 export const getEmployees = async (req, res) => {
   try {
+    console.log('[GET /api/employees] Query:', req.query);
     const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.max(parseInt(req.query.limit) || 10, 1);
-    const search = (req.query.search || "").toLowerCase();
+    const search = (req.query.search || '').trim();
 
-    let filtered = mockEmployees;
+    console.log(`[GET /api/employees] Page: ${page}, Limit: ${limit}, Search: "${search}"`);
+
+    const where = {};
 
     if (search) {
-      filtered = filtered.filter((emp) =>
-        emp.employee_id.toLowerCase().includes(search) ||
-        emp.full_name.toLowerCase().includes(search) ||
-        emp.email.toLowerCase().includes(search) ||
-        emp.phone.includes(req.query.search) ||
-        emp.cccd.includes(req.query.search)
-      );
+      where.OR = [
+        { full_name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search } },
+        { identity_number: { contains: search } },
+      ];
     }
 
-    const total = filtered.length;
-    const total_pages = Math.max(Math.ceil(total / limit), 1);
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    const data = filtered.slice(start, end);
+    console.log('[GET /api/employees] Where clause:', JSON.stringify(where));
+
+    const total = await prisma.employee.count({ where });
+    console.log(`[GET /api/employees] Total count: ${total}`);
+
+    const data = await prisma.employee.findMany({
+      where,
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: { id: 'desc' },
+    });
+
+    console.log('[GET /api/employees] Fetched raw records:', JSON.stringify(data, null, 2).substring(0, 500));
+
+    const mapped = data.map(mapEmployee);
 
     res.json({
-      data,
-      pagination: { page, limit, total, total_pages },
+      data: mapped,
+      pagination: { page, limit, total, total_pages: Math.max(Math.ceil(total / limit), 1) },
     });
   } catch (error) {
-    console.error("Error fetching employees:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error('[GET /api/employees] ERROR:', error);
+    console.error('[GET /api/employees] Error message:', error?.message);
+    console.error('[GET /api/employees] Error code:', error?.code);
+    console.error('[GET /api/employees] Stack:', error?.stack);
+    res.status(500).json({ 
+      message: 'Internal Server Error',
+      details: error?.message || String(error)
+    });
   }
 };
 
 // GET /api/employees/:id
 export const getEmployeeById = async (req, res) => {
   try {
-    const id = req.params.id;
-    const employee = mockEmployees.find((e) => e.employee_id === id);
-    if (!employee) {
-      return res.status(404).json({ message: "Employee not found" });
+    const rawId = req.params.id;
+    let idNum = parseInt(rawId.replace(/^EMP/i, ''), 10);
+
+    if (Number.isNaN(idNum)) {
+      return res.status(400).json({ message: 'Invalid employee id' });
     }
-    res.json({ data: employee });
+
+    const employee = await prisma.employee.findUnique({ where: { id: idNum } });
+    if (!employee) return res.status(404).json({ message: 'Employee not found' });
+
+    res.json({ data: mapEmployee(employee) });
   } catch (error) {
-    console.error("Error fetching employee:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error('[GET /api/employees/:id] Error:', error?.message || error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+// POST /api/employees
+export const createEmployee = async (req, res) => {
+  try {
+    console.log('[POST /api/employees] Payload:', JSON.stringify(req.body, null, 2));
+    const { full_name, gender, dob, cccd, phone, email, address } = req.body;
+
+    // Basic validation
+    if (!full_name || !gender || !dob || !cccd) {
+      console.warn('[POST /api/employees] Missing required fields');
+      return res.status(400).json({ message: 'Missing required fields: full_name, gender, dob, cccd' });
+    }
+
+    // Parse and validate date
+    let dobDate = null;
+    if (dob) {
+      dobDate = new Date(dob);
+      if (isNaN(dobDate.getTime())) {
+        console.warn(`[POST /api/employees] Invalid date format: ${dob}`);
+        return res.status(400).json({ message: 'Invalid date format for dob. Use YYYY-MM-DD.' });
+      }
+    }
+
+    console.log('[POST /api/employees] Creating employee:', {
+      full_name: full_name,
+      gender,
+      dob: dobDate,
+      identity_number: cccd,
+      phone: phone || null,
+      email: email || null,
+      address: address || null,
+    });
+
+    // Create in DB
+    const created = await prisma.employee.create({
+      data: {
+        full_name: full_name,
+        gender,
+        dob: dobDate,
+        identity_number: cccd,
+        phone: phone || null,
+        email: email || null,
+        address: address || null,
+      },
+    });
+
+    console.log('[POST /api/employees] Success:', created);
+    return res.status(201).json({ data: mapEmployee(created) });
+  } catch (error) {
+    console.error('[POST /api/employees] Error:', error?.message || error);
+    console.error('[POST /api/employees] Code:', error?.code);
+    if (error?.code === 'P2002') {
+      const field = error?.meta?.target?.[0] || 'field';
+      return res.status(409).json({ message: `Duplicate ${field}. This value already exists.` });
+    }
+    return res.status(500).json({ 
+      message: 'Internal Server Error', 
+      details: error?.message || String(error) 
+    });
   }
 };
