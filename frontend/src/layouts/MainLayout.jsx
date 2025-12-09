@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import { useTheme } from "../../hooks/useTheme";
+import { useTheme } from "@hooks/useTheme";
 
 function MainLayout() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);

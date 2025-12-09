@@ -30,6 +30,7 @@ function Input({
         value={value}
         onChange={onChange}
         disabled={disabled}
+        autoComplete="new-password"
         className={`
           w-full px-4 py-2.5 rounded-lg border
           text-base text-secondary-900 placeholder:text-secondary-400

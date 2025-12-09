@@ -1,9 +1,11 @@
 import express from 'express';
 import { config } from 'dotenv';
+import cors from 'cors';
+
 import { connectDB, disconnectDB } from './config/db.js';
+import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import employeeRoutes from './routes/employee.routes.js';
-import cors from 'cors';
 
 config();
 connectDB();
@@ -21,12 +23,14 @@ app.use(cors({
 
 // Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.get('/', (req, res) => {
   res.send('Hello, World!');
 });
 
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/employees', employeeRoutes);
 

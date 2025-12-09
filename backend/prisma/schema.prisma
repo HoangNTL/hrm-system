@@ -13,81 +13,86 @@ datasource db {
   provider = "postgresql"
 }
 
-model Department {
-  id            Int          @id @default(autoincrement())
-  name          String
-  description   String?
-  created_at    DateTime     @default(now())
-  updated_at    DateTime     @updatedAt
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  password_hash String
+  role          UserRole @default(STAFF)
 
-  employees     Employee[]
+  employee_id Int?      @unique
+  employee    Employee? @relation(fields: [employee_id], references: [id])
+
+  created_at DateTime @default(now())
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  STAFF
+}
+
+model Employee {
+  id              Int       @id @default(autoincrement())
+  full_name       String
+  gender          String?
+  dob             DateTime?
+  identity_number String?
+  phone           String?
+  email           String?   @unique
+  address         String?
+  hire_date       DateTime?
+  work_status     String    @default("working")
+
+  department_id Int?
+  department    Department? @relation(fields: [department_id], references: [id])
+
+  position_id Int?
+  position    Position? @relation(fields: [position_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  attendances  Attendance[]
+  user_account User?
+
+  @@map("employees")
+}
+
+model Department {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  employees Employee[]
 
   @@map("departments")
 }
 
 model Position {
-  id            Int          @id @default(autoincrement())
-  name          String
-  description   String?
-  created_at    DateTime     @default(now())
-  updated_at    DateTime     @updatedAt
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 
-  employees     Employee[]
+  employees Employee[]
 
   @@map("positions")
 }
 
-model Employee {
-  id               Int          @id @default(autoincrement())
-  full_name        String
-  gender           String?
-  dob              DateTime?
-  identity_number  String?
-  phone            String?
-  email            String?      @unique
-  address          String?
-  hire_date        DateTime?
-  work_status      String        @default("working")
-
-  department_id    Int?
-  department       Department?   @relation(fields: [department_id], references: [id])
-
-  position_id      Int?
-  position         Position?     @relation(fields: [position_id], references: [id])
-
-  created_at       DateTime      @default(now())
-  updated_at       DateTime      @updatedAt
-
-  attendances      Attendance[]
-  user_account     User?
-
-  @@map("employees")
-}
-
 model Attendance {
-  id             Int        @id @default(autoincrement())
-  employee_id    Int
-  employee       Employee   @relation(fields: [employee_id], references: [id])
+  id          Int      @id @default(autoincrement())
+  employee_id Int
+  employee    Employee @relation(fields: [employee_id], references: [id])
 
-  check_in       DateTime?
-  check_out      DateTime?
-  working_hours  Float?
-  note           String?
+  check_in      DateTime?
+  check_out     DateTime?
+  working_hours Float?
+  note          String?
 
   @@map("attendances")
 }
-
-model User {
-  id             Int        @id @default(autoincrement())
-  username       String     @unique
-  password_hash  String
-  role           String
-
-  employee_id    Int?       @unique
-  employee       Employee?  @relation(fields: [employee_id], references: [id])
-
-  created_at     DateTime   @default(now())
-
-  @@map("users")
-}
-

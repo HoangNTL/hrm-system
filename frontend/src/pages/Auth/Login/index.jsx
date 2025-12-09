@@ -1,15 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Input from "../../../components/ui/Input";
-import Button from "../../../components/ui/Button";
+import { useDispatch, useSelector } from "react-redux";
+
+import { handleAPIError } from "@api";
+import {
+  loginAsync,
+  clearError,
+  selectAuthLoading,
+  selectAuthError,
+  selectIsAuthenticated,
+} from "@store/slices/auth/authSlice";
+import LoginForm from "./LoginForm";
+import APIErrorMessage from "@/components/ui/APIErrorMessage";
+import { validateLoginForm } from "@utils/validation";
+
+
 
 function LoginPage() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const loading = useSelector(selectAuthLoading);
+  const authError = useSelector(selectAuthError);
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [errors, setErrors] = useState({});
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Clear errors on unmount
+  useEffect(() => {
+    return () => {
+      dispatch(clearError());
+    };
+  }, [dispatch]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -17,113 +50,88 @@ function LoginPage() {
       ...prev,
       [name]: value,
     }));
-    // Clear error when user starts typing
+
+    // Clear field error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
         [name]: "",
       }));
     }
+
+    // Clear auth error
+    if (authError) {
+      dispatch(clearError());
+    }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
 
-    if (!formData.email) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid";
-    }
-
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-
-    return newErrors;
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const newErrors = validateForm();
+    const newErrors = validateLoginForm(formData);
 
     if (Object.keys(newErrors).length === 0) {
-      // TODO: Implement actual login logic with backend
-      console.log("Login with:", formData);
+      try {
+        // Dispatch login action
+        await dispatch(
+          loginAsync({
+            email: formData.email,
+            password: formData.password,
+          })
+        ).unwrap();
 
-      // Set authentication flag
-      localStorage.setItem("isAuthenticated", "true");
+        // Navigate to dashboard on success
+        navigate("/dashboard");
+      } catch (error) {
+        console.error("Login error:", error);
 
-      // Navigate to dashboard
-      navigate("/dashboard");
+        // Handle field-specific errors if returned by API
+        if (error.errors) {
+          setErrors(error.errors);
+        }
+      }
     } else {
       setErrors(newErrors);
     }
   };
 
+  // Get error message
+  const errorMessage = authError ? handleAPIError(authError) : "";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-secondary-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-secondary-100 dark:from-secondary-900 dark:to-secondary-800 px-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white dark:bg-secondary-800 rounded-2xl shadow-xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-heading font-bold text-secondary-900 mb-2">
+            <h1 className="text-3xl font-heading font-bold text-secondary-900 dark:text-secondary-50 mb-2">
               Welcome Back
             </h1>
-            <p className="text-body text-secondary-600">
+            <p className="text-body text-secondary-600 dark:text-secondary-400">
               Sign in to your HRM account
             </p>
           </div>
 
+          {/* API Error Message */}
+          <APIErrorMessage message={errorMessage} />
+
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Input
-              label="Email Address"
-              type="email"
-              name="email"
-              placeholder="you@company.com"
-              value={formData.email}
-              onChange={handleChange}
-              error={errors.email}
-              required
-            />
-
-            <Input
-              label="Password"
-              type="password"
-              name="password"
-              placeholder="Enter your password"
-              value={formData.password}
-              onChange={handleChange}
-              error={errors.password}
-              required
-            />
-
-            {/* Forgot Password Link */}
-            <div className="flex items-center justify-end">
-              <a
-                href="#"
-                className="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
-              >
-                Forgot password?
-              </a>
-            </div>
-
-            {/* Submit Button */}
-            <Button type="submit" variant="primary" fullWidth>
-              Sign In
-            </Button>
-          </form>
+          <LoginForm
+            formData={formData}
+            errors={errors}
+            loading={loading}
+            onChange={handleChange}
+            onSubmit={handleSubmit}
+          />
 
           {/* Footer */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-secondary-600">
+            <p className="text-sm text-secondary-600 dark:text-secondary-400">
               Don't have an account?{" "}
               <a
                 href="#"
-                className="text-primary-600 hover:text-primary-700 font-medium transition-colors"
+                className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition-colors"
               >
                 Contact your administrator
               </a>
@@ -132,8 +140,8 @@ function LoginPage() {
         </div>
 
         {/* Additional Info */}
-        <p className="text-center mt-6 text-caption text-secondary-500">
-          © 2024 HRM System. All rights reserved.
+        <p className="text-center mt-6 text-caption text-secondary-500 dark:text-secondary-400">
+          © 2025 HRM System. All rights reserved.
         </p>
       </div>
     </div>
