@@ -4,6 +4,7 @@ import LoginPage from "@pages/Auth/Login";
 import DashboardPage from "@pages/Dashboard";
 import EmployeesPage from "@pages/Employees";
 import ProtectedRoute from "./ProtectedRoute";
+import DepartmentsPage from "@pages/Departments";
 import NotFoundPage from "@pages/NotFound";
 
 export const router = createBrowserRouter([
