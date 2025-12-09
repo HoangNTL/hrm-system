@@ -22,6 +22,8 @@ model User {
   employee_id Int?      @unique
   employee    Employee? @relation(fields: [employee_id], references: [id])
 
+  refresh_token String?
+
   created_at DateTime @default(now())
 
   @@map("users")

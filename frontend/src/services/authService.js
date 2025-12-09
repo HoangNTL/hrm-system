@@ -5,11 +5,10 @@ export const authService = {
     async login(email, password) {
         try {
             const response = await authAPI.login({ email, password });
-            console.log(response)
 
             // Store tokens and user data
-            if (response.data.access_token) {
-                localStorage.setItem('access_token', response.data.access_token);
+            if (response.data.accessToken) {
+                localStorage.setItem('accessToken', response.data.accessToken);
             }
             if (response.data.user) {
                 localStorage.setItem('user', JSON.stringify(response.data.user));
@@ -18,16 +17,23 @@ export const authService = {
 
             return response;
         } catch (error) {
-            console.error('Login failed:', error);
+            console.error('Login Service error:', error);
             throw error;
         }
     },
 
     // Logout
     async logout() {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('user');
-        localStorage.removeItem('isAuthenticated');
+        try {
+            await authAPI.logout();
+
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+            localStorage.removeItem('isAuthenticated');
+        } catch (error) {
+            console.error('Logout Service error:', error);
+            throw error;
+        }
     },
 
     // Get current user
@@ -46,7 +52,7 @@ export const authService = {
 
     // Check if user is authenticated
     isAuthenticated() {
-        const token = localStorage.getItem('access_token');
+        const token = localStorage.getItem('accessToken');
         const isAuth = localStorage.getItem('isAuthenticated') === 'true';
         return !!(token && isAuth);
     },
