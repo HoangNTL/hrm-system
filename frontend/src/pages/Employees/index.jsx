@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { employeeService } from "../../services/employeeService";
+import { departmentService } from "../../services/departmentService";
+import { positionService } from "../../services/positionService";
 import { handleAPIError } from "../../api";
 import Table from "../../components/ui/Table";
 import Pagination from "../../components/ui/Pagination";
 import Button from "../../components/ui/Button";
 import Icon from "../../components/ui/Icon";
+import Modal from "../../components/ui/Modal";
 
 function EmployeesPage() {
   const [employees, setEmployees] = useState([]);
@@ -27,8 +30,12 @@ function EmployeesPage() {
     phone: "",
     email: "",
     address: "",
+    department_id: "",
+    position_id: "",
   });
   const [creating, setCreating] = useState(false);
+  const [departments, setDepartments] = useState([]);
+  const [positions, setPositions] = useState([]);
 
   // Fetch employees
   const fetchEmployees = async () => {
@@ -55,6 +62,22 @@ function EmployeesPage() {
   useEffect(() => {
     fetchEmployees();
   }, [pagination.page, pagination.limit, searchTerm]);
+
+  useEffect(() => {
+    const fetchDropdownData = async () => {
+      try {
+        const [deptRes, posRes] = await Promise.all([
+          departmentService.getDepartments({ limit: 100 }),
+          positionService.getPositions({ limit: 100 }),
+        ]);
+        setDepartments(deptRes.data || []);
+        setPositions(posRes.data || []);
+      } catch (err) {
+        console.error('Error fetching dropdown data:', err);
+      }
+    };
+    fetchDropdownData();
+  }, []);
 
   // Handle search
   const handleSearch = (e) => {
@@ -99,10 +122,10 @@ function EmployeesPage() {
   const columns = [
     {
       key: "employee_id",
-      label: "Employee ID",
-      render: (value) => (
+      label: "No.",
+      render: (value, item, index) => (
         <span className="font-medium text-primary-600 dark:text-primary-400">
-          {value}
+          {index + 1 + (pagination.page - 1) * pagination.limit}
         </span>
       ),
     },
@@ -197,99 +220,157 @@ function EmployeesPage() {
         </Button>
       </div>
 
-      {/* Add Employee Modal */}
-      {showAddForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowAddForm(false)} />
-
-          <div className="relative bg-white dark:bg-secondary-800 rounded-lg shadow-lg w-full max-w-2xl p-6 z-10">
-            <h2 className="text-xl font-semibold mb-4">Add Employee</h2>
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                try {
-                  setCreating(true);
-                  await employeeService.createEmployee(formData);
-                  setShowAddForm(false);
-                  setFormData({ full_name: "", gender: "Male", dob: "", cccd: "", phone: "", email: "", address: "" });
-                  setPagination((prev) => ({ ...prev, page: 1 }));
-                  await fetchEmployees();
-                } catch (err) {
-                  console.error('Create employee error', err);
-                  setError(handleAPIError(err));
-                } finally {
-                  setCreating(false);
-                }
-              }}
-              className="space-y-4"
-            >
-              <div className="grid grid-cols-2 gap-4">
+      <Modal open={showAddForm} title="Add Employee" onClose={() => setShowAddForm(false)} size="md">
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            try {
+              setCreating(true);
+              const payload = { ...formData };
+              if (!payload.department_id) delete payload.department_id;
+              if (!payload.position_id) delete payload.position_id;
+              await employeeService.createEmployee(payload);
+              setShowAddForm(false);
+              setFormData({ full_name: "", gender: "Male", dob: "", cccd: "", phone: "", email: "", address: "", department_id: "", position_id: "" });
+              setPagination((prev) => ({ ...prev, page: 1 }));
+              await fetchEmployees();
+            } catch (err) {
+              console.error('Create employee error', err);
+              setError(handleAPIError(err));
+            } finally {
+              setCreating(false);
+            }
+          }}
+          className="space-y-5"
+        >
+          {/* A. Personal Information */}
+          <div>
+            <h4 className="text-sm font-semibold text-secondary-700 dark:text-secondary-300 mb-3">A. Personal Information</h4>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
                 <input
                   required
-                  placeholder="Full name"
+                  placeholder="Enter full name"
                   value={formData.full_name}
                   onChange={(e) => setFormData((s) => ({ ...s, full_name: e.target.value }))}
-                  className="px-3 py-2 border rounded"
+                  className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
-                <select
-                  value={formData.gender}
-                  onChange={(e) => setFormData((s) => ({ ...s, gender: e.target.value }))}
-                  className="px-3 py-2 border rounded"
-                >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">Gender</label>
+                  <select
+                    value={formData.gender}
+                    onChange={(e) => setFormData((s) => ({ ...s, gender: e.target.value }))}
+                    className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">Date of Birth</label>
+                  <input
+                    required
+                    type="date"
+                    value={formData.dob}
+                    onChange={(e) => setFormData((s) => ({ ...s, dob: e.target.value }))}
+                    className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">
+                  CCCD/Passport <span className="text-red-500">*</span>
+                </label>
                 <input
                   required
-                  type="date"
-                  value={formData.dob}
-                  onChange={(e) => setFormData((s) => ({ ...s, dob: e.target.value }))}
-                  className="px-3 py-2 border rounded"
-                />
-                <input
-                  required
-                  placeholder="CCCD / Passport"
+                  placeholder="Enter CCCD/Passport number"
                   value={formData.cccd}
                   onChange={(e) => setFormData((s) => ({ ...s, cccd: e.target.value }))}
-                  className="px-3 py-2 border rounded"
-                />
-                <input
-                  placeholder="Phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData((s) => ({ ...s, phone: e.target.value }))}
-                  className="px-3 py-2 border rounded"
-                />
-                <input
-                  placeholder="Email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData((s) => ({ ...s, email: e.target.value }))}
-                  className="px-3 py-2 border rounded"
+                  className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
-
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">Phone</label>
+                  <input
+                    placeholder="Enter phone number"
+                    value={formData.phone}
+                    onChange={(e) => setFormData((s) => ({ ...s, phone: e.target.value }))}
+                    className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">Email</label>
+                  <input
+                    placeholder="Enter email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData((s) => ({ ...s, email: e.target.value }))}
+                    className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
               <div>
+                <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">Address</label>
                 <input
-                  placeholder="Address"
+                  placeholder="Enter address"
                   value={formData.address}
                   onChange={(e) => setFormData((s) => ({ ...s, address: e.target.value }))}
-                  className="w-full px-3 py-2 border rounded"
+                  className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
-
-              <div className="flex items-center justify-end gap-3">
-                <Button type="button" variant="outline" onClick={() => setShowAddForm(false)} disabled={creating}>
-                  Cancel
-                </Button>
-                <Button type="submit" variant="primary" disabled={creating}>
-                  {creating ? 'Creating...' : 'Create'}
-                </Button>
-              </div>
-            </form>
+            </div>
           </div>
-        </div>
-      )}
+
+          {/* B. Work Information */}
+          <div>
+            <h4 className="text-sm font-semibold text-secondary-700 dark:text-secondary-300 mb-3">B. Work Information</h4>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">Department</label>
+                <select
+                  value={formData.department_id}
+                  onChange={(e) => setFormData((s) => ({ ...s, department_id: e.target.value ? parseInt(e.target.value) : "" }))}
+                  className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="">-- Select Department --</option>
+                  {departments.map((dept) => (
+                    <option key={dept.id} value={dept.id}>{dept.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">Position</label>
+                <select
+                  value={formData.position_id}
+                  onChange={(e) => setFormData((s) => ({ ...s, position_id: e.target.value ? parseInt(e.target.value) : "" }))}
+                  className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="">-- Select Position --</option>
+                  {positions.map((pos) => (
+                    <option key={pos.id} value={pos.id}>{pos.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <Button type="button" variant="danger" onClick={() => setShowAddForm(false)} disabled={creating}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" disabled={creating}>
+              {creating ? 'Creating...' : 'Create'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Error Message */}
       {error && (

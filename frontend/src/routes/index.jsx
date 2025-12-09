@@ -3,6 +3,7 @@ import MainLayout from "../layouts/MainLayout";
 import LoginPage from "../pages/Auth/Login";
 import DashboardPage from "../pages/Dashboard";
 import EmployeesPage from "../pages/Employees";
+import DepartmentsPage from "../pages/Departments";
 
 // Protected Route Component
 import ProtectedRoute from "./ProtectedRoute";
@@ -31,6 +32,10 @@ export const router = createBrowserRouter([
       {
         path: "employees",
         element: <EmployeesPage />,
+      },
+      {
+        path: "departments",
+        element: <DepartmentsPage />,
       },
       // Add more routes here as you build them
     ],

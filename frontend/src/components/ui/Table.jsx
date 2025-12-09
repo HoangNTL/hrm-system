@@ -57,7 +57,7 @@ function Table({ columns, data, onRowClick, loading = false }) {
                     className="px-6 py-4 whitespace-nowrap text-sm text-secondary-900 dark:text-secondary-100"
                   >
                     {column.render
-                      ? column.render(row[column.key], row)
+                      ? column.render(row[column.key], row, rowIndex)
                       : row[column.key]}
                   </td>
                 ))}

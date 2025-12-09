@@ -13,7 +13,7 @@ function Icon({ name, className = "w-5 h-5", color, ...props }) {
         const response = await fetch(iconPath);
         const text = await response.text();
         setSvgContent(text);
-      } catch (error) {
+      } catch {
         console.error(`Icon "${name}" not found`);
       }
     };
