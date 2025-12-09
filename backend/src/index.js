@@ -11,6 +11,11 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import employeeRoutes from './routes/employee.routes.js';
 
+import departmentRoutes from './routes/department.routes.js';
+import positionRoutes from './routes/position.routes.js';
+import cors from 'cors';
+
+
 config();
 connectDB();
 
@@ -43,6 +48,8 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/employees', employeeRoutes);
+app.use('/api/departments', departmentRoutes);
+app.use('/api/positions', positionRoutes);
 
 // const server = app.listen(PORT, () => {
 //   console.log(`Server is running on http://localhost:${PORT}`);

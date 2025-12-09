@@ -1,5 +1,4 @@
 import { createBrowserRouter } from "react-router-dom";
-
 import MainLayout from "@layouts/MainLayout";
 import LoginPage from "@pages/Auth/Login";
 import DashboardPage from "@pages/Dashboard";
@@ -31,6 +30,10 @@ export const router = createBrowserRouter([
       {
         path: "employees",
         element: <EmployeesPage />,
+      },
+      {
+        path: "departments",
+        element: <DepartmentsPage />,
       },
       // Add more routes here as you build them
     ],
