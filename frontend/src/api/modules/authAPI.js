@@ -14,31 +14,16 @@ export const authAPI = {
     },
 
     // Refresh token
-    async refreshToken(refreshToken) {
-        const response = await apiClient.post('/auth/refresh', {
-            refresh_token: refreshToken,
-        });
-        return response.data;
-    },
+    // async refreshToken(refreshToken) {
+    //     const response = await apiClient.post('/auth/refresh-token', {
+    //         refreshToken: refreshToken,
+    //     });
+    //     return response.data;
+    // },
 
     // Get current user
-    async getCurrentUser() {
-        const response = await apiClient.get('/auth/me');
-        return response.data;
-    },
-
-    // Forgot password
-    async forgotPassword(email) {
-        const response = await apiClient.post('/auth/forgot-password', { email });
-        return response.data;
-    },
-
-    // Reset password
-    async resetPassword(token, password) {
-        const response = await apiClient.post('/auth/reset-password', {
-            token,
-            password,
-        });
-        return response.data;
-    },
+    // async getCurrentUser() {
+    //     const response = await apiClient.get('/auth/me');
+    //     return response.data;
+    // },
 };

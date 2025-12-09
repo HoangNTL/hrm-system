@@ -1,14 +1,27 @@
-import { Navigate } from 'react-router-dom';
+import { useSelector } from "react-redux";
+import {
+  selectIsAuthenticated,
+  selectAuthLoading,
+} from "@store/slices/auth/authSlice";
+import { Navigate } from "react-router-dom";
 
 function ProtectedRoute({ children }) {
-    // TODO: Replace this with actual authentication logic
-    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const loading = useSelector(selectAuthLoading);
 
-    if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
-    }
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
 
-    return children;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
 }
 
 export default ProtectedRoute;

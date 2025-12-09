@@ -1,12 +1,35 @@
 import { useNavigate } from "react-router-dom";
-import Icon from "../../components/ui/Icon";
+import { useDispatch, useSelector } from "react-redux";
+import Icon from "@components/ui/Icon";
+import { logoutAsync } from "@store/slices/auth/authSlice";
+import { selectUser } from "@store/slices/user/userSlice";
 
 function Header({ isDarkMode, onToggleTheme, onToggleSidebar }) {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const user = useSelector(selectUser);
 
-  const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutAsync()).unwrap();
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Still navigate to login even if API call fails
+      navigate("/login", { replace: true });
+    }
+  };
+
+  // Get user initials
+  const getUserInitials = () => {
+    if (user?.full_name) {
+      const names = user.full_name.split(" ");
+      if (names.length >= 2) {
+        return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+      }
+      return names[0][0].toUpperCase();
+    }
+    return "JD";
   };
 
   return (
@@ -71,14 +94,14 @@ function Header({ isDarkMode, onToggleTheme, onToggleSidebar }) {
             aria-label="User menu"
           >
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-semibold text-sm">
-              JD
+              {getUserInitials()}
             </div>
             <div className="hidden md:block text-left">
               <p className="text-sm font-medium text-secondary-900 dark:text-secondary-100">
-                John Doe
+                {user?.full_name || "User"}
               </p>
               <p className="text-xs text-secondary-500 dark:text-secondary-400">
-                Administrator
+                {user?.role || "Employee"}
               </p>
             </div>
             <Icon

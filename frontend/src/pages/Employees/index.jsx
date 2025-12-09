@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
-import { employeeService } from "../../services/employeeService";
-import { departmentService } from "../../services/departmentService";
-import { positionService } from "../../services/positionService";
-import { handleAPIError } from "../../api";
-import Table from "../../components/ui/Table";
-import Pagination from "../../components/ui/Pagination";
-import Button from "../../components/ui/Button";
-import Icon from "../../components/ui/Icon";
-import Modal from "../../components/ui/Modal";
+import { employeeService } from "@services/employeeService";
+import { handleAPIError } from "@api";
+import Table from "@components/ui/Table";
+import Pagination from "@components/ui/Pagination";
+import Button from "@components/ui/Button";
+import Icon from "@components/ui/Icon";
+
 
 function EmployeesPage() {
   const [employees, setEmployees] = useState([]);

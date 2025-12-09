@@ -1,12 +1,10 @@
 import { createBrowserRouter } from "react-router-dom";
-import MainLayout from "../layouts/MainLayout";
-import LoginPage from "../pages/Auth/Login";
-import DashboardPage from "../pages/Dashboard";
-import EmployeesPage from "../pages/Employees";
-import DepartmentsPage from "../pages/Departments";
-
-// Protected Route Component
+import MainLayout from "@layouts/MainLayout";
+import LoginPage from "@pages/Auth/Login";
+import DashboardPage from "@pages/Dashboard";
+import EmployeesPage from "@pages/Employees";
 import ProtectedRoute from "./ProtectedRoute";
+import NotFoundPage from "@pages/NotFound";
 
 export const router = createBrowserRouter([
   {
@@ -42,17 +40,6 @@ export const router = createBrowserRouter([
   },
   {
     path: "*",
-    element: (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <h1 className="text-6xl font-bold text-secondary-900 dark:text-secondary-100">
-            404
-          </h1>
-          <p className="text-xl text-secondary-600 dark:text-secondary-400 mt-4">
-            Page Not Found
-          </p>
-        </div>
-      </div>
-    ),
+    element: <NotFoundPage />
   },
 ]);
