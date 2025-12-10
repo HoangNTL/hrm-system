@@ -34,9 +34,17 @@ export const createDepartment = async ({ name, description }) => {
     throw new Error('Missing required field: name');
   }
 
+  // Auto-generate code from name (convert to uppercase, remove spaces/special chars)
+  const code = name.trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
+
   const department = await prisma.department.create({
     data: {
       name: name.trim(),
+      code,
       description: description || null,
     },
   });
