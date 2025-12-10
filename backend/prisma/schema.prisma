@@ -13,88 +13,134 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id            Int      @id @default(autoincrement())
-  email         String   @unique
-  password_hash String
-  role          UserRole @default(STAFF)
-
-  employee_id Int?      @unique
-  employee    Employee? @relation(fields: [employee_id], references: [id])
-
-  refresh_token String?
-
-  created_at DateTime @default(now())
-
-  @@map("users")
-}
-
+// Enums
 enum UserRole {
   ADMIN
   MANAGER
   STAFF
 }
 
+enum Gender {
+  male
+  female
+}
+
+enum WorkStatus {
+  working
+  resigned
+  probation
+  leave
+}
+
+// Models
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  password_hash String
+  role          UserRole @default(STAFF)
+  refresh_token String?
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  is_deleted Boolean   @default(false)
+  deleted_at DateTime?
+
+  // Relations
+  // A user is associated with one employee
+  employee_id Int?      @unique
+  employee    Employee? @relation(fields: [employee_id], references: [id])
+
+  @@map("users")
+}
+
 model Employee {
-  id              Int       @id @default(autoincrement())
+  id              Int        @id @default(autoincrement())
   full_name       String
-  gender          String?
+  gender          Gender?
   dob             DateTime?
   identity_number String?
-  phone           String?
-  email           String?   @unique
+  phone           String?    @unique
+  email           String?    @unique
   address         String?
   hire_date       DateTime?
-  work_status     String    @default("working")
+  work_status     WorkStatus @default(working)
 
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  is_deleted Boolean   @default(false)
+  deleted_at DateTime?
+
+  // Relations
+  // An employee can belong to one department
   department_id Int?
-  department    Department? @relation(fields: [department_id], references: [id])
+  department    Department? @relation("DepartmentEmployees", fields: [department_id], references: [id])
 
+  // An employee can manage one department or none
+  managing_department Department? @relation("DepartmentManager")
+
+  // An employee can hold one position
   position_id Int?
   position    Position? @relation(fields: [position_id], references: [id])
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  // An employee can have multiple attendance records
+  // attendances Attendance[]
 
-  attendances  Attendance[]
+  // An employee can have one user account
   user_account User?
 
   @@map("employees")
 }
 
 model Department {
-  id          Int      @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   name        String
+  code        String
   description String?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  status      Boolean @default(true) // active/inactive
 
-  employees Employee[]
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  is_deleted Boolean   @default(false)
+  deleted_at DateTime?
+
+  // Relations
+  // A department can have one manager (an employee)
+  manager_id Int?      @unique
+  manager    Employee? @relation("DepartmentManager", fields: [manager_id], references: [id])
+
+  // A department can have multiple employees
+  employees Employee[] @relation("DepartmentEmployees")
 
   @@map("departments")
 }
 
 model Position {
-  id          Int      @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   name        String
   description String?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  status      Boolean @default(true) // active/inactive
 
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  is_deleted Boolean   @default(false)
+  deleted_at DateTime?
+
+  // Relations
+  // A position can be held by multiple employees
   employees Employee[]
 
   @@map("positions")
 }
 
-model Attendance {
-  id          Int      @id @default(autoincrement())
-  employee_id Int
-  employee    Employee @relation(fields: [employee_id], references: [id])
+// model Attendance {
+//   id          Int      @id @default(autoincrement())
+//   employee_id Int
+//   employee    Employee @relation(fields: [employee_id], references: [id])
 
-  check_in      DateTime?
-  check_out     DateTime?
-  working_hours Float?
-  note          String?
+//   check_in      DateTime?
+//   check_out     DateTime?
+//   working_hours Float?
+//   note          String?
 
-  @@map("attendances")
-}
+//   @@map("attendances")
+// }

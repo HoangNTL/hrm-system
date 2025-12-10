@@ -1,4 +1,5 @@
 import { prisma } from '../config/db.js';
+import * as userService from './user.service.js';
 
 export const getEmployees = async ({ page = 1, limit = 10, search = '' } = {}) => {
   const where = {};
@@ -18,20 +19,32 @@ export const getEmployees = async ({ page = 1, limit = 10, search = '' } = {}) =
     skip: (page - 1) * limit,
     take: limit,
     orderBy: { id: 'desc' },
+    include: {
+      user_account: {
+        select: { id: true, email: true },
+      },
+    },
   });
 
   return { data, total, page, limit };
 };
 
 export const getEmployeeById = async (id) => {
-  const employee = await prisma.employee.findUnique({ where: { id } });
+  const employee = await prisma.employee.findUnique({
+    where: { id },
+    include: {
+      user_account: {
+        select: { id: true, email: true },
+      },
+    },
+  });
   if (!employee) {
     throw new Error('Employee not found');
   }
   return employee;
 };
 
-export const createEmployee = async ({ full_name, gender, dob, cccd, phone, email, address, department_id, position_id }) => {
+export const createEmployee = async ({ full_name, gender, dob, cccd, phone, email, address, department_id, position_id, auto_create_account = false }) => {
   // Validate required fields
   if (!full_name || !gender || !dob || !cccd) {
     throw new Error('Missing required fields: full_name, gender, dob, cccd');
@@ -60,7 +73,23 @@ export const createEmployee = async ({ full_name, gender, dob, cccd, phone, emai
     },
   });
 
-  return employee;
+  // Auto-create user account if requested
+  let accountInfo = null;
+  if (auto_create_account && email) {
+    try {
+      accountInfo = await userService.createUserAccount({
+        email,
+        employee_id: employee.id,
+        role: 'STAFF',
+      });
+    } catch (error) {
+      // Log error but don't fail employee creation
+      console.error('Error creating user account:', error.message);
+      accountInfo = { error: error.message };
+    }
+  }
+
+  return { employee, accountInfo };
 };
 
 export const updateEmployee = async (id, { full_name, gender, dob, cccd, phone, email, address, department_id, position_id }) => {

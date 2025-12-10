@@ -9,10 +9,10 @@ function Modal({ open, title, children, onClose, size = 'md', footer = null }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
-      <div className={`relative bg-white dark:bg-secondary-800 rounded-lg shadow-lg w-full ${sizes[size]} p-6 z-10`}>
+      <div className={`relative bg-white dark:bg-secondary-800 rounded-lg shadow-lg w-full ${sizes[size]} max-h-[90vh] overflow-y-auto p-6 z-10`}>
         <div className="flex items-start justify-between mb-4">
           <h3 className="text-lg font-semibold text-secondary-900 dark:text-secondary-100">{title}</h3>
           <button 

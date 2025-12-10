@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { employeeService } from "@services/employeeService";
 import { departmentService } from "@services/departmentService";
 import { positionService } from "@services/positionService";
+import { userAPI, handleAPIError } from "@api";
 import Modal from "@components/ui/Modal";
-import { handleAPIError } from "@api";
 import Table from "@components/ui/Table";
 import Pagination from "@components/ui/Pagination";
 import Button from "@components/ui/Button";
@@ -25,7 +25,7 @@ function EmployeesPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
-    gender: "Male",
+    gender: "male",
     dob: "",
     cccd: "",
     phone: "",
@@ -33,10 +33,14 @@ function EmployeesPage() {
     address: "",
     department_id: "",
     position_id: "",
+    auto_create_account: false,
   });
   const [creating, setCreating] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [positions, setPositions] = useState([]);
+  const [accountInfo, setAccountInfo] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [creatingAccount, setCreatingAccount] = useState(null);
 
   // Fetch employees
   const fetchEmployees = async () => {
@@ -79,6 +83,29 @@ function EmployeesPage() {
     };
     fetchDropdownData();
   }, []);
+
+  // Handle create account for existing employee
+  const handleCreateAccount = async (employee) => {
+    if (!employee.email) {
+      setError('Employee does not have email address');
+      return;
+    }
+
+    try {
+      setCreatingAccount(employee.employee_id);
+      const response = await userAPI.createAccountForEmployee(employee.employee_id);
+      setAccountInfo(response.data);
+      setSelectedEmployee(null);
+      
+      // Refresh employee list to update account status
+      await fetchEmployees();
+    } catch (err) {
+      console.error('Create account error:', err);
+      setError(handleAPIError(err));
+    } finally {
+      setCreatingAccount(null);
+    }
+  };
 
   // Handle search
   const handleSearch = (e) => {
@@ -147,7 +174,7 @@ function EmployeesPage() {
           className={`
           px-2 py-1 rounded-full text-xs font-medium
           ${
-            value === "Male"
+            value === "male"
               ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
               : "bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400"
           }
@@ -201,7 +228,65 @@ function EmployeesPage() {
         </div>
       ),
     },
+    {
+      key: "account_status",
+      label: "Account Status",
+      render: (value, item) => {
+        // Check if employee has account by looking at user_account relationship
+        // If not provided by API, we'll show based on if email exists and is marked as having account
+        const hasAccount = item.has_account || value === "active";
+        
+        if (hasAccount) {
+          return (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+              ✓ Active
+            </span>
+          );
+        } else if (item.email) {
+          return (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400">
+              ⚠ No Account
+            </span>
+          );
+        } else {
+          return (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-400">
+              — N/A
+            </span>
+          );
+        }
+      },
+    },
   ];
+
+  // Row actions render function
+  const renderRowActions = (item) => {
+    const hasAccount = item.has_account;
+
+    if (hasAccount) {
+      return (
+        <span className="inline-flex items-center justify-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+          Already has account
+        </span>
+      );
+    }
+
+    if (!hasAccount && item.email) {
+      return (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setSelectedEmployee(item)}
+          disabled={creatingAccount === item.employee_id}
+          className="text-xs"
+        >
+          {creatingAccount === item.employee_id ? 'Creating...' : 'Create Account'}
+        </Button>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div className="space-y-6">
@@ -221,7 +306,7 @@ function EmployeesPage() {
         </Button>
       </div>
 
-      <Modal open={showAddForm} title="Add Employee" onClose={() => setShowAddForm(false)} size="md">
+      <Modal open={showAddForm} title="Add Employee" onClose={() => setShowAddForm(false)} size="lg">
         <form
           onSubmit={async (e) => {
             e.preventDefault();
@@ -230,9 +315,16 @@ function EmployeesPage() {
               const payload = { ...formData };
               if (!payload.department_id) delete payload.department_id;
               if (!payload.position_id) delete payload.position_id;
-              await employeeService.createEmployee(payload);
+              
+              const response = await employeeService.createEmployee(payload);
+              
+              // Show account info if created
+              if (response.accountInfo && !response.accountInfo.error) {
+                setAccountInfo(response.accountInfo);
+              }
+              
               setShowAddForm(false);
-              setFormData({ full_name: "", gender: "Male", dob: "", cccd: "", phone: "", email: "", address: "", department_id: "", position_id: "" });
+              setFormData({ full_name: "", gender: "male", dob: "", cccd: "", phone: "", email: "", address: "", department_id: "", position_id: "", auto_create_account: false });
               setPagination((prev) => ({ ...prev, page: 1 }));
               await fetchEmployees();
             } catch (err) {
@@ -242,13 +334,13 @@ function EmployeesPage() {
               setCreating(false);
             }
           }}
-          className="space-y-5"
+          className="space-y-4"
         >
           {/* A. Personal Information */}
           <div>
             <h4 className="text-sm font-semibold text-secondary-700 dark:text-secondary-300 mb-3">A. Personal Information</h4>
-            <div className="space-y-3">
-              <div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
                 <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">
                   Full Name <span className="text-red-500">*</span>
                 </label>
@@ -260,31 +352,28 @@ function EmployeesPage() {
                   className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">Gender</label>
-                  <select
-                    value={formData.gender}
-                    onChange={(e) => setFormData((s) => ({ ...s, gender: e.target.value }))}
-                    className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">Date of Birth</label>
-                  <input
-                    required
-                    type="date"
-                    value={formData.dob}
-                    onChange={(e) => setFormData((s) => ({ ...s, dob: e.target.value }))}
-                    className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">Gender</label>
+                <select
+                  value={formData.gender}
+                  onChange={(e) => setFormData((s) => ({ ...s, gender: e.target.value }))}
+                  className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
               </div>
               <div>
+                <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">Date of Birth</label>
+                <input
+                  required
+                  type="date"
+                  value={formData.dob}
+                  onChange={(e) => setFormData((s) => ({ ...s, dob: e.target.value }))}
+                  className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+              <div className="col-span-2">
                 <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">
                   CCCD/Passport <span className="text-red-500">*</span>
                 </label>
@@ -296,28 +385,26 @@ function EmployeesPage() {
                   className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">Phone</label>
-                  <input
-                    placeholder="Enter phone number"
-                    value={formData.phone}
-                    onChange={(e) => setFormData((s) => ({ ...s, phone: e.target.value }))}
-                    className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">Email</label>
-                  <input
-                    placeholder="Enter email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData((s) => ({ ...s, email: e.target.value }))}
-                    className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">Phone</label>
+                <input
+                  placeholder="Enter phone number"
+                  value={formData.phone}
+                  onChange={(e) => setFormData((s) => ({ ...s, phone: e.target.value }))}
+                  className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
               </div>
               <div>
+                <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">Email</label>
+                <input
+                  placeholder="Enter email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData((s) => ({ ...s, email: e.target.value }))}
+                  className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+              <div className="col-span-2">
                 <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">Address</label>
                 <input
                   placeholder="Enter address"
@@ -332,7 +419,7 @@ function EmployeesPage() {
           {/* B. Work Information */}
           <div>
             <h4 className="text-sm font-semibold text-secondary-700 dark:text-secondary-300 mb-3">B. Work Information</h4>
-            <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">Department</label>
                 <select
@@ -362,6 +449,29 @@ function EmployeesPage() {
             </div>
           </div>
 
+          {/* C. Account Settings */}
+          <div>
+            <h4 className="text-sm font-semibold text-secondary-700 dark:text-secondary-300 mb-3">C. Account Settings</h4>
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="auto_create_account"
+                checked={formData.auto_create_account}
+                onChange={(e) => setFormData((s) => ({ ...s, auto_create_account: e.target.checked }))}
+                disabled={!formData.email}
+                className="w-4 h-4 rounded cursor-pointer"
+              />
+              <label htmlFor="auto_create_account" className="text-sm font-medium text-secondary-700 dark:text-secondary-300 cursor-pointer">
+                Auto-create login account (Email required)
+              </label>
+            </div>
+            {formData.auto_create_account && formData.email && (
+              <p className="text-xs text-secondary-500 dark:text-secondary-400 mt-2">
+                ✓ Login account will be created with email as username and auto-generated secure password
+              </p>
+            )}
+          </div>
+
           <div className="flex items-center justify-end gap-3 pt-2">
             <Button type="button" variant="danger" onClick={() => setShowAddForm(false)} disabled={creating}>
               Cancel
@@ -371,6 +481,125 @@ function EmployeesPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Create Account Confirmation Modal */}
+      <Modal 
+        open={!!selectedEmployee} 
+        title="Create Login Account" 
+        onClose={() => setSelectedEmployee(null)} 
+        size="md"
+      >
+        {selectedEmployee && (
+          <div className="space-y-4">
+            <div className="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+              <p className="text-sm text-secondary-700 dark:text-secondary-300">
+                Create login account for <span className="font-semibold">{selectedEmployee.full_name}</span>?
+              </p>
+              <p className="text-xs text-secondary-600 dark:text-secondary-400 mt-2">
+                Email: <span className="font-mono">{selectedEmployee.email}</span>
+              </p>
+              <p className="text-xs text-secondary-600 dark:text-secondary-400 mt-1">
+                A secure password will be auto-generated and displayed after creation.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setSelectedEmployee(null)}
+                disabled={creatingAccount === selectedEmployee.employee_id}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => handleCreateAccount(selectedEmployee)}
+                disabled={creatingAccount === selectedEmployee.employee_id}
+              >
+                {creatingAccount === selectedEmployee.employee_id ? 'Creating...' : 'Create Account'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Account Info Modal */}
+      <Modal open={!!accountInfo} title="Login Credentials" onClose={() => setAccountInfo(null)} size="md">
+        {accountInfo && (
+          <div className="space-y-4">
+            <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-secondary-700 dark:text-secondary-300 mb-3">
+                📧 Account created successfully! Share these credentials with the employee:
+              </p>
+              
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-medium text-secondary-600 dark:text-secondary-400">Email (Username):</label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <code className="flex-1 px-3 py-2 rounded bg-white dark:bg-secondary-800 text-sm font-mono border border-secondary-200 dark:border-secondary-700">
+                      {accountInfo.email}
+                    </code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(accountInfo.email);
+                        alert('Copied!');
+                      }}
+                      className="px-3 py-2 text-sm bg-primary-500 hover:bg-primary-600 text-white rounded font-medium"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-secondary-600 dark:text-secondary-400">Password:</label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <code className="flex-1 px-3 py-2 rounded bg-white dark:bg-secondary-800 text-sm font-mono border border-secondary-200 dark:border-secondary-700 break-all">
+                      {accountInfo.password}
+                    </code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(accountInfo.password);
+                        alert('Copied!');
+                      }}
+                      className="px-3 py-2 text-sm bg-primary-500 hover:bg-primary-600 text-white rounded font-medium"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-secondary-600 dark:text-secondary-400">Role:</label>
+                  <p className="text-sm text-secondary-900 dark:text-secondary-100 mt-1 capitalize">{accountInfo.role}</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-secondary-600 dark:text-secondary-400 mt-4">
+                💡 Save these credentials. The password won't be displayed again.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  navigator.clipboard.writeText(`Email: ${accountInfo.email}\nPassword: ${accountInfo.password}`);
+                  alert('All credentials copied to clipboard!');
+                }}
+              >
+                Copy All
+              </Button>
+              <Button type="button" variant="primary" onClick={() => setAccountInfo(null)}>
+                Done
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* Error Message */}
@@ -469,6 +698,7 @@ function EmployeesPage() {
         columns={columns}
         data={employees}
         onRowClick={handleRowClick}
+        actions={renderRowActions}
         loading={loading}
       />
 

@@ -1,4 +1,4 @@
-function Table({ columns, data, onRowClick, loading = false }) {
+function Table({ columns, data, onRowClick, actions, loading = false }) {
   if (loading) {
     return (
       <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700">
@@ -35,6 +35,11 @@ function Table({ columns, data, onRowClick, loading = false }) {
                   {column.label}
                 </th>
               ))}
+              {actions && (
+                <th className="px-6 py-3 text-right text-xs font-medium text-secondary-700 dark:text-secondary-300 uppercase tracking-wider">
+                  Actions
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-secondary-200 dark:divide-secondary-700">
@@ -61,6 +66,14 @@ function Table({ columns, data, onRowClick, loading = false }) {
                       : row[column.key]}
                   </td>
                 ))}
+                {actions && (
+                  <td 
+                    className="px-6 py-4 whitespace-nowrap text-sm text-right"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {actions(row, rowIndex)}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
