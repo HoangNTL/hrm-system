@@ -144,3 +144,4 @@ model Position {
 
 //   @@map("attendances")
 // }
+

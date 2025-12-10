@@ -1,215 +1,121 @@
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import bcrypt from "bcrypt";
+import { prisma } from "../config/db.js";
+import { tokenService } from "./token.service.js";
+import response from "../utils/response.js";
 
-import { prisma } from '../config/db.js';
-
+/**
+ * Authentication Service
+ * Handles login, logout, and refresh token logic.
+ */
 export const authService = {
+    /**
+     * Login
+     * @param {string} email
+     * @param {string} password
+     * @returns {Object} Response object
+     */
     async login(email, password) {
-        try {
-            // Validate input
-            if (!email || !password) {
-                return {
-                    ok: false,
-                    status: 400,
-                    message: "Email and password are required",
-                    data: null,
-                };
-            }
-
-            // Find user
-            const user = await prisma.user.findUnique({
-                where: { email },
-                include: { employee: true },
-            });
-
-            if (!user) {
-                return {
-                    ok: false,
-                    status: 401,
-                    message: "Invalid email or password",
-                    data: null,
-                };
-            }
-
-            // Validate password
-            const isValid = await bcrypt.compare(password, user.password_hash);
-
-            if (!isValid) {
-                return {
-                    ok: false,
-                    status: 401,
-                    message: "Invalid email or password",
-                    data: null,
-                };
-            }
-
-            // Generate tokens
-            const accessToken = generateAccessToken(user);
-            const refreshToken = generateRefreshToken(user);
-
-            // Save refresh token in DB
-            await saveRefreshToken(user.id, refreshToken);
-
-            return {
-                ok: true,
-                status: 200,
-                message: "Login success",
-                data: { accessToken, refreshToken, user: { id: user.id, email: user.email, role: user.role, employee: user.employee } }
-            };
-
-        } catch (error) {
-            console.error("Login Service Error:", error.message);
-            return {
-                ok: false,
-                status: 500,
-                message: "Internal server error",
-                data: null,
-            };
+        if (!email || !password) {
+            return response.fail(400, "Email and password are required");
         }
+
+        // find user by email
+        const user = await prisma.user.findUnique({
+            where: { email },
+            include: { employee: true },
+        });
+
+        if (!user) return response.unauthorized("Invalid email or password");
+
+        // compare password
+        const passwordMatch = await bcrypt.compare(password, user.password_hash);
+        if (!passwordMatch) return response.unauthorized("Invalid email or password");
+
+        // generate tokens
+        const accessToken = tokenService.generateAccessToken(user);
+        const refreshToken = tokenService.generateRefreshToken(user);
+
+        await this._saveRefreshToken(user.id, refreshToken);
+
+        return response.success({
+            accessToken,
+            refreshToken,
+            user: {
+                id: user.id,
+                email: user.email,
+                role: user.role,
+                employee: user.employee,
+            },
+        });
     },
 
+    /**
+     * Logout
+     * @param {number} userId
+     * @returns {Object} Response object
+     */
     async logout(userId) {
-        try {
-            // Validate input
-            if (!userId) {
-                return {
-                    ok: false,
-                    status: 401,
-                    message: "Unauthorized",
-                    data: null,
-                };
-            }
+        if (!userId) return response.unauthorized();
 
-            // Remove refresh token from DB
-            await clearRefreshToken(userId);
+        await this._clearRefreshToken(userId);
 
-            return {
-                ok: true,
-                status: 200,
-                message: "Logout success",
-                data: null,
-            };
-
-        } catch (error) {
-            console.error(`Logout Service Error (userId=${userId}):`, error.message);
-            return {
-                ok: false,
-                status: 500,
-                message: "Internal server error",
-                data: null,
-            };
-        }
+        return response.success(null, "Logout successful");
     },
 
+    /**
+     * Refresh Token
+     * @param {string} refreshTokenCookie
+     * @param {number} userId
+     * @returns {Object} Response object
+     */
     async refreshToken(refreshTokenCookie, userId) {
-        try {
-            let token = refreshTokenCookie;
+        let token = refreshTokenCookie;
 
-            // 1. If no token from cookie, try get from DB
-            if (!token) {
-                if (!userId) return {
-                    ok: false,
-                    status: 401,
-                    message: "No refresh token",
-                    data: null
-                };
+        // if no token in cookie, try to get from userId
+        if (!token) {
+            if (!userId) return response.unauthorized("No refresh token");
 
-                const user = await findUserById(userId);
+            const user = await this._findUser(userId);
+            if (!user?.refresh_token) return response.fail(403, "Invalid refresh token");
 
-                if (!user || !user.refresh_token) return {
-                    ok: false,
-                    status: 403,
-                    message: "Invalid refresh token",
-                    data: null
-                };
-
-                token = user.refresh_token;
-            }
-
-            // 2. Verify token
-            let payload;
-            try {
-                payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-            } catch (err) {
-                return {
-                    ok: false,
-                    status: 403,
-                    message: "Invalid or expired refresh token",
-                    data: null
-                };
-            }
-
-            // 3. Find user
-            const user = await findUserById(payload.id);
-
-            if (!user) return {
-                ok: false,
-                status: 404,
-                message: "User not found",
-                data: null
-            };
-
-            // 4. Generate new tokens
-            const accessToken = generateAccessToken(user);
-            const refreshToken = generateRefreshToken(user);
-
-            // 5. Update refresh token in DB
-            await saveRefreshToken(user.id, refreshToken);
-
-            return {
-                ok: true,
-                status: 200,
-                message: "Token refreshed",
-                data: {
-                    accessToken,
-                    refreshToken
-                }
-            };
-        } catch (err) {
-            console.error("Refresh Token Service Error:", err.message);
-            return {
-                ok: false,
-                status: 500,
-                message: "Internal server error",
-                data: null
-            };
+            token = user.refresh_token;
         }
+
+        // verify token
+        let payload;
+        try {
+            payload = tokenService.verifyRefreshToken(token);
+        } catch {
+            return response.fail(403, "Invalid or expired refresh token");
+        }
+
+        const user = await this._findUser(payload.id);
+        if (!user) return response.notFound("User not found");
+
+        const accessToken = tokenService.generateAccessToken(user);
+        const refreshToken = tokenService.generateRefreshToken(user);
+
+        await this._saveRefreshToken(user.id, refreshToken);
+
+        return response.success({ accessToken, refreshToken }, "Token refreshed");
+    },
+
+    // _helpers
+    async _saveRefreshToken(userId, refreshToken) {
+        await prisma.user.update({
+            where: { id: userId },
+            data: { refresh_token: refreshToken },
+        });
+    },
+
+    async _clearRefreshToken(userId) {
+        await prisma.user.update({
+            where: { id: userId },
+            data: { refresh_token: null },
+        });
+    },
+
+    async _findUser(userId) {
+        return await prisma.user.findUnique({ where: { id: userId } });
     }
 };
-
-// Helper functions
-const generateAccessToken = (user) => {
-    return jwt.sign(
-        { id: user.id, role: user.role },
-        process.env.JWT_SECRET,
-        { expiresIn: '15m' }
-    );
-}
-
-const generateRefreshToken = (user) => {
-    return jwt.sign(
-        { id: user.id },
-        process.env.JWT_REFRESH_SECRET,
-        { expiresIn: '7d' }
-    );
-}
-
-const saveRefreshToken = async (userId, refreshToken) => {
-    await prisma.user.update({
-        where: { id: userId },
-        data: { refresh_token: refreshToken }
-    });
-}
-
-const clearRefreshToken = async (userId) => {
-    await prisma.user.update({
-        where: { id: userId },
-        data: { refresh_token: null }
-    });
-}
-
-const findUserById = async (userId) => {
-    return await prisma.user.findUnique({
-        where: { id: userId }
-    });
-}
