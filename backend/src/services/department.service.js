@@ -1,6 +1,10 @@
 import { prisma } from '../config/db.js';
 
-export const getDepartments = async ({ page = 1, limit = 10, search = '' } = {}) => {
+export const getDepartments = async ({
+  page = 1,
+  limit = 10,
+  search = '',
+} = {}) => {
   const where = {};
 
   if (search) {

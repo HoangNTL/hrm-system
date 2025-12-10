@@ -1,7 +1,11 @@
 import { prisma } from '../config/db.js';
 import * as userService from './user.service.js';
 
-export const getEmployees = async ({ page = 1, limit = 10, search = '' } = {}) => {
+export const getEmployees = async ({
+  page = 1,
+  limit = 10,
+  search = '',
+} = {}) => {
   const where = {};
 
   if (search) {
@@ -44,7 +48,17 @@ export const getEmployeeById = async (id) => {
   return employee;
 };
 
-export const createEmployee = async ({ full_name, gender, dob, cccd, phone, email, address, department_id, position_id, auto_create_account = false }) => {
+export const createEmployee = async ({
+  full_name,
+  gender,
+  dob,
+  cccd,
+  phone,
+  email,
+  address,
+  department_id,
+  position_id,
+}) => {
   // Validate required fields
   if (!full_name || !gender || !dob || !cccd) {
     throw new Error('Missing required fields: full_name, gender, dob, cccd');
@@ -92,7 +106,20 @@ export const createEmployee = async ({ full_name, gender, dob, cccd, phone, emai
   return { employee, accountInfo };
 };
 
-export const updateEmployee = async (id, { full_name, gender, dob, cccd, phone, email, address, department_id, position_id }) => {
+export const updateEmployee = async (
+  id,
+  {
+    full_name,
+    gender,
+    dob,
+    cccd,
+    phone,
+    email,
+    address,
+    department_id,
+    position_id,
+  },
+) => {
   const employee = await prisma.employee.findUnique({ where: { id } });
   if (!employee) {
     throw new Error('Employee not found');

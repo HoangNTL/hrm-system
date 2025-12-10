@@ -1,10 +1,12 @@
-import { authService } from "../services/auth.service.js";
-import response from "../utils/response.js";
+import { authService } from '../services/auth.service.js';
+import response from '../utils/response.js';
+import ApiError from '../utils/ApiError.js';
+import { ERROR_CODES } from '../utils/errorCodes.js';
 
 const cookieOptions = {
   httpOnly: true,
-  secure: true,
-  sameSite: "strict",
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
@@ -14,24 +16,18 @@ const cookieOptions = {
  * @access  Public
  * @returns {Object} accessToken, refreshToken, user info
  */
-export const login = async (req, res) => {
+export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
     const result = await authService.login(email, password);
 
-    if (!result.ok) {
-      return res.status(result.status).json(result);
-    }
-
     // set refresh token in cookie
-    res.cookie("refreshToken", result.data.refreshToken, cookieOptions);
+    res.cookie('refreshToken', result.refreshToken, cookieOptions);
 
-    return res.json(result);
+    return response.success(res, result, 'Login successful', 200);
   } catch (error) {
-    console.error("Login error:", error.message);
-
-    return res.status(500).json(response.serverError());
+    next(error); // Pass error to the error handling middleware
   }
 };
 
@@ -45,17 +41,12 @@ export const logout = async (req, res) => {
   try {
     const result = await authService.logout(req.user?.id);
 
-    if (!result.ok) {
-      return res.status(result.status).json(result);
-    }
+    // clear refresh token cookie
+    res.clearCookie('refreshToken', { ...cookieOptions, maxAge: 0 });
 
-    res.clearCookie("refreshToken", { ...cookieOptions, maxAge: 0 });
-
-    return res.json(result);
+    return response.success(res, result, 'Logout successful', 200);
   } catch (error) {
-    console.error("Logout error:", error.message);
-
-    return res.status(500).json(response.serverError());
+    next(error);
   }
 };
 
@@ -65,26 +56,22 @@ export const logout = async (req, res) => {
  * @access  Public
  * @returns {Object} accessToken, refreshToken
  */
-export const refreshToken = async (req, res) => {
+export const refreshToken = async (req, res, next) => {
   try {
-    const result = await authService.refreshToken(
-      req.cookies?.refreshToken,
-      req.user?.id
-    );
+    // get refresh token from cookie
+    const token = req.cookies?.refreshToken;
 
-    if (!result.ok) {
-      return res.status(result.status).json(result);
-    }
+    if (!token) throw new ApiError(ERROR_CODES.UNAUTHORIZED, 'No refresh token provided');
+
+    const result = await authService.refreshToken(token);
 
     // set new refresh token in cookie if provided
-    if (result.data.refreshToken) {
-      res.cookie("refreshToken", result.data.refreshToken, cookieOptions);
+    if (result.refreshToken) {
+      res.cookie('refreshToken', result.refreshToken, cookieOptions);
     }
 
-    return res.json(result);
+    return response.success(res, result, 'Token refreshed successfully', 200);
   } catch (error) {
-    console.error("Logout error:", error.message);
-
-    return res.status(500).json(response.serverError());
+    next(error);
   }
 };

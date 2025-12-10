@@ -1,37 +1,22 @@
 const response = {
-  success(data, message = "Success") {
-    return {
+  success(res, data = {}, message = 'Success', status = 200) {
+    return res.status(status).json({
       ok: true,
-      status: 200,
+      status,
       message,
       data,
-    };
+    });
   },
 
-  fail(status, message) {
-    return {
+  fail(res, status = 400, message = 'Something went wrong', errors = null) {
+    return res.status(status).json({
       ok: false,
       status,
       message,
+      errors, // additional error details
       data: null,
-    };
+    });
   },
-
-  unauthorized(message = "Unauthorized") {
-    return this.fail(401, message);
-  },
-
-  serverError(message = "Internal server error") {
-    return this.fail(500, message);
-  },
-
-  notFound(message = "Resource not found") {
-    return this.fail(404, message);
-  },
-
-//   badRequest(message = "Bad request") {
-//     return this.fail(400, message);
-//   },
 };
 
 export default response;

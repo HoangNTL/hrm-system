@@ -1,54 +1,95 @@
-import * as positionService from '../services/position.service.js';
+import response from '../utils/response.js';
+import { positionService } from '../services/position.service.js';
+import { parsePagination } from '../utils/sanitizeQuery.js';
 
-const mapPosition = (p) => {
-  if (!p) return null;
-  return {
-    position_id: p.id,
-    id: p.id,
-    name: p.name,
-    description: p.description || null,
-    created_at: p.created_at ? p.created_at.toISOString() : null,
-  };
-};
-
-// GET /api/positions
-export const getPositions = async (req, res) => {
+/**
+ * @route GET /api/positions
+ * @desc  Get all positions (with search + pagination)
+ * @access Public
+ */
+export const getPositions = async (req, res, next) => {
   try {
-    console.log('[GET /api/positions] Query:', req.query);
-    const page = Math.max(parseInt(req.query.page) || 1, 1);
-    const limit = Math.max(parseInt(req.query.limit) || 100, 1);
-    const search = (req.query.search || '').trim();
-
-    const result = await positionService.getPositions({ page, limit, search });
-    const mapped = result.data.map(mapPosition);
-    const total_pages = Math.max(Math.ceil(result.total / limit), 1);
-
-    res.json({
-      data: mapped,
-      pagination: { page, limit, total: result.total, total_pages },
-    });
+    const { search, page, limit } = parsePagination(req.query);
+    const result = await positionService.getAll({ search, page, limit });
+    return response.success(res, { items: result.data, pagination: result.pagination }, 'Success', 200);
   } catch (error) {
-    console.error('[GET /api/positions] ERROR:', error.message);
-    res.status(500).json({ message: 'Internal Server Error', details: error.message });
+    next(error);
   }
 };
 
-// GET /api/positions/:id
-export const getPositionById = async (req, res) => {
+/**
+ * @route GET /api/positions/:id
+ * @desc  Get position by ID
+ * @access Public
+ */
+export const getPositionById = async (req, res, next) => {
   try {
-    const idNum = parseInt(req.params.id, 10);
-
-    if (Number.isNaN(idNum)) {
-      return res.status(400).json({ message: 'Invalid position id' });
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return response.fail(res, 400, 'Invalid position id');
     }
 
-    const pos = await positionService.getPositionById(idNum);
-    res.json({ data: mapPosition(pos) });
+    const result = await positionService.getById(id);
+    return response.success(res, { position: result }, 'Success', 200);
   } catch (error) {
-    if (error.message === 'Position not found') {
-      return res.status(404).json({ message: error.message });
+    next(error);
+  }
+};
+
+/**
+ * @route POST /api/positions
+ * @desc  Create a new position
+ * @access Public
+ */
+export const createPosition = async (req, res, next) => {
+  try {
+    const { name, description, status } = req.body;
+    const created = await positionService.create({ name, description, status });
+    return response.success(res, { position: created }, 'Created', 201);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route PUT /api/positions/:id
+ * @desc  Update a position
+ * @access Public
+ */
+export const updatePosition = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return response.fail(res, 400, 'Invalid position id');
     }
-    console.error('[GET /api/positions/:id] ERROR:', error.message);
-    res.status(500).json({ message: 'Internal Server Error' });
+
+    const { name, description, status } = req.body;
+    const updated = await positionService.update(id, {
+      name,
+      description,
+      status,
+    });
+    return response.success(res, { data: updated }, 'Updated', 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route DELETE /api/positions/:id
+ * @desc  Delete a position
+ * @access Public
+ */
+export const deletePosition = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return response.fail(res, 400, 'Invalid position id');
+    }
+
+    const result = await positionService.delete(id);
+    return response.success(res, { position: result }, 'Deleted', 200);
+  } catch (error) {
+    next(error);
   }
 };

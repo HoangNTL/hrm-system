@@ -19,7 +19,11 @@ export const getDepartments = async (req, res) => {
     const limit = Math.max(parseInt(req.query.limit) || 10, 1);
     const search = (req.query.search || '').trim();
 
-    const result = await departmentService.getDepartments({ page, limit, search });
+    const result = await departmentService.getDepartments({
+      page,
+      limit,
+      search,
+    });
     const mapped = result.data.map(mapDepartment);
     const total_pages = Math.max(Math.ceil(result.total / limit), 1);
 
@@ -29,7 +33,9 @@ export const getDepartments = async (req, res) => {
     });
   } catch (error) {
     console.error('[GET /api/departments] ERROR:', error.message);
-    res.status(500).json({ message: 'Internal Server Error', details: error.message });
+    res
+      .status(500)
+      .json({ message: 'Internal Server Error', details: error.message });
   }
 };
 
@@ -73,6 +79,8 @@ export const createDepartment = async (req, res) => {
       return res.status(400).json({ message: error.message });
     }
 
-    return res.status(500).json({ message: 'Internal Server Error', details: error.message });
+    return res
+      .status(500)
+      .json({ message: 'Internal Server Error', details: error.message });
   }
 };

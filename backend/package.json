@@ -6,6 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/index.js",
     "dev": "nodemon --watch src src/index.js",
+    "format": "prettier --write .",
     "seed": "node prisma/seed.js"
   },
   "keywords": [],
@@ -20,11 +21,13 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3"
+    "jsonwebtoken": "^9.0.3",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
     "nodemon": "^3.1.11",
+    "prettier": "^3.7.4",
     "prisma": "^7.1.0"
   },
   "type": "module"

@@ -7,7 +7,11 @@ const mapEmployee = (e) => {
     employee_id: e.id,
     full_name: e.full_name || '',
     gender: e.gender || '',
-    dob: e.dob ? (typeof e.dob === 'string' ? e.dob : e.dob.toISOString().split('T')[0]) : null,
+    dob: e.dob
+      ? typeof e.dob === 'string'
+        ? e.dob
+        : e.dob.toISOString().split('T')[0]
+      : null,
     cccd: e.identity_number || '',
     phone: e.phone || '',
     email: e.email || '',
@@ -38,7 +42,9 @@ export const getEmployees = async (req, res) => {
     });
   } catch (error) {
     console.error('[GET /api/employees] ERROR:', error.message);
-    res.status(500).json({ message: 'Internal Server Error', details: error.message });
+    res
+      .status(500)
+      .json({ message: 'Internal Server Error', details: error.message });
   }
 };
 
@@ -94,13 +100,20 @@ export const createEmployee = async (req, res) => {
 
     if (error.code === 'P2002') {
       const field = error?.meta?.target?.[0] || 'field';
-      return res.status(409).json({ message: `Duplicate ${field}. This value already exists.` });
+      return res
+        .status(409)
+        .json({ message: `Duplicate ${field}. This value already exists.` });
     }
 
-    if (error.message.includes('Missing required') || error.message.includes('Invalid date')) {
+    if (
+      error.message.includes('Missing required') ||
+      error.message.includes('Invalid date')
+    ) {
       return res.status(400).json({ message: error.message });
     }
 
-    return res.status(500).json({ message: 'Internal Server Error', details: error.message });
+    return res
+      .status(500)
+      .json({ message: 'Internal Server Error', details: error.message });
   }
 };

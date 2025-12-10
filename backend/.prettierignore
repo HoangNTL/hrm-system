@@ -1,0 +1,27 @@
+# Node modules
+node_modules
+
+# Build output
+dist
+build
+
+# Environment files
+.env
+.env.local
+
+# Logs
+*.log
+
+# VSCode settings
+.vscode
+
+# Lock files
+package-lock.json
+package.json
+yarn.lock
+
+# Prisma
+prisma/schema.prisma
+prisma/migrations
+src/generated/prisma
+prisma.config.ts
