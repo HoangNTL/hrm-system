@@ -14,6 +14,8 @@ const mapEmployee = (e) => {
     address: e.address || '',
     department_id: e.department_id || null,
     position_id: e.position_id || null,
+    has_account: !!e.user_account,
+    account_status: e.user_account ? 'active' : null,
   };
 };
 
@@ -64,10 +66,28 @@ export const getEmployeeById = async (req, res) => {
 export const createEmployee = async (req, res) => {
   try {
     console.log('[POST /api/employees] Payload:', JSON.stringify(req.body, null, 2));
-    const employee = await employeeService.createEmployee(req.body);
+    const result = await employeeService.createEmployee(req.body);
 
-    console.log('[POST /api/employees] Success:', employee);
-    return res.status(201).json({ data: mapEmployee(employee) });
+    console.log('[POST /api/employees] Success:', result);
+    
+    const response = { 
+      data: mapEmployee(result.employee)
+    };
+
+    // Include account info if created
+    if (result.accountInfo) {
+      if (result.accountInfo.error) {
+        response.accountInfo = { error: result.accountInfo.error };
+      } else {
+        response.accountInfo = {
+          email: result.accountInfo.email,
+          password: result.accountInfo.password,
+          role: result.accountInfo.role,
+        };
+      }
+    }
+
+    return res.status(201).json(response);
   } catch (error) {
     console.error('[POST /api/employees] Error:', error.message);
     console.error('[POST /api/employees] Code:', error?.code);

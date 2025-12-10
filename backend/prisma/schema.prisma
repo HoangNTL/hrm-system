@@ -58,7 +58,7 @@ model Employee {
   full_name       String
   gender          Gender?
   dob             DateTime?
-  identity_number String?    @unique
+  identity_number String?
   phone           String?    @unique
   email           String?    @unique
   address         String?
@@ -94,7 +94,7 @@ model Employee {
 model Department {
   id          Int     @id @default(autoincrement())
   name        String
-  code        String  @unique
+  code        String
   description String?
   status      Boolean @default(true) // active/inactive
 
@@ -144,3 +144,4 @@ model Position {
 
 //   @@map("attendances")
 // }
+
