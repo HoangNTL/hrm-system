@@ -1,4 +1,6 @@
-import * as employeeService from '../services/employee.service.js';
+import response from '../utils/response.js';
+import { parsePagination } from '../utils/sanitizeQuery.js';
+import { employeeService } from '../services/employee.service.js';
 
 // Helper to map Prisma Employee -> frontend shape
 const mapEmployee = (e) => {
@@ -7,11 +9,7 @@ const mapEmployee = (e) => {
     employee_id: e.id,
     full_name: e.full_name || '',
     gender: e.gender || '',
-    dob: e.dob
-      ? typeof e.dob === 'string'
-        ? e.dob
-        : e.dob.toISOString().split('T')[0]
-      : null,
+    dob: e.dob ? (typeof e.dob === 'string' ? e.dob : e.dob.toISOString().split('T')[0]) : null,
     cccd: e.identity_number || '',
     phone: e.phone || '',
     email: e.email || '',
@@ -23,97 +21,135 @@ const mapEmployee = (e) => {
   };
 };
 
-// GET /api/employees
-export const getEmployees = async (req, res) => {
+/**
+ * @route GET /api/employees
+ * @desc  Get all employees (with search + pagination)
+ * @access Public
+ */
+export const getEmployees = async (req, res, next) => {
   try {
-    console.log('[GET /api/employees] Query:', req.query);
-    const page = Math.max(parseInt(req.query.page) || 1, 1);
-    const limit = Math.max(parseInt(req.query.limit) || 10, 1);
-    const search = (req.query.search || '').trim();
+    const { search, page, limit } = parsePagination(req.query);
+    const result = await employeeService.getAll({ page, limit, search });
+    return response.success(res, { items: result.data.map(mapEmployee), pagination: result.pagination }, 'Success', 200);
+  } catch (error) {
+    next(error);
+  }
+};
 
-    const result = await employeeService.getEmployees({ page, limit, search });
+/**
+ * @route GET /api/employees/:id
+ * @desc  Get employee by ID
+ * @access Public
+ */
+export const getEmployeeById = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return response.fail(res, 400, 'Invalid employee id');
+    }
+    const employee = await employeeService.getById(id);
+    return response.success(res, { employee: mapEmployee(employee) }, 'Success', 200);
+  } catch (error) {
+    next(error);
+  }
+};
 
-    const mapped = result.data.map(mapEmployee);
-    const total_pages = Math.max(Math.ceil(result.total / limit), 1);
+/**
+ * @route POST /api/employees
+ * @desc  Create a new employee (optionally with account)
+ * @access Public
+ */
+export const createEmployee = async (req, res, next) => {
+  try {
+    const {
+      full_name,
+      gender,
+      dob,
+      cccd,
+      phone,
+      email,
+      address,
+      department_id,
+      position_id,
+      auto_create_account,
+    } = req.body;
 
-    res.json({
-      data: mapped,
-      pagination: { page, limit, total: result.total, total_pages },
+    const { employee, accountInfo } = await employeeService.create({
+      full_name,
+      gender,
+      dob,
+      cccd,
+      phone,
+      email,
+      address,
+      department_id,
+      position_id,
+      auto_create_account,
     });
+
+    return response.success(res, { employee: mapEmployee(employee), accountInfo }, 'Created', 201);
   } catch (error) {
-    console.error('[GET /api/employees] ERROR:', error.message);
-    res
-      .status(500)
-      .json({ message: 'Internal Server Error', details: error.message });
+    next(error);
   }
 };
 
-// GET /api/employees/:id
-export const getEmployeeById = async (req, res) => {
+/**
+ * @route PUT /api/employees/:id
+ * @desc  Update an employee
+ * @access Public
+ */
+export const updateEmployee = async (req, res, next) => {
   try {
-    const idNum = parseInt(req.params.id, 10);
-
-    if (Number.isNaN(idNum)) {
-      return res.status(400).json({ message: 'Invalid employee id' });
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return response.fail(res, 400, 'Invalid employee id');
     }
 
-    const employee = await employeeService.getEmployeeById(idNum);
-    res.json({ data: mapEmployee(employee) });
+    const {
+      full_name,
+      gender,
+      dob,
+      cccd,
+      phone,
+      email,
+      address,
+      department_id,
+      position_id,
+    } = req.body;
+
+    const updated = await employeeService.update(id, {
+      full_name,
+      gender,
+      dob,
+      cccd,
+      phone,
+      email,
+      address,
+      department_id,
+      position_id,
+    });
+
+    return response.success(res, { employee: mapEmployee(updated) }, 'Updated', 200);
   } catch (error) {
-    if (error.message === 'Employee not found') {
-      return res.status(404).json({ message: error.message });
-    }
-    console.error('[GET /api/employees/:id] Error:', error.message);
-    res.status(500).json({ message: 'Internal Server Error' });
+    next(error);
   }
 };
 
-// POST /api/employees
-export const createEmployee = async (req, res) => {
+/**
+ * @route DELETE /api/employees/:id
+ * @desc  Delete an employee (soft delete)
+ * @access Public
+ */
+export const deleteEmployee = async (req, res, next) => {
   try {
-    console.log('[POST /api/employees] Payload:', JSON.stringify(req.body, null, 2));
-    const result = await employeeService.createEmployee(req.body);
-
-    console.log('[POST /api/employees] Success:', result);
-    
-    const response = { 
-      data: mapEmployee(result.employee)
-    };
-
-    // Include account info if created
-    if (result.accountInfo) {
-      if (result.accountInfo.error) {
-        response.accountInfo = { error: result.accountInfo.error };
-      } else {
-        response.accountInfo = {
-          email: result.accountInfo.email,
-          password: result.accountInfo.password,
-          role: result.accountInfo.role,
-        };
-      }
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return response.fail(res, 400, 'Invalid employee id');
     }
 
-    return res.status(201).json(response);
+    await employeeService.delete(id);
+    return response.success(res, {}, 'Deleted', 200);
   } catch (error) {
-    console.error('[POST /api/employees] Error:', error.message);
-    console.error('[POST /api/employees] Code:', error?.code);
-
-    if (error.code === 'P2002') {
-      const field = error?.meta?.target?.[0] || 'field';
-      return res
-        .status(409)
-        .json({ message: `Duplicate ${field}. This value already exists.` });
-    }
-
-    if (
-      error.message.includes('Missing required') ||
-      error.message.includes('Invalid date')
-    ) {
-      return res.status(400).json({ message: error.message });
-    }
-
-    return res
-      .status(500)
-      .json({ message: 'Internal Server Error', details: error.message });
+    next(error);
   }
 };
