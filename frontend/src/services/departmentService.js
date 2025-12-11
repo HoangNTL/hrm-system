@@ -1,4 +1,4 @@
-import { departmentAPI } from '../api';
+import { departmentAPI } from '@api/departmentAPI';
 
 export const departmentService = {
   async getDepartments({ page = 1, limit = 10, search = '' } = {}) {

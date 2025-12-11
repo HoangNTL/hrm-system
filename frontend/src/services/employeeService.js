@@ -1,4 +1,4 @@
-import { employeeAPI } from '../api';
+import { employeeAPI } from '@api/employeeAPI';
 
 export const employeeService = {
   // Get all employees with pagination and search
@@ -9,9 +9,9 @@ export const employeeService = {
         limit,
         search,
       };
-      
+
       const response = await employeeAPI.getEmployees(params);
-      
+
       return {
         data: response.data,
         pagination: {

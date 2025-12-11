@@ -1,9 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './slices/auth/authSlice';
-import userReducer from './slices/user/userSlice';
+import authReducer from './slices/authSlice';
+import userReducer from './slices/userSlice';
 import uiReducer from './slices/uiSlice';
 
-export const store = configureStore({
+const store = configureStore({
   reducer: {
     auth: authReducer,
     user: userReducer,
@@ -11,7 +11,10 @@ export const store = configureStore({
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: false,
+      serializableCheck: {
+        ignoredActions: ['auth/loginAsync/fulfilled', 'auth/logoutAsync/fulfilled'],
+        ignoredPaths: ['auth.accessToken', 'user.user']
+      },
     }),
 });
 

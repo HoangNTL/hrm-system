@@ -1,5 +1,3 @@
-import MainLayout from "../../layouts/MainLayout";
-
 function DashboardPage() {
   return (
     <div className="space-y-6">
@@ -20,8 +18,7 @@ function DashboardPage() {
             Dashboard Overview
           </h2>
           <p className="text-body text-secondary-700 dark:text-secondary-300">
-            This is the main dashboard page of your Human Resource Management
-            System.
+            This is the main dashboard page of your Human Resource Management System.
           </p>
           <p className="text-body text-secondary-700 dark:text-secondary-300">
             From here, you can access all the key features including:
@@ -35,8 +32,8 @@ function DashboardPage() {
           </ul>
           <div className="mt-6 p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg">
             <p className="text-sm text-primary-800 dark:text-primary-300">
-              <strong>Quick Tip:</strong> Use the sidebar to navigate between
-              different sections. You can collapse it to get more screen space!
+              <strong>Quick Tip:</strong> Use the sidebar to navigate between different sections.
+              You can collapse it to get more screen space!
             </p>
           </div>
         </div>
@@ -46,19 +43,19 @@ function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           {
-            title: "Total Employees",
-            value: "248",
-            icon: "👥",
-            color: "primary",
+            title: 'Total Employees',
+            value: '248',
+            icon: '👥',
+            color: 'primary',
           },
-          { title: "Departments", value: "12", icon: "🏢", color: "accent" },
+          { title: 'Departments', value: '12', icon: '🏢', color: 'accent' },
           {
-            title: "Present Today",
-            value: "234",
-            icon: "✅",
-            color: "success",
+            title: 'Present Today',
+            value: '234',
+            icon: '✅',
+            color: 'success',
           },
-          { title: "On Leave", value: "14", icon: "🏖️", color: "warning" },
+          { title: 'On Leave', value: '14', icon: '🏖️', color: 'warning' },
         ].map((stat, index) => (
           <div
             key={index}

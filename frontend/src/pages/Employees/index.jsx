@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+
 import { employeeService } from "@services/employeeService";
 import { departmentService } from "@services/departmentService";
 import { positionService } from "@services/positionService";
-import { userAPI, handleAPIError } from "@api";
+import { userAPI } from "@api/userAPI";
+import { handleAPIError } from "@utils/api";
 import Modal from "@components/ui/Modal";
 import Table from "@components/ui/Table";
 import Pagination from "@components/ui/Pagination";
@@ -96,7 +98,7 @@ function EmployeesPage() {
       const response = await userAPI.createAccountForEmployee(employee.employee_id);
       setAccountInfo(response.data);
       setSelectedEmployee(null);
-      
+
       // Refresh employee list to update account status
       await fetchEmployees();
     } catch (err) {
@@ -235,7 +237,7 @@ function EmployeesPage() {
         // Check if employee has account by looking at user_account relationship
         // If not provided by API, we'll show based on if email exists and is marked as having account
         const hasAccount = item.has_account || value === "active";
-        
+
         if (hasAccount) {
           return (
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
@@ -315,14 +317,14 @@ function EmployeesPage() {
               const payload = { ...formData };
               if (!payload.department_id) delete payload.department_id;
               if (!payload.position_id) delete payload.position_id;
-              
+
               const response = await employeeService.createEmployee(payload);
-              
+
               // Show account info if created
               if (response.accountInfo && !response.accountInfo.error) {
                 setAccountInfo(response.accountInfo);
               }
-              
+
               setShowAddForm(false);
               setFormData({ full_name: "", gender: "male", dob: "", cccd: "", phone: "", email: "", address: "", department_id: "", position_id: "", auto_create_account: false });
               setPagination((prev) => ({ ...prev, page: 1 }));
@@ -484,10 +486,10 @@ function EmployeesPage() {
       </Modal>
 
       {/* Create Account Confirmation Modal */}
-      <Modal 
-        open={!!selectedEmployee} 
-        title="Create Login Account" 
-        onClose={() => setSelectedEmployee(null)} 
+      <Modal
+        open={!!selectedEmployee}
+        title="Create Login Account"
+        onClose={() => setSelectedEmployee(null)}
         size="md"
       >
         {selectedEmployee && (
@@ -534,7 +536,7 @@ function EmployeesPage() {
               <p className="text-sm text-secondary-700 dark:text-secondary-300 mb-3">
                 📧 Account created successfully! Share these credentials with the employee:
               </p>
-              
+
               <div className="space-y-3">
                 <div>
                   <label className="text-xs font-medium text-secondary-600 dark:text-secondary-400">Email (Username):</label>

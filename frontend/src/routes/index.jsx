@@ -1,19 +1,19 @@
-import { createBrowserRouter } from "react-router-dom";
-import MainLayout from "@layouts/MainLayout";
-import LoginPage from "@pages/Auth/Login";
-import DashboardPage from "@pages/Dashboard";
-import EmployeesPage from "@pages/Employees";
-import ProtectedRoute from "./ProtectedRoute";
-import DepartmentsPage from "@pages/Departments";
-import NotFoundPage from "@pages/NotFound";
+import { createBrowserRouter } from 'react-router-dom';
+import MainLayout from '@/components/MainLayout';
+import LoginPage from '@/pages/auth/LoginPage';
+import DashboardPage from '@/pages/dashBoard';
+import EmployeesPage from '@pages/Employees';
+import ProtectedRoute from './ProtectedRoute';
+import DepartmentsPage from '@pages/Departments';
+import NotFoundPage from '@pages/NotFound';
 
 export const router = createBrowserRouter([
   {
-    path: "/login",
+    path: '/login',
     element: <LoginPage />,
   },
   {
-    path: "/",
+    path: '/',
     element: (
       <ProtectedRoute>
         <MainLayout />
@@ -25,22 +25,22 @@ export const router = createBrowserRouter([
         element: <DashboardPage />,
       },
       {
-        path: "dashboard",
+        path: 'dashboard',
         element: <DashboardPage />,
       },
       {
-        path: "employees",
+        path: 'employees',
         element: <EmployeesPage />,
       },
       {
-        path: "departments",
+        path: 'departments',
         element: <DepartmentsPage />,
       },
       // Add more routes here as you build them
     ],
   },
   {
-    path: "*",
-    element: <NotFoundPage />
+    path: '*',
+    element: <NotFoundPage />,
   },
 ]);

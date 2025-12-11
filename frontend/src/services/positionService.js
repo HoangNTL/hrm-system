@@ -1,4 +1,4 @@
-import { positionAPI } from '../api';
+import { positionAPI } from '@api/positionAPI';
 
 export const positionService = {
   async getPositions({ page = 1, limit = 100, search = '' } = {}) {

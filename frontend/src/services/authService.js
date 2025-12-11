@@ -1,59 +1,70 @@
-import { authAPI } from '@api';
+import authAPI from '@/api/authAPI';
 
-export const authService = {
-    // Login
-    async login(email, password) {
-        try {
-            const response = await authAPI.login({ email, password });
+const authService = {
+  async login(email, password) {
+    try {
+      const response = await authAPI.login({ email, password });
+      const { data } = response.data;
+      const { user, accessToken } = data || {};
 
-            // Store tokens and user data
-            if (response.data.accessToken) {
-                localStorage.setItem('accessToken', response.data.accessToken);
-            }
-            if (response.data.user) {
-                localStorage.setItem('user', JSON.stringify(response.data.user));
-            }
-            localStorage.setItem('isAuthenticated', 'true');
+      if (!user || !accessToken) {
+        throw new Error('Invalid login response');
+      }
 
-            return response;
-        } catch (error) {
-            console.error('Login Service error:', error);
-            throw error;
-        }
-    },
+      // Store user data and token in localStorage
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('isAuthenticated', 'true');
 
-    // Logout
-    async logout() {
-        try {
-            await authAPI.logout();
+      return { user, accessToken };
+    } catch (error) {
+      console.error('Login Service error:', error);
 
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('user');
-            localStorage.removeItem('isAuthenticated');
-        } catch (error) {
-            console.error('Logout Service error:', error);
-            throw error;
-        }
-    },
+      throw {
+        message: error.message || 'Login failed',
+        status: error.response?.status,
+        errors: error.response?.data?.errors || {},
+      };
+    }
+  },
 
-    // Get current user
-    getCurrentUser() {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-            try {
-                return JSON.parse(userStr);
-            } catch (error) {
-                console.error('Error parsing user data:', error);
-                return null;
-            }
-        }
+  async logout() {
+    try {
+      await authAPI.logout();
+
+      // Clear user data and token from localStorage
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('user');
+      localStorage.removeItem('isAuthenticated');
+    } catch (error) {
+      console.error('Logout Service error:', error);
+      throw {
+        message: error.message || 'Logout failed',
+        status: error.response?.status,
+      };
+    }
+  },
+
+  // Get current user
+  getCurrentUser() {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        return JSON.parse(userStr);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
         return null;
-    },
+      }
+    }
+    return null;
+  },
 
-    // Check if user is authenticated
-    isAuthenticated() {
-        const token = localStorage.getItem('accessToken');
-        const isAuth = localStorage.getItem('isAuthenticated') === 'true';
-        return !!(token && isAuth);
-    },
+  // Check if user is authenticated
+  isAuthenticated() {
+    const token = localStorage.getItem('accessToken');
+    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+    return !!(token && isAuth);
+  },
 };
+
+export default authService;

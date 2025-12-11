@@ -1,4 +1,4 @@
-import apiClient from '../config/axios';
+import apiClient from './axios';
 
 export const positionAPI = {
   async getPositions(params = {}) {

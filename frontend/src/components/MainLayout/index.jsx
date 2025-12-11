@@ -1,16 +1,17 @@
-import { useState } from "react";
-import { Outlet } from "react-router-dom";
-import Sidebar from "./Sidebar";
-import Header from "./Header";
-import { useTheme } from "@hooks/useTheme";
+import { Outlet } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+
+import Sidebar from './SideBar';
+import Header from './Header/index';
+import { useTheme } from '@hooks/useTheme';
+import { selectSidebarCollapsed, toggleSidebar } from '@/store/slices/uiSlice';
 
 function MainLayout() {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const dispatch = useDispatch();
+  const isSidebarCollapsed = useSelector(selectSidebarCollapsed);
   const { isDarkMode, toggleTheme } = useTheme();
 
-  const toggleSidebar = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
-  };
+  const handleToggleSidebar = () => dispatch(toggleSidebar());
 
   return (
     <div className="min-h-screen">
@@ -24,11 +25,11 @@ function MainLayout() {
           <Header
             isDarkMode={isDarkMode}
             onToggleTheme={toggleTheme}
-            onToggleSidebar={toggleSidebar}
+            onToggleSidebar={handleToggleSidebar}
           />
 
           {/* Page Content */}
-          <main className="flex-1 overflow-y-auto p-6">
+          <main className="flex-1 overflow-y-auto p-6" role="main">
             <Outlet />
           </main>
         </div>

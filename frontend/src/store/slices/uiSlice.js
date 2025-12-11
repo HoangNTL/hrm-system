@@ -10,20 +10,16 @@ const uiSlice = createSlice({
   name: 'ui',
   initialState,
   reducers: {
-    // set state loading and message
-    setGlobalLoading: (state, { payload: { loading, message = '' } }) => {
-      state.globalLoading = loading;
+    setGlobalLoading: (state, action) => {
+      const { loading = false, message = '' } = action.payload || {};
+      state.globalLoading = !!loading;
       state.loadingMessage = message;
     },
-
-    // switch state sidebar
     toggleSidebar: (state) => {
       state.sidebarCollapsed = !state.sidebarCollapsed;
     },
-
-    // set state sidebar
-    setSidebarCollapsed: (state, { payload }) => {
-      state.sidebarCollapsed = !!payload;
+    setSidebarCollapsed: (state, action) => {
+      state.sidebarCollapsed = !!action.payload;
     },
   },
 });
@@ -34,7 +30,7 @@ export const { setGlobalLoading, toggleSidebar, setSidebarCollapsed } = uiSlice.
 // reducer
 export default uiSlice.reducer;
 
-// Selectors
+// selectors
 export const selectGlobalLoading = (state) => state.ui.globalLoading;
 export const selectLoadingMessage = (state) => state.ui.loadingMessage;
 export const selectSidebarCollapsed = (state) => state.ui.sidebarCollapsed;

@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { departmentService } from '../../services/departmentService';
-import { handleAPIError } from '../../api';
-import Table from '../../components/ui/Table';
-import Pagination from '../../components/ui/Pagination';
-import Button from '../../components/ui/Button';
-import Icon from '../../components/ui/Icon';
-import Modal from '../../components/ui/Modal';
+import { departmentService } from '@services/departmentService';
+import { handleAPIError } from '@utils/api';
+import Table from '@components/ui/Table';
+import Pagination from '@components/ui/Pagination';
+import Button from '@components/ui/Button';
+import Icon from '@components/ui/Icon';
+import Modal from '@components/ui/Modal';
 
 function DepartmentsPage() {
   const [departments, setDepartments] = useState([]);
