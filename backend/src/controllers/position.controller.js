@@ -69,7 +69,7 @@ export const updatePosition = async (req, res, next) => {
       description,
       status,
     });
-    return response.success(res, { data: updated }, 'Updated', 200);
+    return response.success(res, { position: updated }, 'Updated', 200);
   } catch (error) {
     next(error);
   }

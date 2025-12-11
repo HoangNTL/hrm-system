@@ -1,86 +1,99 @@
-import * as departmentService from '../services/department.service.js';
+import response from '../utils/response.js';
+import { departmentService } from '../services/department.service.js';
+import { parsePagination } from '../utils/sanitizeQuery.js';
 
-const mapDepartment = (d) => {
-  if (!d) return null;
-  return {
-    department_id: d.id,
-    id: d.id,
-    name: d.name,
-    description: d.description || null,
-    created_at: d.created_at ? d.created_at.toISOString() : null,
-  };
-};
-
-// GET /api/departments
-export const getDepartments = async (req, res) => {
+/**
+ * @route GET /api/departments
+ * @desc  Get all departments (with search + pagination)
+ * @access Public
+ */
+export const getDepartments = async (req, res, next) => {
   try {
-    console.log('[GET /api/departments] Query:', req.query);
-    const page = Math.max(parseInt(req.query.page) || 1, 1);
-    const limit = Math.max(parseInt(req.query.limit) || 10, 1);
-    const search = (req.query.search || '').trim();
-
-    const result = await departmentService.getDepartments({
-      page,
-      limit,
-      search,
-    });
-    const mapped = result.data.map(mapDepartment);
-    const total_pages = Math.max(Math.ceil(result.total / limit), 1);
-
-    res.json({
-      data: mapped,
-      pagination: { page, limit, total: result.total, total_pages },
-    });
+    const { search, page, limit } = parsePagination(req.query);
+    const result = await departmentService.getAll({ search, page, limit });
+    return response.success(res, { items: result.data, pagination: result.pagination }, 'Success', 200);
   } catch (error) {
-    console.error('[GET /api/departments] ERROR:', error.message);
-    res
-      .status(500)
-      .json({ message: 'Internal Server Error', details: error.message });
+    next(error);
   }
 };
 
-// GET /api/departments/:id
-export const getDepartmentById = async (req, res) => {
+/**
+ * @route GET /api/departments/:id
+ * @desc  Get department by ID
+ * @access Public
+ */
+export const getDepartmentById = async (req, res, next) => {
   try {
-    const idNum = parseInt(req.params.id, 10);
+    const id = Number(req.params.id);
 
-    if (Number.isNaN(idNum)) {
-      return res.status(400).json({ message: 'Invalid department id' });
+    if (!Number.isInteger(id) || id <= 0) {
+      return response.fail(res, 400, 'Invalid department id');
     }
 
-    const dept = await departmentService.getDepartmentById(idNum);
-    res.json({ data: mapDepartment(dept) });
+    const dept = await departmentService.getById(id);
+    return response.success(res, { department: dept }, 'Success', 200);
   } catch (error) {
-    if (error.message === 'Department not found') {
-      return res.status(404).json({ message: error.message });
-    }
-    console.error('[GET /api/departments/:id] ERROR:', error.message);
-    res.status(500).json({ message: 'Internal Server Error' });
+    next(error);
   }
 };
 
-// POST /api/departments
-export const createDepartment = async (req, res) => {
+/**
+ * @route POST /api/departments
+ * @desc  Create a new department
+ * @access Public
+ */
+export const createDepartment = async (req, res, next) => {
   try {
-    console.log('[POST /api/departments] Payload:', req.body);
-    const department = await departmentService.createDepartment(req.body);
-
-    console.log('[POST /api/departments] Created:', department);
-    return res.status(201).json({ data: mapDepartment(department) });
+    const { name, code, description, status } = req.body;
+    const created = await departmentService.create({ name, code, description, status });
+    return response.success(res, { department: created }, 'Created', 201);
   } catch (error) {
-    console.error('[POST /api/departments] ERROR:', error.message);
+    next(error);
+  }
+};
 
-    if (error.code === 'P2002') {
-      const field = error?.meta?.target?.[0] || 'field';
-      return res.status(409).json({ message: `Duplicate ${field}.` });
+/**
+ * @route PUT /api/departments/:id
+ * @desc  Update a department
+ * @access Public
+ */
+export const updateDepartment = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id) || id <= 0) {
+      return response.fail(res, 400, 'Invalid department id');
     }
 
-    if (error.message.includes('Missing required')) {
-      return res.status(400).json({ message: error.message });
+    const { name, code, description, status } = req.body;
+    const updated = await departmentService.update(id, {
+      name,
+      code,
+      description,
+      status,
+    });
+    return response.success(res, { department: updated }, 'Updated', 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route DELETE /api/departments/:id
+ * @desc  Delete a department
+ * @access Public
+ */
+export const deleteDepartment = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isInteger(id) || id <= 0) {
+      return response.fail(res, 400, 'Invalid department id');
     }
 
-    return res
-      .status(500)
-      .json({ message: 'Internal Server Error', details: error.message });
+    const result = await departmentService.delete(id);
+    return response.success(res, { department: result }, 'Deleted', 200);
+  } catch (error) {
+    next(error);
   }
 };
