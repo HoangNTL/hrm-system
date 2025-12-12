@@ -1,10 +1,10 @@
 import { createBrowserRouter } from 'react-router-dom';
 import MainLayout from '@/components/MainLayout';
-import LoginPage from '@/pages/auth/LoginPage';
-import DashboardPage from '@/pages/dashBoard';
-import EmployeesPage from '@pages/Employees';
+import LoginPage from '@/pages/Auth/LoginPage';
+import DashboardPage from '@/pages/Dashboard';
+import EmployeesPage from '@/pages/employees';
 import ProtectedRoute from './ProtectedRoute';
-import DepartmentsPage from '@pages/Departments';
+// import DepartmentsPage from '@pages/Departments';
 import NotFoundPage from '@pages/NotFound';
 
 export const router = createBrowserRouter([
@@ -32,11 +32,10 @@ export const router = createBrowserRouter([
         path: 'employees',
         element: <EmployeesPage />,
       },
-      {
-        path: 'departments',
-        element: <DepartmentsPage />,
-      },
-      // Add more routes here as you build them
+      // {
+      //   path: 'departments',
+      //   element: <DepartmentsPage />,
+      // },
     ],
   },
   {

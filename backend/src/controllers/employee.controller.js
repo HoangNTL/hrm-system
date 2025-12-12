@@ -2,35 +2,31 @@ import response from '../utils/response.js';
 import { parsePagination } from '../utils/sanitizeQuery.js';
 import { employeeService } from '../services/employee.service.js';
 
-// Helper to map Prisma Employee -> frontend shape
-const mapEmployee = (e) => {
-  if (!e) return null;
-  return {
-    employee_id: e.id,
-    full_name: e.full_name || '',
-    gender: e.gender || '',
-    dob: e.dob ? (typeof e.dob === 'string' ? e.dob : e.dob.toISOString().split('T')[0]) : null,
-    cccd: e.identity_number || '',
-    phone: e.phone || '',
-    email: e.email || '',
-    address: e.address || '',
-    department_id: e.department_id || null,
-    position_id: e.position_id || null,
-    has_account: !!e.user_account,
-    account_status: e.user_account ? 'active' : null,
-  };
-};
-
 /**
  * @route GET /api/employees
- * @desc  Get all employees (with search + pagination)
+ * @desc  Get all employees (with search + pagination + filters)
  * @access Public
  */
 export const getEmployees = async (req, res, next) => {
   try {
     const { search, page, limit } = parsePagination(req.query);
-    const result = await employeeService.getAll({ page, limit, search });
-    return response.success(res, { items: result.data.map(mapEmployee), pagination: result.pagination }, 'Success', 200);
+    const { department_id, gender, work_status } = req.query;
+
+    const result = await employeeService.getAll({
+      page,
+      limit,
+      search,
+      department_id,
+      gender,
+      work_status,
+    });
+
+    return response.success(
+      res,
+      { items: result.data, pagination: result.pagination },
+      'Success',
+      200
+    );
   } catch (error) {
     next(error);
   }
@@ -48,7 +44,7 @@ export const getEmployeeById = async (req, res, next) => {
       return response.fail(res, 400, 'Invalid employee id');
     }
     const employee = await employeeService.getById(id);
-    return response.success(res, { employee: mapEmployee(employee) }, 'Success', 200);
+    return response.success(res, { employee }, 'Success', 200);
   } catch (error) {
     next(error);
   }
@@ -71,10 +67,11 @@ export const createEmployee = async (req, res, next) => {
       address,
       department_id,
       position_id,
-      auto_create_account,
+      create_login = false,
     } = req.body;
 
-    const { employee, accountInfo } = await employeeService.create({
+    // Map service return to userInfo expected by response
+    const { employee, user_account, generated_password } = await employeeService.create({
       full_name,
       gender,
       dob,
@@ -84,10 +81,10 @@ export const createEmployee = async (req, res, next) => {
       address,
       department_id,
       position_id,
-      auto_create_account,
+      create_login,
     });
 
-    return response.success(res, { employee: mapEmployee(employee), accountInfo }, 'Created', 201);
+    return response.success(res, { employee, user_account, generated_password }, 'Created', 201);
   } catch (error) {
     next(error);
   }
@@ -129,7 +126,7 @@ export const updateEmployee = async (req, res, next) => {
       position_id,
     });
 
-    return response.success(res, { employee: mapEmployee(updated) }, 'Updated', 200);
+    return response.success(res, { employee: updated }, 'Updated', 200);
   } catch (error) {
     next(error);
   }
@@ -147,8 +144,8 @@ export const deleteEmployee = async (req, res, next) => {
       return response.fail(res, 400, 'Invalid employee id');
     }
 
-    await employeeService.delete(id);
-    return response.success(res, {}, 'Deleted', 200);
+    const result = await employeeService.delete(id);
+    return response.success(res, { employee: result }, 'Deleted', 200);
   } catch (error) {
     next(error);
   }

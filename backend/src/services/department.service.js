@@ -2,19 +2,18 @@ import ApiError from '../utils/ApiError.js';
 import { ERROR_CODES } from '../utils/errorCodes.js';
 import { prisma } from '../config/db.js';
 
-/**
- * Department Service
- * Handles business logic related to departments.
- */
+// standardized select fields for department
+const departmentSelect = {
+  id: true,
+  name: true,
+  code: true,
+  description: true,
+  status: true,
+  created_at: true,
+  updated_at: true,
+};
+
 export const departmentService = {
-  /**
-   * Get all departments (with search + pagination)
-   * @param {Object} params
-   * @param {string} params.search
-   * @param {number} params.page
-   * @param {number} params.limit
-   * @returns {Object} Response object
-   */
   async getAll({ search = '', page = 1, limit = 10 } = {}) {
     const skip = (page - 1) * limit;
 
@@ -27,15 +26,7 @@ export const departmentService = {
     const [data, total] = await Promise.all([
       prisma.department.findMany({
         where,
-        select: {
-          id: true,
-          name: true,
-          code: true,
-          description: true,
-          status: true,
-          created_at: true,
-          updated_at: true,
-        },
+        select: departmentSelect,
         skip,
         take: limit,
         orderBy: { id: 'desc' },
@@ -54,23 +45,10 @@ export const departmentService = {
     };
   },
 
-  /**
-   * Get a single department by id
-   * @param {number} id
-   * @returns {Object} Response object
-   */
   async getById(id) {
     const department = await prisma.department.findUnique({
       where: { id },
-      select: {
-        id: true,
-        name: true,
-        code: true,
-        description: true,
-        status: true,
-        created_at: true,
-        updated_at: true,
-      },
+      select: departmentSelect,
     });
 
     if (!department || department.is_deleted) {
@@ -80,10 +58,6 @@ export const departmentService = {
     return department;
   },
 
-  /**
-   * Create a new department
-   * @param {{ name: string, code?: string, description?: string|null, status?: boolean }} payload
-   */
   async create({ name, code, description, status }) {
     if (!name || typeof name !== 'string' || !name.trim()) {
       throw new ApiError(ERROR_CODES.BAD_REQUEST, 'Name is required');
@@ -103,28 +77,15 @@ export const departmentService = {
         description: description ?? null,
         status: status === undefined ? true : Boolean(status),
       },
-      select: {
-        id: true,
-        name: true,
-        code: true,
-        description: true,
-        status: true,
-        created_at: true,
-        updated_at: true,
-      },
+      select: departmentSelect,
     });
 
     return department;
   },
 
-  /**
-   * Update a department by id
-   * @param {number} id
-   * @param {{ name?: string, code?: string, description?: string|null, status?: boolean }} payload
-   */
   async update(id, { name, code, description, status }) {
-    const existing = await prisma.department.findUnique({ where: { id, is_deleted: false } });
-    if (!existing) {
+    const existing = await prisma.department.findUnique({ where: { id } });
+    if (!existing || existing.is_deleted) {
       throw new ApiError(ERROR_CODES.NOT_FOUND, 'Department not found');
     }
 
@@ -148,27 +109,15 @@ export const departmentService = {
     const updated = await prisma.department.update({
       where: { id },
       data,
-      select: {
-        id: true,
-        name: true,
-        code: true,
-        description: true,
-        status: true,
-        created_at: true,
-        updated_at: true,
-      },
+      select: departmentSelect,
     });
 
     return updated;
   },
 
-  /**
-   * Delete a department by id (soft delete)
-   * @param {number} id
-   */
   async delete(id) {
     const existing = await prisma.department.findUnique({ where: { id } });
-    if (!existing) {
+    if (!existing || existing.is_deleted) {
       throw new ApiError(ERROR_CODES.NOT_FOUND, 'Department not found');
     }
 

@@ -1,74 +1,90 @@
-import { prisma } from '../config/db.js';
-import * as userService from '../services/user.service.js';
+import response from '../utils/response.js';
+import { parsePagination } from '../utils/sanitizeQuery.js';
+import { userService } from '../services/user.service.js';
 
-export const getAllUsers = async (_req, res) => {
-    try {
-        const users = await prisma.user.findMany();
-        res.json(users);
-    } catch (error) {
-        console.error('Error fetching users:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
+/**
+ * @route GET /api/users
+ * @desc  Get all users (with search + pagination)
+ * @access Public
+ */
+export const getUsers = async (req, res, next) => {
+  try {
+    const { search, page, limit } = parsePagination(req.query);
+    const result = await userService.getAll({ search, page, limit });
+    return response.success(res, { items: result.data, pagination: result.pagination }, 'Success', 200);
+  } catch (error) {
+    next(error);
+  }
 };
 
-// Create login account for an existing employee
-export const createAccountForEmployee = async (req, res) => {
-    const employeeId = Number(req.params.employeeId);
+/**
+ * @route GET /api/users/:id
+ * @desc  Get user by ID
+ * @access Public
+ */
+// export const getUserById = async (req, res, next) => {
+//   try {
+//     const id = Number(req.params.id);
+//     if (!Number.isInteger(id) || id <= 0) {
+//       return response.fail(res, 400, 'Invalid user id');
+//     }
+//     const user = await userService.getById(id);
+//     return response.success(res, { user }, 'Success', 200);
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
-    if (!employeeId) {
-        return res.status(400).json({ error: 'Invalid employee id' });
-    }
+/**
+ * @route POST /api/users
+ * @desc  Create a new user
+ * @access Public
+ */
+// export const createUser = async (req, res, next) => {
+//   try {
+//     const { email, role, employee_id, password } = req.body;
+//     const result = await userService.create({ email, role, employee_id, password });
+//     return response.success(res, result, 'Created', 201);
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
-    try {
-        const employee = await prisma.employee.findUnique({
-            where: { id: employeeId },
-            include: { user_account: true },
-        });
+/**
+ * @route PUT /api/users/:id
+ * @desc  Update a user
+ * @access Public
+ */
+// export const updateUser = async (req, res, next) => {
+//   try {
+//     const id = Number(req.params.id);
+//     if (!Number.isInteger(id) || id <= 0) {
+//       return response.fail(res, 400, 'Invalid user id');
+//     }
 
-        if (!employee) {
-            return res.status(404).json({ error: 'Employee not found' });
-        }
+//     const { email, role, employee_id, password } = req.body;
+//     const result = await userService.update(id, { email, role, employee_id, password });
+//     return response.success(res, result, 'Updated', 200);
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
-        if (employee.user_account) {
-            return res.status(409).json({ error: 'Employee already has an account' });
-        }
+/**
+ * @route DELETE /api/users/:id
+ * @desc  Soft delete a user
+ * @access Public
+ */
+// export const deleteUser = async (req, res, next) => {
+//   try {
+//     const id = Number(req.params.id);
+//     if (!Number.isInteger(id) || id <= 0) {
+//       return response.fail(res, 400, 'Invalid user id');
+//     }
 
-        if (!employee.email) {
-            return res.status(400).json({ error: 'Employee does not have an email' });
-        }
-
-        const accountInfo = await userService.createUserAccount({
-            email: employee.email,
-            employee_id: employee.id,
-            role: 'STAFF',
-        });
-
-        return res.status(201).json({
-            message: 'Account created successfully',
-            data: accountInfo,
-        });
-    } catch (error) {
-        console.error('Error creating account for employee:', error);
-        return res.status(500).json({ error: 'Failed to create account' });
-    }
-};
-
-// Reset password for an existing user
-export const resetPassword = async (req, res) => {
-    const userId = Number(req.params.userId);
-
-    if (!userId) {
-        return res.status(400).json({ error: 'Invalid user id' });
-    }
-
-    try {
-        const accountInfo = await userService.resetUserPassword(userId);
-        return res.status(200).json({
-            message: 'Password reset successfully',
-            data: accountInfo,
-        });
-    } catch (error) {
-        console.error('Error resetting password:', error);
-        return res.status(500).json({ error: 'Failed to reset password' });
-    }
-};
+//     const result = await userService.delete(id);
+//     return response.success(res, { user: result }, 'Deleted', 200);
+//   } catch (error) {
+//     next(error);
+//   }
+// };

@@ -5,7 +5,7 @@ import Icon from '@components/ui/Icon';
 import { logoutAsync } from '@/store/slices/authSlice';
 import { selectUser } from '@/store/slices/userSlice';
 
-function UserMenuComponent() {
+function UserMenu() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector(selectUser);
@@ -83,4 +83,4 @@ function UserMenuComponent() {
   );
 }
 
-export default memo(UserMenuComponent);
+export default memo(UserMenu);

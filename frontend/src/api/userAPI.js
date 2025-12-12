@@ -1,13 +1,8 @@
-import axios from './axios';
+import apiClient from './axios';
 
 export const userAPI = {
-  createAccountForEmployee: async (employeeId) => {
-    const response = await axios.post(`/users/create-for-employee/${employeeId}`);
-    return response.data;
-  },
-
-  resetPassword: async (userId) => {
-    const response = await axios.post(`/users/reset-password/${userId}`);
+  async getUsers(params = {}) {
+    const response = await apiClient.get('/users', { params });
     return response.data;
   },
 };

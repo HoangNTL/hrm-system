@@ -1,8 +1,8 @@
-import Icon from "./Icon";
+import Icon from './Icon';
 
 function Input({
   label,
-  type = "text",
+  type = 'text',
   name,
   placeholder,
   value,
@@ -10,7 +10,7 @@ function Input({
   error,
   required = false,
   disabled = false,
-  className = "",
+  className = '',
   ...props
 }) {
   return (
@@ -33,14 +33,14 @@ function Input({
         autoComplete="new-password"
         className={`
           w-full px-4 py-2.5 rounded-lg border
-          text-base text-secondary-900 placeholder:text-secondary-400
+          text-base text-secondary-900 dark:text-secondary-100 placeholder:text-secondary-400 dark:placeholder:text-secondary-500
           transition-all duration-200
           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-          disabled:bg-secondary-100 disabled:cursor-not-allowed
+          disabled:bg-secondary-100 dark:disabled:bg-secondary-800 disabled:cursor-not-allowed
           ${
             error
-              ? "border-error bg-error/5"
-              : "border-secondary-300 bg-white hover:border-secondary-400"
+              ? 'border-error bg-error/5 dark:bg-error/10'
+              : 'border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 hover:border-secondary-400 dark:hover:border-secondary-500'
           }
           ${className}
         `}

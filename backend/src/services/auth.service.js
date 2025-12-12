@@ -6,17 +6,7 @@ import { tokenService } from './token.service.js';
 import ApiError from '../utils/ApiError.js';
 import { ERROR_CODES } from '../utils/errorCodes.js';
 
-/**
- * Authentication Service
- * Handles login, logout, and refresh token logic.
- */
 export const authService = {
-  /**
-   * Login
-   * @param {string} email
-   * @param {string} password
-   * @returns {Object} Response object
-   */
   async login(email, password) {
     if (!email || !password) {
       throw new ApiError(
@@ -57,11 +47,6 @@ export const authService = {
     };
   },
 
-  /**
-   * Logout
-   * @param {number} userId
-   * @returns {Object} Response object
-   */
   async logout(userId) {
     if (!userId) throw new ApiError(ERROR_CODES.BAD_REQUEST, 'User ID is required');
 
@@ -71,13 +56,7 @@ export const authService = {
     return null;
   },
 
-  /**
-   * Refresh Token
-   * @param {string} token
-   * @returns {Object} Response object
-   */
   async refreshToken(token) {
-
     if (!token) throw new ApiError(ERROR_CODES.UNAUTHORIZED, 'No refresh token provided');
 
     // verify token
