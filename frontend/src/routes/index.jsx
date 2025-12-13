@@ -3,7 +3,7 @@ import MainLayout from '@/components/MainLayout';
 import LoginPage from '@/pages/Auth/LoginPage';
 import DashboardPage from '@/pages/Dashboard';
 import EmployeesPage from '@/pages/employees';
-import DepartmentsPage from '@/pages/Departments';
+import DepartmentsPage from '@/pages/departments';
 import ProtectedRoute from './ProtectedRoute';
 import NotFoundPage from '@pages/NotFound';
 

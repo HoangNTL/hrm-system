@@ -1,5 +1,6 @@
 import Input from '@components/ui/Input';
 import Button from '@components/ui/Button';
+import Textarea from '@components/ui/Textarea';
 
 export default function DepartmentForm({
   formData,
@@ -48,26 +49,16 @@ export default function DepartmentForm({
       </div>
 
       {/* Description */}
-      <div>
-        <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
-          Description
-        </label>
-        <textarea
-          name="description"
-          placeholder="Enter department description (optional)"
-          value={formData.description}
-          onChange={onChange}
-          disabled={loading}
-          rows={4}
-          className="w-full px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg shadow-sm 
-                     focus:ring-2 focus:ring-primary-500 focus:border-primary-500 
-                     disabled:bg-secondary-100 dark:disabled:bg-secondary-700 disabled:cursor-not-allowed
-                     dark:bg-secondary-800 dark:text-secondary-100"
-        />
-        {fieldErrors.description && (
-          <p className="mt-1 text-sm text-error">{fieldErrors.description}</p>
-        )}
-      </div>
+      <Textarea
+        label="Description"
+        name="description"
+        placeholder="Enter department description (optional)"
+        value={formData.description}
+        onChange={onChange}
+        error={fieldErrors.description}
+        disabled={loading}
+        rows={4}
+      />
 
       {/* Status */}
       <div className="flex items-center gap-2">

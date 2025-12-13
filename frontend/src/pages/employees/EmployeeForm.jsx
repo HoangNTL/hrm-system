@@ -4,6 +4,7 @@ import Button from '@components/ui/Button';
 import Select from '@components/ui/Select';
 import { departmentService } from '@services/departmentService';
 import { positionService } from '@services/positionService';
+import Textarea from '@components/ui/Textarea';
 
 export default function EmployeeForm({
   formData,
@@ -160,15 +161,15 @@ export default function EmployeeForm({
       </div>
 
       {/* Address */}
-      <Input
+      <Textarea
         label="Address"
-        type="text"
         name="address"
         placeholder="Enter full address"
         value={formData.address}
         onChange={onChange}
         error={fieldErrors.address}
         disabled={loading}
+        rows={3}
       />
 
       {/* Create Login Account Checkbox - Only show in create mode */}

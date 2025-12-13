@@ -38,7 +38,7 @@ model User {
   email         String   @unique
   password_hash String
   role          UserRole @default(STAFF)
-  refresh_token String?
+  refresh_token String?  // TODO: delete this field
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
