@@ -4,6 +4,7 @@ import LoginPage from '@/pages/Auth/LoginPage';
 import DashboardPage from '@/pages/Dashboard';
 import EmployeesPage from '@/pages/employees';
 import DepartmentsPage from '@/pages/departments';
+import ContractsPage from '@/pages/Contracts';
 import ProtectedRoute from './ProtectedRoute';
 import NotFoundPage from '@pages/NotFound';
 
@@ -35,6 +36,10 @@ export const router = createBrowserRouter([
       {
         path: 'departments',
         element: <DepartmentsPage />,
+      },
+      {
+        path: 'contracts',
+        element: <ContractsPage />,
       },
     ],
   },

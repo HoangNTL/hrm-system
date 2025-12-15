@@ -150,3 +150,17 @@ export const deleteEmployee = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @route GET /api/employees/select/list
+ * @desc  Get employees list for select/dropdown (id, name, email)
+ * @access Public
+ */
+export const getEmployeesForSelect = async (req, res, next) => {
+  try {
+    const employees = await employeeService.getListForSelect();
+    return response.success(res, { items: employees }, 'Success', 200);
+  } catch (error) {
+    next(error);
+  }
+};

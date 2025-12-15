@@ -12,6 +12,7 @@ import userRoutes from './routes/user.routes.js';
 import employeeRoutes from './routes/employee.routes.js';
 import departmentRoutes from './routes/department.routes.js';
 import positionRoutes from './routes/position.routes.js';
+import contractRoutes from './routes/contract.routes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import logger from './utils/logger.js';
 
@@ -51,6 +52,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/positions', positionRoutes);
+app.use('/api/contracts', contractRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

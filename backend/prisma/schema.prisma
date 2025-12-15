@@ -88,6 +88,9 @@ model Employee {
   // An employee can have one user account
   user_account User?
 
+  // An employee can have multiple contracts
+  contracts Contract[]
+
   @@map("employees")
 }
 
@@ -130,6 +133,43 @@ model Position {
   employees Employee[]
 
   @@map("positions")
+}
+
+enum ContractType {
+  indefinite // Không xác định thời hạn
+  fixed      // Xác định thời hạn
+  probation  // Thử việc
+  intern     // Thực tập
+}
+
+enum ContractStatus {
+  draft   // Nháp
+  pending // Chờ duyệt
+  active  // Đang hiệu lực
+  expired // Hết hạn
+}
+
+model Contract {
+  id            Int            @id @default(autoincrement())
+  code          String         @unique // Số hợp đồng
+  contract_type ContractType
+  status        ContractStatus @default(draft)
+  start_date    DateTime
+  end_date      DateTime?
+  salary        Decimal?       @db.Decimal(15, 2)
+  work_location String?
+  notes         String?        @db.Text
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  is_deleted Boolean   @default(false)
+  deleted_at DateTime?
+
+  // Relations
+  employee_id Int
+  employee    Employee @relation(fields: [employee_id], references: [id])
+
+  @@map("contracts")
 }
 
 // model Attendance {
