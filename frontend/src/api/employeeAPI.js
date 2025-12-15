@@ -7,6 +7,11 @@ export const employeeAPI = {
     return response.data;
   },
 
+  getEmployeesForSelect: async () => {
+    const response = await apiClient.get('/employees/select/list');
+    return response.data;
+  },
+
   getEmployeeById: async (id) => {
     const response = await apiClient.get(`/employees/${id}`);
     return response.data;

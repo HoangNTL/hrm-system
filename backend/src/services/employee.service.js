@@ -267,4 +267,18 @@ export const employeeService = {
 
     return { id };
   },
+
+  async getListForSelect() {
+    const employees = await prisma.employee.findMany({
+      where: { is_deleted: false },
+      select: {
+        id: true,
+        full_name: true,
+        email: true,
+      },
+      orderBy: { full_name: 'asc' },
+    });
+
+    return employees;
+  },
 };
