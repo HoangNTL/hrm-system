@@ -7,6 +7,7 @@ import DepartmentsPage from '@/pages/departments';
 import ContractsPage from '@/pages/Contracts';
 import ProtectedRoute from './ProtectedRoute';
 import NotFoundPage from '@pages/NotFound';
+import PositionsPage from '@/pages/Position';
 
 export const router = createBrowserRouter([
   {
@@ -32,6 +33,10 @@ export const router = createBrowserRouter([
       {
         path: 'employees',
         element: <EmployeesPage />,
+      },
+      {
+        path: 'positions',
+        element: <PositionsPage />,
       },
       {
         path: 'departments',

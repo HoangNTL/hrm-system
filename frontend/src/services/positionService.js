@@ -6,7 +6,8 @@ export const positionService = {
       const params = { page, limit, search };
       const response = await positionAPI.getPositions(params);
 
-      // The response structure is { data: { items, pagination } }
+      // --- SỬA TẠI ĐÂY ---
+      // Xóa bớt .data vì log cho thấy items nằm trực tiếp trong response.data
       const { items = [], pagination = {} } = response.data || {};
 
       return {
@@ -83,5 +84,5 @@ export const positionService = {
         errors: error.errors || {},
       };
     }
-  }
+  },
 };
