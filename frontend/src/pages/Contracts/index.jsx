@@ -302,7 +302,7 @@ function ContractsPage() {
         onRowDoubleClick={handleRowDoubleClick}
       />
 
-      {!loading && contracts.length === 0 && (
+      {/* {!loading && contracts.length === 0 && (
         <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 p-12">
           <div className="text-center">
             <Icon name="file-text" className="w-16 h-16 mx-auto text-secondary-400 dark:text-secondary-600 mb-4" />
@@ -314,7 +314,7 @@ function ContractsPage() {
             </p>
           </div>
         </div>
-      )}
+      )} */}
 
       <ContractModal
         isOpen={isModalOpen}

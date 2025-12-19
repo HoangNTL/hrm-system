@@ -12,13 +12,13 @@ export default function LoginForm({
   return (
     <form
       onSubmit={onSubmit}
-      className="w-full max-w-sm mx-auto space-y-6 p-6 bg-white rounded-lg shadow-md"
+      className="w-full max-w-sm mx-auto space-y-6 p-6 bg-white dark:bg-secondary-800 rounded-lg shadow-md"
       autoComplete="off"
       noValidate
     >
       {/* Global Error */}
       {globalError && (
-        <div className="text-red-500 text-sm text-center mb-4 font-medium">{globalError}</div>
+        <div className="text-error text-sm text-center mb-4 font-medium">{globalError}</div>
       )}
 
       {/* Email */}
@@ -50,7 +50,10 @@ export default function LoginForm({
       />
 
       <div className="flex items-center justify-end">
-        <a href="#" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+        <a
+          href="#"
+          className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
+        >
           Forgot password?
         </a>
       </div>

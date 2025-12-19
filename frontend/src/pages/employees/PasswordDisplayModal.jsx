@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import Modal from './Modal';
-import Button from './Button';
-import Icon from './Icon';
+import Modal from '@components/ui/Modal';
+import Button from '@components/ui/Button';
+import Icon from '@components/ui/Icon';
 
 function PasswordDisplayModal({ isOpen, onClose, employeeName, email, password }) {
   const [copied, setCopied] = useState(false);

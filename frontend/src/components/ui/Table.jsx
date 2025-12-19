@@ -1,3 +1,5 @@
+import Icon from './Icon';
+
 function Table({
   columns,
   data,
@@ -21,6 +23,7 @@ function Table({
     return (
       <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700">
         <div className="flex flex-col items-center justify-center py-12">
+          <Icon name="inbox" className="w-12 h-12 text-secondary-400 dark:text-secondary-600 mb-2" />
           <p className="text-secondary-500 dark:text-secondary-400 text-lg">No data found</p>
         </div>
       </div>

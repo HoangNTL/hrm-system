@@ -6,7 +6,7 @@ import EmployeeModal from './EmployeeModal';
 import SearchBar from '@components/ui/SearchBar';
 import Select from '@components/ui/Select';
 import DeleteConfirmModal from '@components/ui/DeleteConfirmModal';
-import PasswordDisplayModal from '@components/ui/PasswordDisplayModal';
+import PasswordDisplayModal from './PasswordDisplayModal';
 import { employeeService } from '@services/employeeService';
 import { departmentService } from '@services/departmentService';
 import { positionService } from '@services/positionService';
@@ -398,7 +398,7 @@ function EmployeesPage() {
       />
 
       {/* Empty State */}
-      {!loading && employees.length === 0 && (
+      {/* {!loading && employees.length === 0 && (
         <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 p-12">
           <div className="text-center">
             <Icon
@@ -415,7 +415,7 @@ function EmployeesPage() {
             </p>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Add/Edit Employee Modal */}
       <EmployeeModal

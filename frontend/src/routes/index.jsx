@@ -4,10 +4,10 @@ import LoginPage from '@/pages/Auth/LoginPage';
 import DashboardPage from '@/pages/Dashboard';
 import EmployeesPage from '@/pages/employees';
 import DepartmentsPage from '@/pages/departments';
-import ContractsPage from '@/pages/Contracts';
+import ContractsPage from '@/pages/contracts';
 import ProtectedRoute from './ProtectedRoute';
-import NotFoundPage from '@pages/NotFound';
-import PositionsPage from '@/pages/Position';
+import NotFoundPage from '@/pages/notFound';
+import PositionsPage from '@/pages/positions';
 
 export const router = createBrowserRouter([
   {
