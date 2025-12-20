@@ -10,6 +10,10 @@ const userSelect = {
   id: true,
   email: true,
   role: true,
+  is_locked: true,
+  must_change_password: true,
+  last_login_at: true,
+  email_verified: true,
   created_at: true,
   updated_at: true,
   employee: {
@@ -22,18 +26,38 @@ const userSelect = {
 };
 
 export const userService = {
-  async getAll({ search = '', page = 1, limit = 10 } = {}) {
+  async getAll({ search = '', role = '', status = '', page = 1, limit = 10 } = {}) {
     const skip = (page - 1) * limit;
 
-    const where = search
-      ? {
-        OR: [
-          { email: { contains: search, mode: 'insensitive' } },
-          { role: { equals: search.toUpperCase(), mode: 'insensitive' } },
-        ],
-        is_deleted: false,
+    // Build where clause
+    const where = { is_deleted: false };
+
+    // Search filter
+    if (search && search.trim()) {
+      where.OR = [
+        { email: { contains: search.trim(), mode: 'insensitive' } },
+      ];
+    }
+
+    // Role filter
+    if (role && role.trim()) {
+      where.role = role.toUpperCase();
+    }
+
+    // Status filter
+    if (status && status.trim()) {
+      switch (status) {
+        case 'active':
+          where.is_locked = false;
+          break;
+        case 'locked':
+          where.is_locked = true;
+          break;
+        case 'never_logged_in':
+          where.last_login_at = null;
+          break;
       }
-      : { is_deleted: false };
+    }
 
     const [data, total] = await Promise.all([
       prisma.user.findMany({
@@ -68,16 +92,25 @@ export const userService = {
   //   return user;
   // },
 
-  async create({ email, role = 'STAFF', employee_id, password }, tx) {
+  async create({ email, role = 'STAFF', employee_id, password }, tx = prisma) {
     if (!email || !email.trim()) {
       throw new ApiError(ERROR_CODES.BAD_REQUEST, 'Email is required');
     }
 
     email = email.trim().toLowerCase();
 
-    const existing = await tx.user.findUnique({ where: { email } });
+    // Limit selected columns to avoid selecting non-existent fields
+    const existing = await tx.user.findUnique({ where: { email }, select: { id: true } });
     if (existing) {
       throw new ApiError(ERROR_CODES.CONFLICT, 'Email already exists');
+    }
+
+    // Normalize and validate role enum
+    let normalizedRole = String(role || 'STAFF').toUpperCase();
+    if (normalizedRole === 'HR') normalizedRole = 'MANAGER';
+    const validRoles = ['ADMIN', 'MANAGER', 'STAFF'];
+    if (!validRoles.includes(normalizedRole)) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, 'Invalid role');
     }
 
     const plainPassword = password || this._generatePassword();
@@ -87,8 +120,9 @@ export const userService = {
       data: {
         email,
         password_hash: hashedPassword,
-        role,
+        role: normalizedRole,
         employee_id: employee_id || null,
+        email_verified: true,
       },
       select: {
         id: true,
@@ -157,6 +191,82 @@ export const userService = {
 
   //   return { id };
   // },
+
+  async resetPassword(id) {
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing || existing.is_deleted) {
+      throw new ApiError(ERROR_CODES.NOT_FOUND, 'User not found');
+    }
+
+    const newPassword = this._generatePassword();
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { id },
+      data: {
+        password_hash: hashedPassword,
+        must_change_password: true,
+      },
+    });
+
+    return { password: newPassword };
+  },
+
+  async toggleLock(id) {
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing || existing.is_deleted) {
+      throw new ApiError(ERROR_CODES.NOT_FOUND, 'User not found');
+    }
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { is_locked: !existing.is_locked },
+      select: userSelect,
+    });
+
+    return updated;
+  },
+
+  async updateLastLogin(id) {
+    await prisma.user.update({
+      where: { id },
+      data: { last_login_at: new Date() },
+    });
+  },
+
+  async getStats() {
+    const [total, locked, neverLoggedIn] = await Promise.all([
+      prisma.user.count({ where: { is_deleted: false } }),
+      prisma.user.count({ where: { is_deleted: false, is_locked: true } }),
+      prisma.user.count({ where: { is_deleted: false, last_login_at: null } }),
+    ]);
+
+    return {
+      total,
+      active: total - locked,
+      locked,
+      never_logged_in: neverLoggedIn,
+    };
+  },
+
+  async bulkDelete(ids) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, 'Invalid user IDs');
+    }
+
+    const result = await prisma.user.updateMany({
+      where: {
+        id: { in: ids },
+        is_deleted: false,
+      },
+      data: {
+        is_deleted: true,
+        deleted_at: new Date(),
+      },
+    });
+
+    return { deleted_count: result.count };
+  },
 
   _generatePassword() {
     const length = 12;

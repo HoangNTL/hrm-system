@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -13,7 +7,105 @@ datasource db {
   provider = "postgresql"
 }
 
-// Enums
+model User {
+  id                   Int       @id @default(autoincrement())
+  email                String    @unique
+  password_hash        String
+  role                 UserRole  @default(STAFF)
+  refresh_token        String?
+  is_locked            Boolean   @default(false)
+  must_change_password Boolean   @default(true)
+  last_login_at        DateTime?
+  email_verified       Boolean   @default(false)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  is_deleted Boolean   @default(false)
+  deleted_at DateTime?
+
+  employee_id Int?      @unique
+  employee    Employee? @relation(fields: [employee_id], references: [id])
+
+  @@map("users")
+}
+
+model Employee {
+  id                  Int         @id @default(autoincrement())
+  dob                 DateTime?
+  phone               String?     @unique
+  email               String?     @unique
+  address             String?
+  created_at          DateTime    @default(now())
+  department_id       Int?
+  full_name           String
+  hire_date           DateTime?
+  identity_number     String?
+  position_id         Int?
+  updated_at          DateTime    @updatedAt
+  deleted_at          DateTime?
+  is_deleted          Boolean     @default(false)
+  gender              Gender?
+  work_status         WorkStatus  @default(working)
+  contracts           Contract[]
+  managing_department Department? @relation("DepartmentManager")
+  department          Department? @relation("DepartmentEmployees", fields: [department_id], references: [id])
+  position            Position?   @relation(fields: [position_id], references: [id])
+  user_account        User?
+
+  @@map("employees")
+}
+
+model Department {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String?
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+  code        String
+  deleted_at  DateTime?
+  is_deleted  Boolean    @default(false)
+  manager_id  Int?       @unique
+  status      Boolean    @default(true)
+  manager     Employee?  @relation("DepartmentManager", fields: [manager_id], references: [id])
+  employees   Employee[] @relation("DepartmentEmployees")
+
+  @@map("departments")
+}
+
+model Position {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String?
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+  deleted_at  DateTime?
+  is_deleted  Boolean    @default(false)
+  status      Boolean    @default(true)
+  employees   Employee[]
+
+  @@map("positions")
+}
+
+model Contract {
+  id            Int            @id @default(autoincrement())
+  code          String         @unique
+  contract_type ContractType
+  status        ContractStatus @default(draft)
+  start_date    DateTime
+  end_date      DateTime?
+  salary        Decimal?       @db.Decimal(15, 2)
+  work_location String?
+  notes         String?
+  created_at    DateTime       @default(now())
+  updated_at    DateTime       @updatedAt
+  is_deleted    Boolean        @default(false)
+  deleted_at    DateTime?
+  employee_id   Int
+  employee      Employee       @relation(fields: [employee_id], references: [id])
+
+  @@map("contracts")
+}
+
 enum UserRole {
   ADMIN
   MANAGER
@@ -32,156 +124,16 @@ enum WorkStatus {
   leave
 }
 
-// Models
-model User {
-  id            Int      @id @default(autoincrement())
-  email         String   @unique
-  password_hash String
-  role          UserRole @default(STAFF)
-  refresh_token String?  // TODO: delete this field
-
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  is_deleted Boolean   @default(false)
-  deleted_at DateTime?
-
-  // Relations
-  // A user is associated with one employee
-  employee_id Int?      @unique
-  employee    Employee? @relation(fields: [employee_id], references: [id])
-
-  @@map("users")
-}
-
-model Employee {
-  id              Int        @id @default(autoincrement())
-  full_name       String
-  gender          Gender?
-  dob             DateTime?
-  identity_number String?
-  phone           String?    @unique
-  email           String?    @unique
-  address         String?
-  hire_date       DateTime?
-  work_status     WorkStatus @default(working)
-
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  is_deleted Boolean   @default(false)
-  deleted_at DateTime?
-
-  // Relations
-  // An employee can belong to one department
-  department_id Int?
-  department    Department? @relation("DepartmentEmployees", fields: [department_id], references: [id])
-
-  // An employee can manage one department or none
-  managing_department Department? @relation("DepartmentManager")
-
-  // An employee can hold one position
-  position_id Int?
-  position    Position? @relation(fields: [position_id], references: [id])
-
-  // An employee can have multiple attendance records
-  // attendances Attendance[]
-
-  // An employee can have one user account
-  user_account User?
-
-  // An employee can have multiple contracts
-  contracts Contract[]
-
-  @@map("employees")
-}
-
-model Department {
-  id          Int     @id @default(autoincrement())
-  name        String
-  code        String
-  description String?
-  status      Boolean @default(true) // active/inactive
-
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  is_deleted Boolean   @default(false)
-  deleted_at DateTime?
-
-  // Relations
-  // A department can have one manager (an employee)
-  manager_id Int?      @unique
-  manager    Employee? @relation("DepartmentManager", fields: [manager_id], references: [id])
-
-  // A department can have multiple employees
-  employees Employee[] @relation("DepartmentEmployees")
-
-  @@map("departments")
-}
-
-model Position {
-  id          Int     @id @default(autoincrement())
-  name        String
-  description String?
-  status      Boolean @default(true) // active/inactive
-
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  is_deleted Boolean   @default(false)
-  deleted_at DateTime?
-
-  // Relations
-  // A position can be held by multiple employees
-  employees Employee[]
-
-  @@map("positions")
-}
-
 enum ContractType {
-  indefinite // Không xác định thời hạn
-  fixed      // Xác định thời hạn
-  probation  // Thử việc
-  intern     // Thực tập
+  indefinite
+  fixed
+  probation
+  intern
 }
 
 enum ContractStatus {
-  draft   // Nháp
-  pending // Chờ duyệt
-  active  // Đang hiệu lực
-  expired // Hết hạn
+  draft
+  pending
+  active
+  expired
 }
-
-model Contract {
-  id            Int            @id @default(autoincrement())
-  code          String         @unique // Số hợp đồng
-  contract_type ContractType
-  status        ContractStatus @default(draft)
-  start_date    DateTime
-  end_date      DateTime?
-  salary        Decimal?       @db.Decimal(15, 2)
-  work_location String?
-  notes         String?        @db.Text
-
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  is_deleted Boolean   @default(false)
-  deleted_at DateTime?
-
-  // Relations
-  employee_id Int
-  employee    Employee @relation(fields: [employee_id], references: [id])
-
-  @@map("contracts")
-}
-
-// model Attendance {
-//   id          Int      @id @default(autoincrement())
-//   employee_id Int
-//   employee    Employee @relation(fields: [employee_id], references: [id])
-
-//   check_in      DateTime?
-//   check_out     DateTime?
-//   working_hours Float?
-//   note          String?
-
-//   @@map("attendances")
-// }
-

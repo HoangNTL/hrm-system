@@ -95,6 +95,42 @@ export const employeeService = {
     };
   },
 
+  async getListForSelect() {
+    return prisma.employee.findMany({
+      where: { is_deleted: false },
+      select: {
+        id: true,
+        full_name: true,
+        email: true,
+      },
+      orderBy: { full_name: 'asc' },
+    });
+  },
+
+  async getListForSelectWithoutUser() {
+    return prisma.employee.findMany({
+      where: { is_deleted: false, user_account: null },
+      select: {
+        id: true,
+        full_name: true,
+        email: true,
+      },
+      orderBy: { full_name: 'asc' },
+    });
+  },
+
+  async getListForSelectWithUser() {
+    return prisma.employee.findMany({
+      where: { is_deleted: false, user_account: { isNot: null } },
+      select: {
+        id: true,
+        full_name: true,
+        email: true,
+      },
+      orderBy: { full_name: 'asc' },
+    });
+  },
+
   async getById(id) {
     const employee = await prisma.employee.findUnique({
       where: { id },
@@ -251,21 +287,40 @@ export const employeeService = {
   },
 
   async delete(id) {
-    const existing = await prisma.employee.findUnique({
-      where: { id },
+    return await prisma.$transaction(async (tx) => {
+      const existing = await tx.employee.findUnique({
+        where: { id },
+      });
+
+      if (!existing || existing.is_deleted) {
+        throw new ApiError(ERROR_CODES.NOT_FOUND, 'Employee not found');
+      }
+
+      // Soft delete employee
+      await tx.employee.update({
+        where: { id },
+        data: { is_deleted: true, deleted_at: new Date() },
+      });
+
+      // Also lock + soft delete linked user (if any) to prevent orphan login
+      const linkedUser = await tx.user.findFirst({
+        where: { employee_id: id, is_deleted: false },
+        select: { id: true },
+      });
+
+      if (linkedUser) {
+        await tx.user.update({
+          where: { id: linkedUser.id },
+          data: {
+            is_locked: true,
+            is_deleted: true,
+            deleted_at: new Date(),
+          },
+        });
+      }
+
+      return { id, user_deleted: !!linkedUser };
     });
-
-    if (!existing || existing.is_deleted) {
-      throw new ApiError(ERROR_CODES.NOT_FOUND, 'Employee not found');
-    }
-
-    // Soft delete
-    await prisma.employee.update({
-      where: { id },
-      data: { is_deleted: true, deleted_at: new Date() },
-    });
-
-    return { id };
   },
 
   async getListForSelect() {

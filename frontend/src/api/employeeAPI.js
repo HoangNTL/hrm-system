@@ -12,6 +12,16 @@ export const employeeAPI = {
     return response.data;
   },
 
+  getEmployeesForSelectWithoutUser: async () => {
+    const response = await apiClient.get('/employees/select/without-user');
+    return response.data;
+  },
+
+  getEmployeesForSelectWithUser: async () => {
+    const response = await apiClient.get('/employees/select/with-user');
+    return response.data;
+  },
+
   getEmployeeById: async (id) => {
     const response = await apiClient.get(`/employees/${id}`);
     return response.data;

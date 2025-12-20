@@ -164,3 +164,31 @@ export const getEmployeesForSelect = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @route GET /api/employees/select/without-user
+ * @desc  Get employees without user accounts
+ * @access Public
+ */
+export const getEmployeesForSelectWithoutUser = async (req, res, next) => {
+  try {
+    const employees = await employeeService.getListForSelectWithoutUser();
+    return response.success(res, { items: employees }, 'Success', 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route GET /api/employees/select/with-user
+ * @desc  Get employees with user accounts
+ * @access Public
+ */
+export const getEmployeesForSelectWithUser = async (req, res, next) => {
+  try {
+    const employees = await employeeService.getListForSelectWithUser();
+    return response.success(res, { items: employees }, 'Success', 200);
+  } catch (error) {
+    next(error);
+  }
+};
