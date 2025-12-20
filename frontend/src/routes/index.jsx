@@ -5,6 +5,7 @@ import DashboardPage from '@/pages/Dashboard';
 import EmployeesPage from '@/pages/employees';
 import DepartmentsPage from '@/pages/departments';
 import ContractsPage from '@/pages/Contracts';
+import UsersPage from '@/pages/Users';
 import ProtectedRoute from './ProtectedRoute';
 import NotFoundPage from '@pages/NotFound';
 import PositionsPage from '@/pages/Position';
@@ -45,6 +46,10 @@ export const router = createBrowserRouter([
       {
         path: 'contracts',
         element: <ContractsPage />,
+      },
+      {
+        path: 'users',
+        element: <UsersPage />,
       },
     ],
   },

@@ -4,13 +4,14 @@ import { userService } from '../services/user.service.js';
 
 /**
  * @route GET /api/users
- * @desc  Get all users (with search + pagination)
+ * @desc  Get all users (with search + pagination + filters)
  * @access Public
  */
 export const getUsers = async (req, res, next) => {
   try {
     const { search, page, limit } = parsePagination(req.query);
-    const result = await userService.getAll({ search, page, limit });
+    const { role = '', status = '' } = req.query;
+    const result = await userService.getAll({ search, role, status, page, limit });
     return response.success(res, { items: result.data, pagination: result.pagination }, 'Success', 200);
   } catch (error) {
     next(error);
@@ -40,15 +41,15 @@ export const getUsers = async (req, res, next) => {
  * @desc  Create a new user
  * @access Public
  */
-// export const createUser = async (req, res, next) => {
-//   try {
-//     const { email, role, employee_id, password } = req.body;
-//     const result = await userService.create({ email, role, employee_id, password });
-//     return response.success(res, result, 'Created', 201);
-//   } catch (error) {
-//     next(error);
-//   }
-// };
+export const createUser = async (req, res, next) => {
+  try {
+    const { email, role, employee_id, password } = req.body;
+    const result = await userService.create({ email, role, employee_id, password });
+    return response.success(res, result, 'Created', 201);
+  } catch (error) {
+    next(error);
+  }
+};
 
 /**
  * @route PUT /api/users/:id
@@ -88,3 +89,71 @@ export const getUsers = async (req, res, next) => {
 //     next(error);
 //   }
 // };
+
+/**
+ * @route POST /api/users/:id/reset-password
+ * @desc  Reset user password
+ * @access Public
+ */
+export const resetPassword = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return response.fail(res, 400, 'Invalid user id');
+    }
+
+    const result = await userService.resetPassword(id);
+    return response.success(res, result, 'Password reset successfully', 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route PATCH /api/users/:id/toggle-lock
+ * @desc  Toggle user lock status
+ * @access Public
+ */
+export const toggleLock = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return response.fail(res, 400, 'Invalid user id');
+    }
+
+    const user = await userService.toggleLock(id);
+    return response.success(res, { user }, 'User lock status updated', 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route GET /api/users/stats
+ * @desc  Get user statistics
+ * @access Public
+ */
+export const getUserStats = async (req, res, next) => {
+  try {
+    const stats = await userService.getStats();
+    return response.success(res, stats, 'Success', 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route POST /api/users/bulk-delete
+ * @desc  Bulk delete users
+ * @access Public
+ */
+export const bulkDeleteUsers = async (req, res, next) => {
+  try {
+    const { ids } = req.body;
+    const result = await userService.bulkDelete(ids);
+    return response.success(res, result, 'Users deleted successfully', 200);
+  } catch (error) {
+    next(error);
+  }
+};
+

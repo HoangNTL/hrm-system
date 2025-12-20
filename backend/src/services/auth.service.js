@@ -29,6 +29,17 @@ export const authService = {
     if (!passwordMatch)
       throw new ApiError(ERROR_CODES.UNAUTHORIZED, 'Invalid email or password');
 
+    // Check if account is locked
+    if (user.is_locked) {
+      throw new ApiError(ERROR_CODES.FORBIDDEN, 'Account is locked. Please contact administrator.');
+    }
+
+    // Update last login time
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { last_login_at: new Date() },
+    });
+
     // generate tokens
     const accessToken = tokenService.generateAccessToken(user);
     const refreshToken = tokenService.generateRefreshToken(user);
