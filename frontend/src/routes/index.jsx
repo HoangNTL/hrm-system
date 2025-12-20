@@ -7,8 +7,8 @@ import DepartmentsPage from '@/pages/departments';
 import ContractsPage from '@/pages/Contracts';
 import UsersPage from '@/pages/Users';
 import ProtectedRoute from './ProtectedRoute';
-import NotFoundPage from '@pages/NotFound';
-import PositionsPage from '@/pages/Position';
+import NotFoundPage from '@/pages/notFound';
+import PositionsPage from '@/pages/positions';
 
 export const router = createBrowserRouter([
   {

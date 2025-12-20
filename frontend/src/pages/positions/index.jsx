@@ -206,7 +206,7 @@ function PositionsPage() {
       />
 
       {/* Empty State */}
-      {!loading && positions.length === 0 && (
+      {/* {!loading && positions.length === 0 && (
         <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 p-12">
           <div className="text-center">
             <Icon
@@ -223,7 +223,7 @@ function PositionsPage() {
             </p>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Add/Edit Modal */}
       <PositionModal

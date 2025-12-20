@@ -227,7 +227,7 @@ function DepartmentsPage() {
       />
 
       {/* Empty State */}
-      {!loading && departments.length === 0 && (
+      {/* {!loading && departments.length === 0 && (
         <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 p-12">
           <div className="text-center">
             <Icon
@@ -244,7 +244,7 @@ function DepartmentsPage() {
             </p>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Add/Edit Department Modal */}
       <DepartmentModal
