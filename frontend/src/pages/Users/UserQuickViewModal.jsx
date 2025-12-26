@@ -14,7 +14,7 @@ export default function UserQuickViewModal({ isOpen, onClose, user }) {
   const getRoleBadge = (role) => {
     const badges = {
       ADMIN: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-      MANAGER: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+      HR: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
       STAFF: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
     };
     return badges[role] || badges.STAFF;
@@ -23,7 +23,7 @@ export default function UserQuickViewModal({ isOpen, onClose, user }) {
   const getRoleIcon = (role) => {
     const icons = {
       ADMIN: 'shield',
-      MANAGER: 'users',
+      HR: 'users',
       STAFF: 'user',
     };
     return icons[role] || 'user';

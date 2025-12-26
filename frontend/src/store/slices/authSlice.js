@@ -61,7 +61,8 @@ const authSlice = createSlice({
       .addCase(loginAsync.fulfilled, (state, action) => {
         state.loading = false;
         state.isAuthenticated = true;
-        state.accessToken = action.payload.accessToken;
+        // payload is the accessToken returned from service
+        state.accessToken = action.payload;
         state.error = null;
       })
       .addCase(loginAsync.rejected, (state, action) => {

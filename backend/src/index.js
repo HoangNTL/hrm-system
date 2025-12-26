@@ -13,6 +13,7 @@ import employeeRoutes from './routes/employee.routes.js';
 import departmentRoutes from './routes/department.routes.js';
 import positionRoutes from './routes/position.routes.js';
 import contractRoutes from './routes/contract.routes.js';
+import attendanceRoutes from './routes/attendance.routes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import logger from './utils/logger.js';
 
@@ -27,10 +28,23 @@ const PORT = process.env.PORT;
 //   cert: fs.readFileSync(path.join(process.cwd(), 'certs', 'localhost.pem')),
 // };
 
-const FRONTEND_ORIGIN = process.env.FRONTEND_URL;
+const FRONTEND_ORIGIN = process.env.FRONTEND_URL || 'http://localhost:5173';
+const corsOrigins = [
+  FRONTEND_ORIGIN,
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+];
+
 app.use(
   cors({
-    origin: FRONTEND_ORIGIN,
+    origin: (origin, callback) => {
+      if (!origin || corsOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -53,6 +67,7 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/positions', positionRoutes);
 app.use('/api/contracts', contractRoutes);
+app.use('/api/attendance', attendanceRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

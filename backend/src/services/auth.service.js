@@ -53,6 +53,7 @@ export const authService = {
         id: user.id,
         email: user.email,
         role: user.role,
+        employee_id: user.employee_id,
         employee: user.employee,
       },
     };

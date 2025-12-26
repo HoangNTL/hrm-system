@@ -247,7 +247,7 @@ function UsersPage() {
   const roleOptions = [
     { value: '', label: 'All Roles' },
     { value: 'ADMIN', label: 'Admin' },
-    { value: 'MANAGER', label: 'Manager' },
+    { value: 'HR', label: 'HR' },
     { value: 'STAFF', label: 'Staff' },
   ];
 

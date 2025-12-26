@@ -13,6 +13,9 @@
   "author": "",
   "license": "ISC",
   "description": "",
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "dependencies": {
     "@prisma/adapter-pg": "^7.1.0",
     "@prisma/client": "^7.1.0",

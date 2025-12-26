@@ -1,4 +1,6 @@
 export const handleAPIError = (error) => {
+  if (!error) return 'An unexpected error occurred.';
+  
   const status = error.status || error.response?.status;
   switch (status) {
     case 401:
