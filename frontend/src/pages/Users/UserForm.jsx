@@ -4,7 +4,7 @@ import Button from '@components/ui/Button';
 
 const roleOptions = [
   { value: 'ADMIN', label: 'Admin' },
-  { value: 'MANAGER', label: 'Manager' },
+  { value: 'HR', label: 'HR' },
   { value: 'STAFF', label: 'Staff' },
 ];
 

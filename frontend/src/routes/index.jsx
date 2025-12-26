@@ -6,6 +6,7 @@ import EmployeesPage from '@/pages/employees';
 import DepartmentsPage from '@/pages/departments';
 import ContractsPage from '@/pages/Contracts';
 import UsersPage from '@/pages/Users';
+import AttendancePage from '@/pages/Attendance';
 import ProtectedRoute from './ProtectedRoute';
 import NotFoundPage from '@/pages/notFound';
 import PositionsPage from '@/pages/positions';
@@ -32,24 +33,52 @@ export const router = createBrowserRouter([
         element: <DashboardPage />,
       },
       {
+        path: 'attendance',
+        element: (
+          <ProtectedRoute allowedRoles={["STAFF", "ADMIN", "HR"]}>
+            <AttendancePage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: 'employees',
-        element: <EmployeesPage />,
+        element: (
+          <ProtectedRoute allowedRoles={["ADMIN", "HR"]}>
+            <EmployeesPage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: 'positions',
-        element: <PositionsPage />,
+        element: (
+          <ProtectedRoute allowedRoles={["ADMIN", "HR"]}>
+            <PositionsPage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: 'departments',
-        element: <DepartmentsPage />,
+        element: (
+          <ProtectedRoute allowedRoles={["ADMIN", "HR"]}>
+            <DepartmentsPage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: 'contracts',
-        element: <ContractsPage />,
+        element: (
+          <ProtectedRoute allowedRoles={["ADMIN", "HR"]}>
+            <ContractsPage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: 'users',
-        element: <UsersPage />,
+        element: (
+          <ProtectedRoute allowedRoles={["ADMIN"]}>
+            <UsersPage />
+          </ProtectedRoute>
+        ),
       },
     ],
   },

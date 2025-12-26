@@ -2,10 +2,21 @@ import { NavLink } from "react-router-dom";
 import Icon from "@components/ui/Icon";
 import reactLogo from "@assets/react.svg";
 import { sidebarMenuItems } from "@constants/menuItems";
+import { useSelector } from "react-redux";
+import { selectUser } from "@/store/slices/userSlice";
 import Tooltip from "@components/ui/Tooltip";
 import { memo } from "react";
 
 function Sidebar({ isCollapsed }) {
+  const currentUser = useSelector(selectUser);
+  const role = currentUser?.role || 'STAFF';
+
+  // Filter menu items based on user role
+  const visibleItems = sidebarMenuItems.filter((item) => {
+    if (!item.roles) return true;
+    return item.roles.includes(role);
+  });
+
   return (
     <aside
       className={`
@@ -35,7 +46,7 @@ function Sidebar({ isCollapsed }) {
       {/* Navigation Menu */}
       <nav className="flex-1 overflow-y-auto py-4">
         <ul className="space-y-1 px-2">
-          {sidebarMenuItems.map((item) => (
+          {visibleItems.map((item) => (
             <li key={item.id}>
               {isCollapsed ? (
                 <Tooltip content={item.label} position="right">

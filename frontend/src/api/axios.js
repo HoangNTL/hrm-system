@@ -4,6 +4,7 @@ import axios from 'axios';
 const apiClient = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
     timeout: 10000,
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -61,17 +62,11 @@ apiClient.interceptors.response.use(
 
             try {
                 // Try to refresh token
-                const refreshToken = localStorage.getItem('refreshToken');
+                // refresh token is stored in HttpOnly cookie; call refresh-token endpoint
+                const response = await apiClient.post('/auth/refresh-token');
 
-                // get refresh token from cookies
-
-                if (refreshToken) {
-                    const response = await axios.post(
-                        `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
-                        { refreshToken: refreshToken }
-                    );
-
-                    const { accessToken } = response.data;
+                const { accessToken } = response.data?.data || response.data || {};
+                if (accessToken) {
                     localStorage.setItem('accessToken', accessToken);
 
                     // Retry original request with new token

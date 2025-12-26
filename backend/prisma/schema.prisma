@@ -25,6 +25,7 @@ model User {
 
   employee_id Int?      @unique
   employee    Employee? @relation(fields: [employee_id], references: [id])
+  reviewed_requests AttendanceRequest[]
 
   @@map("users")
 }
@@ -47,6 +48,8 @@ model Employee {
   gender              Gender?
   work_status         WorkStatus  @default(working)
   contracts           Contract[]
+  attendances         Attendance[]
+  attendance_requests AttendanceRequest[]
   managing_department Department? @relation("DepartmentManager")
   department          Department? @relation("DepartmentEmployees", fields: [department_id], references: [id])
   position            Position?   @relation(fields: [position_id], references: [id])
@@ -108,7 +111,7 @@ model Contract {
 
 enum UserRole {
   ADMIN
-  MANAGER
+  HR
   STAFF
 }
 
@@ -136,4 +139,65 @@ enum ContractStatus {
   pending
   active
   expired
+}
+
+model Shift {
+  id                       Int      @id @default(autoincrement())
+  shift_name               String
+  start_time               DateTime @db.Time()
+  end_time                 DateTime @db.Time()
+  early_check_in_minutes   Int      @default(15)
+  late_checkout_minutes    Int      @default(15)
+  created_at               DateTime @default(now())
+  updated_at               DateTime @updatedAt
+  is_deleted               Boolean  @default(false)
+  deleted_at               DateTime?
+  
+  attendances              Attendance[]
+  
+  @@map("shifts")
+}
+
+model Attendance {
+  id            Int      @id @default(autoincrement())
+  employee_id   Int
+  shift_id      Int
+  date          DateTime @db.Date()
+  check_in      DateTime?
+  check_out     DateTime?
+  work_hours    Decimal? @db.Decimal(5, 2)
+  status        String   @default("present") // present, late, absent, early_checkout
+  notes         String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  is_deleted    Boolean  @default(false)
+  deleted_at    DateTime?
+  
+  employee      Employee @relation(fields: [employee_id], references: [id])
+  shift         Shift    @relation(fields: [shift_id], references: [id])
+  
+  @@unique([employee_id, date, shift_id])
+  @@map("attendances")
+}
+
+model AttendanceRequest {
+  id              Int      @id @default(autoincrement())
+  employee_id     Int
+  attendance_id   Int?
+  request_type    String   // "forgot_checkin", "forgot_checkout", "leave"
+  reason          String
+  requested_date  DateTime @db.Date()
+  status          String   @default("pending") // pending, approved, rejected
+  reviewed_by     Int?
+  reviewed_at     DateTime?
+  notes           String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  is_deleted      Boolean  @default(false)
+  deleted_at      DateTime?
+  
+  employee        Employee @relation(fields: [employee_id], references: [id])
+  reviewer        User?    @relation(fields: [reviewed_by], references: [id])
+  
+  @@map("attendance_requests")
 }
