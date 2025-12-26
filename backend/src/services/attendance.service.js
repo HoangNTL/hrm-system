@@ -365,7 +365,13 @@ class AttendanceService {
             select: {
               id: true,
               full_name: true,
-              email: true
+              email: true,
+              department: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              }
             }
           },
           shift: true
