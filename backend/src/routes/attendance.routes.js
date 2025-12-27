@@ -16,5 +16,7 @@ router.get('/monthly', verifyToken, verifyRole(['STAFF']), attendanceController.
 
 // HR/Admin ONLY - view all records
 router.get('/', verifyToken, verifyRole(['ADMIN', 'HR']), attendanceController.getAll);
+router.put('/:id', verifyToken, verifyRole(['ADMIN', 'HR']), attendanceController.update);
+router.delete('/:id', verifyToken, verifyRole(['ADMIN', 'HR']), attendanceController.delete);
 
 export default router;

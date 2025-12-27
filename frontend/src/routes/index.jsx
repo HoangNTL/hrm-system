@@ -7,6 +7,7 @@ import DepartmentsPage from '@/pages/departments';
 import ContractsPage from '@/pages/Contracts';
 import UsersPage from '@/pages/Users';
 import AttendancePage from '@/pages/Attendance';
+import AttendanceHistoryPage from '@/pages/AttendanceHistory';
 import ProtectedRoute from './ProtectedRoute';
 import NotFoundPage from '@/pages/notFound';
 import PositionsPage from '@/pages/positions';
@@ -37,6 +38,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={["STAFF", "ADMIN", "HR"]}>
             <AttendancePage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'attendance-history',
+        element: (
+          <ProtectedRoute allowedRoles={["STAFF"]}>
+            <AttendanceHistoryPage />
           </ProtectedRoute>
         ),
       },

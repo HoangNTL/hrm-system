@@ -1,3 +1,6 @@
+// Set timezone to Vietnam
+process.env.TZ = 'Asia/Ho_Chi_Minh';
+
 import express from 'express';
 import { config } from 'dotenv';
 import cors from 'cors';
