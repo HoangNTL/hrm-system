@@ -167,6 +167,8 @@ model Attendance {
   check_out     DateTime?
   work_hours    Decimal? @db.Decimal(5, 2)
   status        String   @default("present") // present, late, absent, early_checkout
+  late_minutes  Int      @default(0)
+  early_minutes Int      @default(0)
   notes         String?
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt

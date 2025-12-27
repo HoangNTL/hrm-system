@@ -331,6 +331,72 @@ class AttendanceController {
       });
     }
   }
+
+  /**
+   * Update attendance record (HR/Admin)
+   */
+  async update(req, res) {
+    try {
+      const attendanceId = parseInt(req.params.id);
+      const updates = req.body;
+
+      if (!attendanceId) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID chấm công không hợp lệ'
+        });
+      }
+
+      const updated = await attendanceService.updateAttendance(attendanceId, updates);
+
+      logger.info(`Attendance ${attendanceId} updated by user ${req.user.id}`);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Cập nhật chấm công thành công',
+        data: updated
+      });
+    } catch (error) {
+      logger.error('Update attendance error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lỗi khi cập nhật chấm công',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Delete attendance record (HR/Admin)
+   */
+  async delete(req, res) {
+    try {
+      const attendanceId = parseInt(req.params.id);
+
+      if (!attendanceId) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID chấm công không hợp lệ'
+        });
+      }
+
+      await attendanceService.deleteAttendance(attendanceId);
+
+      logger.info(`Attendance ${attendanceId} deleted by user ${req.user.id}`);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Xóa bản ghi chấm công thành công'
+      });
+    } catch (error) {
+      logger.error('Delete attendance error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lỗi khi xóa bản ghi chấm công',
+        error: error.message
+      });
+    }
+  }
 }
 
 export default new AttendanceController();

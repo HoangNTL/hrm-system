@@ -3,7 +3,7 @@ import axios from 'axios';
 // Create axios instance with default config
 const apiClient = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
-    timeout: 10000,
+    timeout: 30000, // 30 seconds timeout for slow cloud DB connections
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
@@ -56,8 +56,8 @@ apiClient.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // Handle 401 Unauthorized - Token expired
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Handle 401 Unauthorized or 403 Forbidden (token expired/invalid)
+        if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
             originalRequest._retry = true;
 
             try {

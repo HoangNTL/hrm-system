@@ -41,8 +41,17 @@ class AttendanceService {
     const shiftEnd = this.convertTimeToMinutes(shift.end_time);
     const nowMinutes = this.convertTimeToMinutes(now);
 
+    console.log('=== DEBUG CHECK-IN ===');
+    console.log('shift.start_time:', shift.start_time);
+    console.log('now:', now);
+    console.log('shiftStart (minutes):', shiftStart);
+    console.log('nowMinutes:', nowMinutes);
+    console.log('Late by:', nowMinutes - shiftStart);
+    console.log('=====================');
+
     const earliestCheckIn = shiftStart - shift.early_check_in_minutes;
-    const latestCheckIn = shiftStart + 30; // 30 phút buffer
+    const gracePeriod = shiftStart + 15; // Grace period: 15 phút
+    const maxLateAllowed = shiftStart + 30; // Muộn tối đa cho phép: 30 phút
 
     if (nowMinutes < earliestCheckIn) {
       const minutesLeft = earliestCheckIn - nowMinutes;
@@ -53,20 +62,34 @@ class AttendanceService {
       };
     }
 
-    if (nowMinutes > latestCheckIn) {
+    // Muộn quá 30 phút → Bị từ chối
+    if (nowMinutes > maxLateAllowed) {
+      const lateBy = nowMinutes - shiftStart;
       return {
         valid: false,
-        message: 'Quá muộn. Không thể check-in sau 08:30',
+        message: `Quá muộn (${lateBy} phút). Vui lòng liên hệ HR để xin phép`,
         status: 'too_late'
       };
     }
 
-    // Kiểm tra có muộn không
-    if (nowMinutes > shiftStart + 30) {
+    // Muộn 16-30 phút → Cảnh báo nhưng vẫn cho check-in
+    if (nowMinutes > gracePeriod) {
       const lateMinutes = nowMinutes - shiftStart;
       return {
         valid: true,
-        message: `⚠️ Bạn đi trễ ${lateMinutes} phút`,
+        message: `⚠️ Cảnh báo: Bạn đi trễ ${lateMinutes} phút`,
+        status: 'late',
+        isLate: true,
+        lateMinutes
+      };
+    }
+
+    // Trong grace period (0-15 phút) → Ghi nhận muộn nhưng không cảnh báo nặng
+    if (nowMinutes > shiftStart) {
+      const lateMinutes = nowMinutes - shiftStart;
+      return {
+        valid: true,
+        message: `Check-in thành công. Lưu ý: Đi trễ ${lateMinutes} phút`,
         status: 'late',
         isLate: true,
         lateMinutes
@@ -95,31 +118,38 @@ class AttendanceService {
     const shiftEnd = this.convertTimeToMinutes(shift.end_time);
     const nowMinutes = this.convertTimeToMinutes(now);
 
-    const earliestCheckOut = shiftEnd - 30; // 30 phút sớm
+    const maxEarlyAllowed = shiftEnd - 15; // Về sớm tối đa cho phép: 15 phút
     const latestCheckOut = shiftEnd + shift.late_checkout_minutes;
 
-    if (nowMinutes < earliestCheckOut) {
-      const minutesLeft = earliestCheckOut - nowMinutes;
+    // Về sớm quá 15 phút → Bị từ chối
+    if (nowMinutes < maxEarlyAllowed) {
+      const minutesEarly = shiftEnd - nowMinutes;
       return {
         valid: false,
-        message: `Chưa tới giờ tan ca. Hãy chờ thêm ${minutesLeft} phút`
+        message: `Về quá sớm (${minutesEarly} phút). Vui lòng liên hệ HR để xin phép`
       };
     }
 
     if (nowMinutes > latestCheckOut) {
       return {
         valid: false,
-        message: 'Quá giờ check-out. Vui lòng check-out ngay'
+        message: 'Quá giờ check-out. Vui lòng liên hệ HR'
       };
     }
 
-    // Tính work minutes để trả về
+    // Tính work minutes
     const workMinutes = this.getWorkMinutes(checkInTime, now);
+    
+    // Kiểm tra về sớm 1-15 phút → Cảnh báo
+    const isEarly = nowMinutes < shiftEnd;
+    const earlyMinutes = isEarly ? shiftEnd - nowMinutes : 0;
 
     return {
       valid: true,
-      message: 'Check-out thành công',
-      workMinutes
+      message: isEarly ? `⚠️ Cảnh báo: Bạn về sớm ${earlyMinutes} phút` : 'Check-out thành công',
+      workMinutes,
+      isEarly,
+      earlyMinutes
     };
   }
 
@@ -134,7 +164,8 @@ class AttendanceService {
       }
 
       const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      // Set date at noon to avoid timezone conversion issues
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0);
 
       // Kiểm tra đã check-in ca này hôm nay chưa
       const existingAttendance = await prisma.attendance.findUnique({
@@ -164,16 +195,20 @@ class AttendanceService {
         },
         update: {
           check_in: now,
-          status: validation.isLate ? 'late' : 'present'
+          status: validation.isLate ? 'late' : 'present',
+          late_minutes: validation.lateMinutes || 0
         },
         create: {
           employee_id: employeeId,
           shift_id: shiftId,
           date: today,
           check_in: now,
-          status: validation.isLate ? 'late' : 'present'
+          status: validation.isLate ? 'late' : 'present',
+          late_minutes: validation.lateMinutes || 0
         }
       });
+
+      console.log('Check-in success:', attendance);
 
       return {
         valid: true,
@@ -202,7 +237,8 @@ class AttendanceService {
       }
 
       const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      // Set date at noon to avoid timezone conversion issues
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0);
 
       // Lấy attendance của hôm nay
       const attendance = await prisma.attendance.findUnique({
@@ -235,7 +271,8 @@ class AttendanceService {
         },
         data: {
           check_out: now,
-          work_hours: parseFloat(workHours)
+          work_hours: parseFloat(workHours),
+          early_minutes: validation.earlyMinutes || 0
         }
       });
 
@@ -260,7 +297,8 @@ class AttendanceService {
    */
   async getTodayAttendance(employeeId, shiftId = null) {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Set date at noon to avoid timezone conversion issues
+    today.setHours(12, 0, 0, 0);
     if (shiftId) {
       return prisma.attendance.findUnique({
         where: {
@@ -402,12 +440,19 @@ class AttendanceService {
       const [hours, minutes] = timeObj.split(':').map(Number);
       return hours * 60 + minutes;
     }
-    // Nếu là Date object (PostgreSQL Time type)
-    // Extract UTC time from ISO string to avoid timezone conversion
-    const isoString = timeObj.toISOString(); // "1970-01-01T15:00:00.000Z"
-    const timeStr = isoString.split('T')[1]; // "15:00:00.000Z"
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    return hours * 60 + minutes;
+    // Date object
+    if (timeObj.getFullYear() === 1970) {
+      // Shift time từ DB (UTC) - cần convert sang VN (+7 giờ)
+      const utcHours = timeObj.getUTCHours();
+      const utcMinutes = timeObj.getUTCMinutes();
+      const vnHours = (utcHours + 7) % 24;
+      return vnHours * 60 + utcMinutes;
+    } else {
+      // Current time - lấy local time (đã set TZ = Asia/Ho_Chi_Minh)
+      const hours = timeObj.getHours();
+      const minutes = timeObj.getMinutes();
+      return hours * 60 + minutes;
+    }
   }
 
   /**
@@ -437,6 +482,71 @@ class AttendanceService {
       month: '2-digit',
       day: '2-digit'
     });
+  }
+
+  /**
+   * Update attendance record (HR/Admin only)
+   */
+  async updateAttendance(attendanceId, updates) {
+    const attendance = await prisma.attendance.findUnique({
+      where: { id: attendanceId },
+      include: { shift: true }
+    });
+
+    if (!attendance) {
+      throw new Error('Không tìm thấy bản ghi chấm công');
+    }
+
+    // Calculate work hours if both check-in and check-out are provided
+    let workHours = updates.work_hours;
+    if (updates.check_in && updates.check_out) {
+      const checkInTime = new Date(updates.check_in);
+      const checkOutTime = new Date(updates.check_out);
+      const workMinutes = this.getWorkMinutes(checkInTime, checkOutTime);
+      workHours = (workMinutes / 60).toFixed(2);
+    }
+
+    const updated = await prisma.attendance.update({
+      where: { id: attendanceId },
+      data: {
+        ...updates,
+        work_hours: workHours,
+        updated_at: new Date()
+      },
+      include: {
+        employee: {
+          include: {
+            department: true
+          }
+        },
+        shift: true
+      }
+    });
+
+    return updated;
+  }
+
+  /**
+   * Delete attendance record (soft delete - HR/Admin only)
+   */
+  async deleteAttendance(attendanceId) {
+    const attendance = await prisma.attendance.findUnique({
+      where: { id: attendanceId }
+    });
+
+    if (!attendance) {
+      throw new Error('Không tìm thấy bản ghi chấm công');
+    }
+
+    const deleted = await prisma.attendance.update({
+      where: { id: attendanceId },
+      data: {
+        is_deleted: true,
+        deleted_at: new Date()
+      }
+    });
+
+    return deleted;
   }
 }
 
