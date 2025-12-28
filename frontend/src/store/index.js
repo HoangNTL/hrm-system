@@ -1,7 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './slices/authSlice';
+import authReducer, { selectAccessToken } from './slices/authSlice';
 import userReducer from './slices/userSlice';
 import uiReducer from './slices/uiSlice';
+import { setAccessToken } from '@api/axios';
 
 const store = configureStore({
   reducer: {
@@ -16,6 +17,16 @@ const store = configureStore({
         ignoredPaths: ['auth.accessToken', 'user.user']
       },
     }),
+});
+
+let currentToken = null;
+store.subscribe(() => {
+  const state = store.getState();
+  const newToken = selectAccessToken(state);
+  if (newToken !== currentToken) {
+    currentToken = newToken;
+    setAccessToken(newToken);
+  }
 });
 
 export default store;
