@@ -11,6 +11,7 @@ import AttendanceHistoryPage from '@/pages/AttendanceHistory';
 import ProtectedRoute from './ProtectedRoute';
 import NotFoundPage from '@/pages/notFound';
 import PositionsPage from '@/pages/positions';
+import ShiftsPage from '@/pages/shifts';
 
 export const router = createBrowserRouter([
   {
@@ -86,6 +87,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={["ADMIN"]}>
             <UsersPage />
+          </ProtectedRoute>
+        ),
+      },
+            {
+        path: 'shifts',
+        element: (
+          <ProtectedRoute allowedRoles={["ADMIN", "HR"]}>
+            <ShiftsPage />
           </ProtectedRoute>
         ),
       },
