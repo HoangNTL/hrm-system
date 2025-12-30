@@ -13,6 +13,7 @@ import ProtectedRoute from './ProtectedRoute';
 import NotFoundPage from '@/pages/notFound';
 import PositionsPage from '@/pages/positions';
 import ShiftsPage from '@/pages/shifts';
+import ReportsPage from '@/pages/reports';
 
 export const router = createBrowserRouter([
   {
@@ -96,6 +97,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={["ADMIN"]}>
             <UsersPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'reports',
+        element: (
+          <ProtectedRoute allowedRoles={["ADMIN", "HR"]}>
+            <ReportsPage />
           </ProtectedRoute>
         ),
       },

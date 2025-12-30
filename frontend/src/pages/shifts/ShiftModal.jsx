@@ -56,8 +56,13 @@ export default function ShiftModal({
       };
 
       // convert time-only values to ISO date-time (backend expects Date)
-      const toIso = (timeStr) =>
-        `1970-01-01T${timeStr || '00:00'}:00Z`;
+      // User inputs local VN time, we need to convert to UTC (subtract 7 hours)
+      const toIso = (timeStr) => {
+        if (!timeStr) return `1970-01-01T00:00:00Z`;
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        const localDate = new Date(1970, 0, 1, hours, minutes, 0);
+        return localDate.toISOString();
+      };
 
       payload.start_time = toIso(formData.start_time);
       payload.end_time = toIso(formData.end_time);
