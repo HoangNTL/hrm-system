@@ -26,16 +26,72 @@ export default function ContractTable({
   loading = false,
   pagination = { page: 1, limit: 10, total: 0, totalPages: 1 },
   onPageChange,
-  selectedContract = null,
+  selectedContracts = [],
   onRowSelect,
   onRowDoubleClick,
+  onSelectAll,
 }) {
   const getRowNumber = useCallback(
     (index) => (pagination.page - 1) * pagination.limit + index + 1,
     [pagination.page, pagination.limit],
   );
 
+  const isSelected = useCallback(
+    (contract) => selectedContracts.some((c) => c.id === contract.id),
+    [selectedContracts],
+  );
+
+  const allSelected = contracts.length > 0 && selectedContracts.length === contracts.length;
+  const someSelected =
+    selectedContracts.length > 0 && selectedContracts.length < contracts.length;
+
+  const handleCheckboxChange = useCallback(
+    (contract, e) => {
+      e.stopPropagation();
+      onRowSelect?.(contract);
+    },
+    [onRowSelect],
+  );
+
+  const handleSelectAllChange = useCallback(
+    (e) => {
+      onSelectAll?.(e.target.checked);
+    },
+    [onSelectAll],
+  );
+
+  const handleRowClick = useCallback(
+    (contract) => {
+      onRowSelect?.(contract);
+    },
+    [onRowSelect],
+  );
+
   const columns = [
+    {
+      key: 'checkbox',
+      label: (
+        <input
+          type="checkbox"
+          checked={allSelected}
+          ref={(input) => {
+            if (input) {
+              input.indeterminate = someSelected;
+            }
+          }}
+          onChange={handleSelectAllChange}
+          className="w-4 h-4 rounded border-secondary-300 dark:border-secondary-600 text-primary-600 focus:ring-primary-500 dark:bg-secondary-800"
+        />
+      ),
+      render: (_cell, contract) => (
+        <input
+          type="checkbox"
+          checked={isSelected(contract)}
+          onChange={(e) => handleCheckboxChange(contract, e)}
+          className="w-4 h-4 rounded border-secondary-300 dark:border-secondary-600 text-primary-600 focus:ring-primary-500 dark:bg-secondary-800"
+        />
+      ),
+    },
     {
       key: 'rowNumber',
       label: '#',
@@ -95,12 +151,6 @@ export default function ContractTable({
     },
   ];
 
-  const handleRowClick = useCallback((contract) => {
-    onRowSelect?.(contract);
-  }, [onRowSelect]);
-
-  const isRowSelected = useCallback((contract) => selectedContract?.id === contract.id, [selectedContract]);
-
   return (
     <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 overflow-hidden">
       <Table
@@ -109,8 +159,6 @@ export default function ContractTable({
         loading={loading}
         onRowClick={handleRowClick}
         onRowDoubleClick={onRowDoubleClick}
-        selectedRow={selectedContract}
-        isRowSelected={isRowSelected}
       />
 
       {!loading && contracts.length > 0 && (

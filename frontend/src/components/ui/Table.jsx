@@ -58,13 +58,13 @@ function Table({
               return (
                 <tr
                   key={rowIndex}
-                  onClick={() => onRowClick && onRowClick(row)}
+                  onClick={onRowClick ? () => onRowClick(row) : undefined}
                   className={`
                     transition-all duration-200
                     ${
                       onRowClick
-                        ? 'cursor-pointer hover:bg-secondary-50 dark:hover:bg-secondary-700/30'
-                        : ''
+                      ? 'cursor-pointer hover:bg-secondary-50 dark:hover:bg-secondary-700/30'
+                      : ''
                     }
                     ${
                       selected

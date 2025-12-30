@@ -37,7 +37,7 @@ function Pagination({ currentPage, totalPages, onPageChange, totalItems }) {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-white dark:bg-secondary-800">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-2 bg-white dark:bg-secondary-800">
       {/* Page Info */}
       <div className="text-sm text-secondary-700 dark:text-secondary-300">
         {totalItems !== undefined && (

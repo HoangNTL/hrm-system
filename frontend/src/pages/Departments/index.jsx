@@ -19,7 +19,7 @@ function DepartmentsPage() {
     totalPages: 1,
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDepartment, setSelectedDepartment] = useState(null);
+  const [selectedDepartments, setSelectedDepartments] = useState([]);
 
   // Add state for delete confirmation modal
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -73,14 +73,25 @@ function DepartmentsPage() {
     setPagination((prev) => ({ ...prev, page: newPage }));
   }, []);
 
-  // Handle row selection
+  // Handle row selection (multi-select via checkbox)
   const handleRowSelect = useCallback((department) => {
-    setSelectedDepartment((prev) => (prev?.id === department.id ? null : department));
+    setSelectedDepartments((prev) => {
+      const exists = prev.some((d) => d.id === department.id);
+      return exists ? prev.filter((d) => d.id !== department.id) : [...prev, department];
+    });
   }, []);
+
+  const handleSelectAll = useCallback(
+    (checked) => {
+      setSelectedDepartments(checked ? departments : []);
+    },
+    [departments],
+  );
 
   // Handle edit department
   const handleEdit = useCallback(() => {
-    if (selectedDepartment) {
+    if (selectedDepartments.length === 1) {
+      const selectedDepartment = selectedDepartments[0];
       // Populate form data when editing
       setModalFormData({
         name: selectedDepartment.name || '',
@@ -90,7 +101,7 @@ function DepartmentsPage() {
       });
       setIsModalOpen(true);
     }
-  }, [selectedDepartment]);
+  }, [selectedDepartments]);
 
   // Handle modal close (just close, don't clear data)
   const handleModalClose = useCallback(() => {
@@ -100,7 +111,7 @@ function DepartmentsPage() {
   // Handle modal success (department created/updated)
   const handleModalSuccess = useCallback(() => {
     fetchDepartments();
-    setSelectedDepartment(null);
+    setSelectedDepartments([]);
     setIsModalOpen(false);
     toast.success('Department saved successfully');
 
@@ -115,7 +126,7 @@ function DepartmentsPage() {
 
   // Handle add new department
   const handleAdd = useCallback(() => {
-    setSelectedDepartment(null);
+    setSelectedDepartments([]);
     // Clear form data when adding new department
     setModalFormData({
       name: '',
@@ -133,21 +144,26 @@ function DepartmentsPage() {
 
   // Handle delete department
   const handleDelete = useCallback(() => {
-    if (selectedDepartment) {
+    if (selectedDepartments.length > 0) {
       setIsDeleteModalOpen(true);
     }
-  }, [selectedDepartment]);
+  }, [selectedDepartments]);
 
   // Handle confirm delete
   const handleConfirmDelete = useCallback(async () => {
-    if (!selectedDepartment) return;
+    if (selectedDepartments.length === 0) return;
 
     setDeleteLoading(true);
     try {
-      await departmentService.deleteDepartment(selectedDepartment.id);
-      toast.success('Department deleted successfully');
+      const ids = selectedDepartments.map((d) => d.id);
+
+      for (const id of ids) {
+        await departmentService.deleteDepartment(id);
+      }
+
+      toast.success(`${ids.length} department(s) deleted successfully`);
       setIsDeleteModalOpen(false);
-      setSelectedDepartment(null);
+      setSelectedDepartments([]);
       fetchDepartments();
     } catch (error) {
       console.error('Error deleting department:', error);
@@ -155,7 +171,7 @@ function DepartmentsPage() {
     } finally {
       setDeleteLoading(false);
     }
-  }, [selectedDepartment, fetchDepartments]);
+  }, [selectedDepartments, fetchDepartments]);
 
   // Handle cancel delete
   const handleCancelDelete = useCallback(() => {
@@ -179,23 +195,23 @@ function DepartmentsPage() {
             onClick={handleEdit}
             variant="outline"
             className="inline-flex items-center"
-            disabled={!selectedDepartment}
+            disabled={selectedDepartments.length !== 1}
           >
             <Icon name="pencil" className="w-5 h-5 mr-2" />
-            Edit Department
+            Edit
           </Button>
           <Button
             onClick={handleDelete}
             variant="danger"
             className="inline-flex items-center"
-            disabled={!selectedDepartment}
+            disabled={selectedDepartments.length === 0}
           >
             <Icon name="trash" className="w-5 h-5 mr-2" />
-            Delete Department
+            Delete
           </Button>
           <Button onClick={handleAdd} variant="primary" className="inline-flex items-center">
             <Icon name="plus" className="w-5 h-5 mr-2" />
-            Add Department
+            Add
           </Button>
         </div>
       </div>
@@ -222,36 +238,17 @@ function DepartmentsPage() {
         loading={loading}
         pagination={pagination}
         onPageChange={handlePageChange}
-        selectedDepartment={selectedDepartment}
+        selectedDepartments={selectedDepartments}
         onRowSelect={handleRowSelect}
+        onSelectAll={handleSelectAll}
       />
-
-      {/* Empty State */}
-      {/* {!loading && departments.length === 0 && (
-        <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 p-12">
-          <div className="text-center">
-            <Icon
-              name="building"
-              className="w-16 h-16 mx-auto text-secondary-400 dark:text-secondary-600 mb-4"
-            />
-            <h3 className="text-lg font-heading font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
-              No departments found
-            </h3>
-            <p className="text-sm text-secondary-600 dark:text-secondary-400">
-              {search
-                ? 'Try adjusting your search'
-                : 'Get started by adding your first department'}
-            </p>
-          </div>
-        </div>
-      )} */}
 
       {/* Add/Edit Department Modal */}
       <DepartmentModal
         isOpen={isModalOpen}
         onClose={handleModalClose}
         onSuccess={handleModalSuccess}
-        departmentToEdit={selectedDepartment}
+        departmentToEdit={selectedDepartments.length === 1 ? selectedDepartments[0] : null}
         initialFormData={modalFormData}
         onFormDataChange={handleFormDataChange}
       />
@@ -262,7 +259,11 @@ function DepartmentsPage() {
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
         title="Delete Department"
-        message={`Are you sure you want to delete ${selectedDepartment?.name}? This action cannot be undone.`}
+        message={
+          selectedDepartments.length === 1
+            ? `Are you sure you want to delete ${selectedDepartments[0].name}? This action cannot be undone.`
+            : `Are you sure you want to delete ${selectedDepartments.length} departments? This action cannot be undone.`
+        }
         loading={deleteLoading}
       />
     </div>

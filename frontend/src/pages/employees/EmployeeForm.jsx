@@ -209,7 +209,7 @@ export default function EmployeeForm({
           Cancel
         </Button>
         <Button type="submit" variant="primary" loading={loading}>
-          {isEditMode ? 'Update Employee' : 'Create Employee'}
+          {isEditMode ? 'Save Changes' : 'Save'}
         </Button>
       </div>
     </form>

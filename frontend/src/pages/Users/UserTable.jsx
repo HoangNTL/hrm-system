@@ -30,7 +30,7 @@ export default function UserTable({
 
   const getStatusBadges = (user) => {
     const badges = [];
-    
+
     if (user.is_locked) {
       badges.push(
         <span key="locked" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
@@ -39,7 +39,7 @@ export default function UserTable({
         </span>
       );
     }
-    
+
     if (!user.last_login_at) {
       badges.push(
         <span key="never-logged-in" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
@@ -57,7 +57,7 @@ export default function UserTable({
         </span>
       );
     }
-    
+
     return badges;
   };
 
@@ -179,7 +179,6 @@ export default function UserTable({
         columns={columns}
         data={users}
         loading={loading}
-        selectedRow={selectedUsers.length === 1 ? selectedUsers[0] : null}
         onRowClick={handleRowClick}
         onRowDoubleClick={handleRowDoubleClickInternal}
       />

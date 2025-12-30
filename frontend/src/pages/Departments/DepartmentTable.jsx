@@ -8,8 +8,9 @@ export default function DepartmentTable({
   loading = false,
   pagination = { page: 1, limit: 10, total: 0, totalPages: 1 },
   onPageChange,
-  selectedDepartment = null,
+  selectedDepartments = [],
   onRowSelect,
+  onSelectAll,
 }) {
   // Calculate row number based on pagination
   const getRowNumber = useCallback(
@@ -19,8 +20,65 @@ export default function DepartmentTable({
     [pagination.page, pagination.limit],
   );
 
+  // Selection helpers
+  const isSelected = useCallback(
+    (department) => selectedDepartments.some((d) => d.id === department.id),
+    [selectedDepartments],
+  );
+
+  const allSelected =
+    departments.length > 0 && selectedDepartments.length === departments.length;
+  const someSelected =
+    selectedDepartments.length > 0 && selectedDepartments.length < departments.length;
+
+  const handleCheckboxChange = useCallback(
+    (department, e) => {
+      e.stopPropagation();
+      onRowSelect?.(department);
+    },
+    [onRowSelect],
+  );
+
+  const handleSelectAllChange = useCallback(
+    (e) => {
+      onSelectAll?.(e.target.checked);
+    },
+    [onSelectAll],
+  );
+
+  const handleRowClick = useCallback(
+    (department) => {
+      onRowSelect?.(department);
+    },
+    [onRowSelect],
+  );
+
   // Table columns configuration
   const columns = [
+    {
+      key: 'checkbox',
+      label: (
+        <input
+          type="checkbox"
+          checked={allSelected}
+          ref={(input) => {
+            if (input) {
+              input.indeterminate = someSelected;
+            }
+          }}
+          onChange={handleSelectAllChange}
+          className="w-4 h-4 rounded border-secondary-300 dark:border-secondary-600 text-primary-600 focus:ring-primary-500 dark:bg-secondary-800"
+        />
+      ),
+      render: (_cell, department) => (
+        <input
+          type="checkbox"
+          checked={isSelected(department)}
+          onChange={(e) => handleCheckboxChange(department, e)}
+          className="w-4 h-4 rounded border-secondary-300 dark:border-secondary-600 text-primary-600 focus:ring-primary-500 dark:bg-secondary-800"
+        />
+      ),
+    },
     {
       key: 'rowNumber',
       label: '#',
@@ -83,36 +141,7 @@ export default function DepartmentTable({
         </span>
       ),
     },
-    {
-      key: 'created_at',
-      label: 'Created Date',
-      render: (value) => {
-        if (!value) return '-';
-        const date = new Date(value);
-        return (
-          <span className="text-sm text-secondary-600 dark:text-secondary-400">
-            {date.toLocaleDateString()}
-          </span>
-        );
-      },
-    },
   ];
-
-  // Handle row click
-  const handleRowClick = useCallback(
-    (department) => {
-      onRowSelect?.(department);
-    },
-    [onRowSelect],
-  );
-
-  // Check if row is selected
-  const isRowSelected = useCallback(
-    (department) => {
-      return selectedDepartment?.id === department.id;
-    },
-    [selectedDepartment],
-  );
 
   return (
     <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 overflow-hidden">
@@ -121,8 +150,6 @@ export default function DepartmentTable({
         data={departments}
         loading={loading}
         onRowClick={handleRowClick}
-        selectedRow={selectedDepartment}
-        isRowSelected={isRowSelected}
       />
 
       {/* Pagination */}

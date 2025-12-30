@@ -7,8 +7,9 @@ export default function ShiftTable({
   loading = false,
   pagination = { page: 1, limit: 10, total: 0, totalPages: 1 },
   onPageChange,
-  selectedShift = null,
+  selectedShifts = [],
   onRowSelect,
+  onSelectAll,
 }) {
   const getRowNumber = useCallback(
     (index) => (pagination.page - 1) * pagination.limit + index + 1,
@@ -21,7 +22,59 @@ export default function ShiftTable({
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const isSelected = useCallback(
+    (shift) => selectedShifts.some((s) => s.id === shift.id),
+    [selectedShifts],
+  );
+
+  const allSelected =
+    shifts.length > 0 && shifts.every((shift) => isSelected(shift));
+  const someSelected =
+    shifts.length > 0 && shifts.some((shift) => isSelected(shift)) && !allSelected;
+
+  const handleCheckboxChange = useCallback(
+    (shift, e) => {
+      e.stopPropagation();
+      onRowSelect?.(shift);
+    },
+    [onRowSelect],
+  );
+
+  const handleSelectAllChange = useCallback(
+    (e) => {
+      onSelectAll?.(e.target.checked);
+    },
+    [onSelectAll],
+  );
+
   const columns = [
+    {
+      key: 'select',
+      label: (
+        <input
+          type="checkbox"
+          className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
+          checked={allSelected}
+          ref={(el) => {
+            if (el) {
+              el.indeterminate = someSelected;
+            }
+          }}
+          onChange={handleSelectAllChange}
+          onClick={(e) => e.stopPropagation()}
+        />
+      ),
+      className: 'w-10 text-center',
+      render: (_, row) => (
+        <input
+          type="checkbox"
+          className="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
+          checked={isSelected(row)}
+          onChange={(e) => handleCheckboxChange(row, e)}
+          onClick={(e) => e.stopPropagation()}
+        />
+      ),
+    },
     {
       key: 'rowNumber',
       label: '#',
@@ -76,28 +129,7 @@ export default function ShiftTable({
         </span>
       ),
     },
-    {
-      key: 'created_at',
-      label: 'Created At',
-      render: (value) => (
-        <span className="text-secondary-600 dark:text-secondary-400">
-          {value ? new Date(value).toLocaleDateString() : '-'}
-        </span>
-      ),
-    },
   ];
-
-  const handleRowClick = useCallback(
-    (shift) => {
-      onRowSelect?.(shift);
-    },
-    [onRowSelect],
-  );
-
-  const isRowSelected = useCallback(
-    (shift) => selectedShift?.id === shift.id,
-    [selectedShift],
-  );
 
   return (
     <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 overflow-hidden">
@@ -105,9 +137,7 @@ export default function ShiftTable({
         columns={columns}
         data={shifts}
         loading={loading}
-        onRowClick={handleRowClick}
-        selectedRow={selectedShift}
-        isRowSelected={isRowSelected}
+        onRowClick={onRowSelect}
       />
 
       {!loading && shifts.length > 0 && (

@@ -85,7 +85,7 @@ export default function UserModal({
       if (response.data?.password) {
         toast.success(`Generated password: ${response.data.password}`, { duration: 8000 });
       }
-      
+
       onSuccess?.();
       onClose();
     } catch (error) {
@@ -101,7 +101,7 @@ export default function UserModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditMode ? 'Edit User' : 'Add User'}
+      title={isEditMode ? 'Edit User' : 'Add New User'}
       size="lg"
     >
       <UserForm

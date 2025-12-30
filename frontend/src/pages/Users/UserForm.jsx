@@ -77,7 +77,7 @@ export default function UserForm({
           Cancel
         </Button>
         <Button variant="primary" type="submit" disabled={loading}>
-          {loading ? 'Saving...' : 'Add'}
+          {loading ? 'Saving...' : 'Save'}
         </Button>
       </div>
     </form>

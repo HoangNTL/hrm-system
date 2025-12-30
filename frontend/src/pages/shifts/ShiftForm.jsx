@@ -80,7 +80,7 @@ export default function ShiftForm({
           Cancel
         </Button>
         <Button type="submit" variant="primary" loading={loading}>
-          {isEditMode ? 'Update Shift' : 'Create Shift'}
+          {isEditMode ? 'Save Changes' : 'Save'}
         </Button>
       </div>
     </form>

@@ -20,7 +20,7 @@ function ShiftsPage() {
     totalPages: 1,
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedShift, setSelectedShift] = useState(null);
+  const [selectedShifts, setSelectedShifts] = useState([]);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -70,11 +70,29 @@ function ShiftsPage() {
   }, []);
 
   const handleRowSelect = useCallback((shift) => {
-    setSelectedShift((prev) => (prev?.id === shift.id ? null : shift));
+    setSelectedShifts((prev) => {
+      const exists = prev.some((s) => s.id === shift.id);
+      if (exists) {
+        return prev.filter((s) => s.id !== shift.id);
+      }
+      return [...prev, shift];
+    });
   }, []);
 
+  const handleSelectAll = useCallback(
+    (checked) => {
+      if (checked) {
+        setSelectedShifts(shifts);
+      } else {
+        setSelectedShifts([]);
+      }
+    },
+    [shifts],
+  );
+
   const handleEdit = useCallback(() => {
-    if (selectedShift) {
+    if (selectedShifts.length === 1) {
+      const selectedShift = selectedShifts[0];
       const start = new Date(selectedShift.start_time);
       const end = new Date(selectedShift.end_time);
       const toTimeStr = (d) =>
@@ -89,10 +107,10 @@ function ShiftsPage() {
       });
       setIsModalOpen(true);
     }
-  }, [selectedShift]);
+  }, [selectedShifts]);
 
   const handleAdd = useCallback(() => {
-    setSelectedShift(null);
+    setSelectedShifts([]);
     setModalFormData({
       shift_name: '',
       start_time: '',
@@ -109,7 +127,7 @@ function ShiftsPage() {
 
   const handleModalSuccess = useCallback(() => {
     fetchShifts();
-    setSelectedShift(null);
+    setSelectedShifts([]);
     setIsModalOpen(false);
   }, [fetchShifts]);
 
@@ -118,20 +136,26 @@ function ShiftsPage() {
   }, []);
 
   const handleDelete = useCallback(() => {
-    if (selectedShift) {
+    if (selectedShifts.length > 0) {
       setIsDeleteModalOpen(true);
     }
-  }, [selectedShift]);
+  }, [selectedShifts]);
 
   const handleConfirmDelete = useCallback(async () => {
-    if (!selectedShift) return;
+    if (selectedShifts.length === 0) return;
 
     setDeleteLoading(true);
     try {
-      await shiftService.deleteShift(selectedShift.id);
-      toast.success('Shift deleted successfully');
+      for (const shift of selectedShifts) {
+        await shiftService.deleteShift(shift.id);
+      }
+      toast.success(
+        selectedShifts.length === 1
+          ? 'Shift deleted successfully'
+          : `${selectedShifts.length} shifts deleted successfully`,
+      );
       setIsDeleteModalOpen(false);
-      setSelectedShift(null);
+      setSelectedShifts([]);
       fetchShifts();
     } catch (error) {
       console.error('Error deleting shift:', error);
@@ -139,7 +163,7 @@ function ShiftsPage() {
     } finally {
       setDeleteLoading(false);
     }
-  }, [selectedShift, fetchShifts]);
+  }, [selectedShifts, fetchShifts]);
 
   return (
     <div className="space-y-6">
@@ -158,19 +182,19 @@ function ShiftsPage() {
             onClick={handleEdit}
             variant="outline"
             className="inline-flex items-center"
-            disabled={!selectedShift}
+            disabled={selectedShifts.length !== 1}
           >
             <Icon name="pencil" className="w-5 h-5 mr-2" />
-            Edit Shift
+            Edit
           </Button>
           <Button
             onClick={handleDelete}
             variant="danger"
             className="inline-flex items-center"
-            disabled={!selectedShift}
+            disabled={selectedShifts.length === 0}
           >
             <Icon name="trash" className="w-5 h-5 mr-2" />
-            Delete Shift
+            Delete
           </Button>
           <Button
             onClick={handleAdd}
@@ -178,7 +202,7 @@ function ShiftsPage() {
             className="inline-flex items-center"
           >
             <Icon name="plus" className="w-5 h-5 mr-2" />
-            Add Shift
+            Add
           </Button>
         </div>
       </div>
@@ -205,8 +229,9 @@ function ShiftsPage() {
         loading={loading}
         pagination={pagination}
         onPageChange={handlePageChange}
-        selectedShift={selectedShift}
+        selectedShifts={selectedShifts}
         onRowSelect={handleRowSelect}
+        onSelectAll={handleSelectAll}
       />
 
       {/* Modal */}
@@ -214,7 +239,7 @@ function ShiftsPage() {
         isOpen={isModalOpen}
         onClose={handleModalClose}
         onSuccess={handleModalSuccess}
-        shiftToEdit={selectedShift}
+        shiftToEdit={selectedShifts.length === 1 ? selectedShifts[0] : null}
         initialFormData={modalFormData}
         onFormDataChange={handleFormDataChange}
       />
@@ -225,7 +250,11 @@ function ShiftsPage() {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Delete Shift"
-        message={`Are you sure you want to delete "${selectedShift?.shift_name}"? This action cannot be undone.`}
+        message={
+          selectedShifts.length === 1
+            ? `Are you sure you want to delete "${selectedShifts[0]?.shift_name}"? This action cannot be undone.`
+            : `Are you sure you want to delete ${selectedShifts.length} shifts? This action cannot be undone.`
+        }
         loading={deleteLoading}
       />
     </div>

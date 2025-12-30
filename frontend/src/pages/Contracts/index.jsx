@@ -3,7 +3,6 @@ import Button from '@components/ui/Button';
 import Icon from '@components/ui/Icon';
 import SearchBar from '@components/ui/SearchBar';
 import Select from '@components/ui/Select';
-import DeleteConfirmModal from '@components/ui/DeleteConfirmModal';
 import toast from 'react-hot-toast';
 
 import ContractTable from './ContractTable';
@@ -36,11 +35,10 @@ function ContractsPage() {
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState({ status: '', type: '' });
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
-  const [selectedContract, setSelectedContract] = useState(null);
+  const [selectedContracts, setSelectedContracts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  // Deletion of contracts is not supported in UI
 
   const [modalFormData, setModalFormData] = useState({
     code: '',
@@ -122,11 +120,21 @@ function ContractsPage() {
   }, []);
 
   const handleRowSelect = useCallback((contract) => {
-    setSelectedContract((prev) => (prev?.id === contract.id ? null : contract));
+    setSelectedContracts((prev) => {
+      const exists = prev.some((c) => c.id === contract.id);
+      return exists ? prev.filter((c) => c.id !== contract.id) : [...prev, contract];
+    });
   }, []);
 
+  const handleSelectAll = useCallback(
+    (checked) => {
+      setSelectedContracts(checked ? contracts : []);
+    },
+    [contracts],
+  );
+
   const handleRowDoubleClick = useCallback((contract) => {
-    setSelectedContract(contract);
+    setSelectedContracts([contract]);
     setIsDetailsModalOpen(true);
   }, []);
 
@@ -135,7 +143,7 @@ function ContractsPage() {
     const randomNum = Math.floor(1000 + Math.random() * 9000);
     const generatedCode = `CT-${currentYear}-${randomNum}`;
 
-    setSelectedContract(null);
+  setSelectedContracts([]);
     setModalFormData({
       code: generatedCode,
       employee_id: '',
@@ -151,7 +159,9 @@ function ContractsPage() {
   }, []);
 
   const handleEdit = useCallback(() => {
-    if (!selectedContract) return;
+    if (selectedContracts.length !== 1) return;
+
+    const selectedContract = selectedContracts[0];
     setModalFormData({
       code: selectedContract.code || '',
       employee_id: selectedContract.employee_id || '',
@@ -164,7 +174,7 @@ function ContractsPage() {
       work_location: selectedContract.work_location || '',
     });
     setIsModalOpen(true);
-  }, [selectedContract]);
+  }, [selectedContracts]);
 
   const handleModalClose = useCallback(() => {
     setIsModalOpen(false);
@@ -172,7 +182,7 @@ function ContractsPage() {
 
   const handleModalSuccess = useCallback(() => {
     fetchContracts();
-    setSelectedContract(null);
+    setSelectedContracts([]);
     setIsModalOpen(false);
     toast.success('Contract saved successfully');
     setModalFormData({
@@ -192,39 +202,15 @@ function ContractsPage() {
     setModalFormData(newFormData);
   }, []);
 
-  const handleDelete = useCallback(() => {
-    if (selectedContract) setIsDeleteModalOpen(true);
-  }, [selectedContract]);
-
-  const handleConfirmDelete = useCallback(async () => {
-    if (!selectedContract) return;
-    setDeleteLoading(true);
-    try {
-      await contractService.deleteContract(selectedContract.id);
-      toast.success('Contract deleted successfully');
-      setIsDeleteModalOpen(false);
-      setSelectedContract(null);
-      fetchContracts();
-    } catch (error) {
-      toast.error(error.message || 'Failed to delete contract');
-    } finally {
-      setDeleteLoading(false);
-    }
-  }, [selectedContract, fetchContracts]);
-
-  const handleCancelDelete = useCallback(() => {
-    setIsDeleteModalOpen(false);
-  }, []);
-
   const handleDetailsModalClose = useCallback(() => {
     setIsDetailsModalOpen(false);
   }, []);
 
   const handleEditFromDetails = useCallback(() => {
-    if (!selectedContract) return;
+    if (selectedContracts.length !== 1) return;
     setIsDetailsModalOpen(false);
     handleEdit();
-  }, [selectedContract, handleEdit]);
+  }, [selectedContracts, handleEdit]);
 
   return (
     <div className="space-y-6">
@@ -238,17 +224,18 @@ function ContractsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button onClick={handleEdit} variant="outline" disabled={!selectedContract} className="inline-flex items-center">
+          <Button
+            onClick={handleEdit}
+            variant="outline"
+            disabled={selectedContracts.length !== 1}
+            className="inline-flex items-center"
+          >
             <Icon name="pencil" className="w-5 h-5 mr-2" />
             Edit
           </Button>
-          <Button onClick={handleDelete} variant="danger" disabled={!selectedContract} className="inline-flex items-center">
-            <Icon name="trash" className="w-5 h-5 mr-2" />
-            Delete
-          </Button>
           <Button onClick={handleAdd} variant="primary" className="inline-flex items-center">
             <Icon name="plus" className="w-5 h-5 mr-2" />
-            Add Contract
+            Add
           </Button>
         </div>
       </div>
@@ -297,9 +284,10 @@ function ContractsPage() {
         loading={loading}
         pagination={pagination}
         onPageChange={handlePageChange}
-        selectedContract={selectedContract}
+        selectedContracts={selectedContracts}
         onRowSelect={handleRowSelect}
         onRowDoubleClick={handleRowDoubleClick}
+        onSelectAll={handleSelectAll}
       />
 
       {/* {!loading && contracts.length === 0 && (
@@ -320,26 +308,17 @@ function ContractsPage() {
         isOpen={isModalOpen}
         onClose={handleModalClose}
         onSuccess={handleModalSuccess}
-        contractToEdit={selectedContract}
+        contractToEdit={selectedContracts.length === 1 ? selectedContracts[0] : null}
         initialFormData={modalFormData}
         onFormDataChange={handleFormDataChange}
         employees={employees}
         employeesLoading={employeesLoading}
       />
 
-      <DeleteConfirmModal
-        isOpen={isDeleteModalOpen}
-        onClose={handleCancelDelete}
-        onConfirm={handleConfirmDelete}
-        title="Delete Contract"
-        message={`Are you sure you want to delete contract ${selectedContract?.code || ''}? This action cannot be undone.`}
-        loading={deleteLoading}
-      />
-
       <ContractDetailsModal
         isOpen={isDetailsModalOpen}
         onClose={handleDetailsModalClose}
-        contract={selectedContract}
+        contract={selectedContracts.length === 1 ? selectedContracts[0] : null}
         onEdit={handleEditFromDetails}
       />
     </div>

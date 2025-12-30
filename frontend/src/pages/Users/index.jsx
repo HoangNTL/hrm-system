@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 
 import UserTable from './UserTable';
 import UserModal from './UserModal';
-import UserStatsCard from './UserStatsCard';
 import UserQuickViewModal from './UserQuickViewModal';
 import { userService } from '@services/userService';
 import { employeeAPI } from '@api/employeeAPI';
@@ -29,7 +28,6 @@ function UsersPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
   const [toggleLockLoading, setToggleLockLoading] = useState(false);
-  const [statsKey, setStatsKey] = useState(0);
 
   const hasActiveFilters = useMemo(
     () => !!search.trim() || !!roleFilter || !!statusFilter,
@@ -138,11 +136,10 @@ function UsersPage() {
     try {
       const ids = selectedUsers.map((u) => u.id);
       await userService.bulkDelete(ids);
-      toast.success(`${selectedUsers.length} user(s) deleted successfully`);
-      setSelectedUsers([]);
-      setIsDeleteModalOpen(false);
-      fetchUsers();
-      setStatsKey((prev) => prev + 1); // Refresh stats
+  toast.success(`${selectedUsers.length} user(s) deleted successfully`);
+  setSelectedUsers([]);
+  setIsDeleteModalOpen(false);
+  fetchUsers();
     } catch (error) {
       toast.error(error.message || 'Failed to delete users');
     } finally {
@@ -163,13 +160,13 @@ function UsersPage() {
       const result = await userService.resetPassword(user.id);
       console.log('Reset password result:', result);
       console.log('Has password?', !!result.password);
-      
+
       toast.success(`Password reset for ${user.email}`);
-      
+
       if (result && result.password) {
         console.log('Showing password toast with password:', result.password);
         const password = result.password;
-        
+
         toast((t) => (
           <div className="flex items-center gap-4 p-4">
             <div className="flex-1">
@@ -195,9 +192,8 @@ function UsersPage() {
       } else {
         console.log('No password in result, result object:', result);
       }
-      
-      fetchUsers();
-      setStatsKey((prev) => prev + 1);
+
+  fetchUsers();
     } catch (error) {
       toast.error(error.message || 'Failed to reset password');
     } finally {
@@ -216,7 +212,7 @@ function UsersPage() {
       // Count locked users to determine collective action
       const lockedCount = selectedUsers.filter(u => u.is_locked).length;
       const shouldUnlock = lockedCount > selectedUsers.length / 2; // If majority locked, unlock all
-      
+
       // Toggle each selected user
       for (const user of selectedUsers) {
         // Only toggle if state needs to change
@@ -227,9 +223,8 @@ function UsersPage() {
 
       const action = shouldUnlock ? 'unlocked' : 'locked';
       toast.success(`${selectedUsers.length} user(s) ${action} successfully`);
-      setSelectedUsers([]);
-      fetchUsers();
-      setStatsKey((prev) => prev + 1);
+  setSelectedUsers([]);
+  fetchUsers();
     } catch (error) {
       toast.error(error.message || 'Failed to toggle lock status');
     } finally {
@@ -241,7 +236,6 @@ function UsersPage() {
     fetchUsers();
     fetchEmployeesWithoutUser();
     setSelectedUsers([]);
-    setStatsKey((prev) => prev + 1);
   }, [fetchUsers, fetchEmployeesWithoutUser]);
 
   const roleOptions = [
@@ -296,8 +290,8 @@ function UsersPage() {
                     className="w-5 h-5 mr-2"
                   />
                   {toggleLockLoading ? 'Processing...' : (
-                    shouldUnlock 
-                      ? `Unlock${selectedUsers.length > 1 ? ' All' : ''}` 
+                    shouldUnlock
+                      ? `Unlock${selectedUsers.length > 1 ? ' All' : ''}`
                       : `Lock${selectedUsers.length > 1 ? ' All' : ''}`
                   )}
                 </>
@@ -317,17 +311,14 @@ function UsersPage() {
             className="inline-flex items-center"
           >
             <Icon name="trash" className="w-5 h-5 mr-2" />
-            Delete ({selectedUsers.length})
+            Delete
           </Button>
           <Button onClick={handleAdd} variant="primary" className="inline-flex items-center">
             <Icon name="plus" className="w-5 h-5 mr-2" />
-            Add User
+            Add
           </Button>
         </div>
       </div>
-
-      {/* Stats Dashboard */}
-      <UserStatsCard key={statsKey} />
 
       {/* Filters */}
       <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 p-4">

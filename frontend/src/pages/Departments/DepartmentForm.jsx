@@ -82,7 +82,7 @@ export default function DepartmentForm({
           Cancel
         </Button>
         <Button type="submit" variant="primary" loading={loading}>
-          {isEditMode ? 'Update' : 'Create'} Department
+          {isEditMode ? 'Save Changes' : 'Save'}
         </Button>
       </div>
     </form>

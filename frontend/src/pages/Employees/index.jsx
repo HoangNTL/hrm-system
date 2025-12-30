@@ -23,7 +23,7 @@ function EmployeesPage() {
     totalPages: 1,
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
 
   // Add state for delete confirmation modal
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -116,7 +116,7 @@ function EmployeesPage() {
     fetchEmployees();
   }, [fetchEmployees]);
 
-  // Handle search
+  // Handle search (trả lại behavior cũ: bind trực tiếp SearchBar -> search)
   const handleSearch = useCallback((value) => {
     setSearch(value);
     setPagination((prev) => ({ ...prev, page: 1 }));
@@ -146,12 +146,23 @@ function EmployeesPage() {
 
   // Handle row selection
   const handleRowSelect = useCallback((employee) => {
-    setSelectedEmployee((prev) => (prev?.id === employee.id ? null : employee));
+    setSelectedEmployees((prev) => {
+      const exists = prev.some((e) => e.id === employee.id);
+      return exists ? prev.filter((e) => e.id !== employee.id) : [...prev, employee];
+    });
   }, []);
+
+  const handleSelectAll = useCallback(
+    (checked) => {
+      setSelectedEmployees(checked ? employees : []);
+    },
+    [employees],
+  );
 
   // Handle edit employee
   const handleEdit = useCallback(() => {
-    if (selectedEmployee) {
+    if (selectedEmployees.length === 1) {
+      const selectedEmployee = selectedEmployees[0];
       // Populate form data when editing
       setModalFormData({
         full_name: selectedEmployee.full_name || '',
@@ -167,7 +178,7 @@ function EmployeesPage() {
       });
       setIsModalOpen(true);
     }
-  }, [selectedEmployee]);
+  }, [selectedEmployees]);
 
   // Handle modal close (just close, don't clear data)
   const handleModalClose = useCallback(() => {
@@ -178,7 +189,7 @@ function EmployeesPage() {
   const handleModalSuccess = useCallback(
     (data) => {
       fetchEmployees();
-      setSelectedEmployee(null);
+      setSelectedEmployees([]);
       setIsModalOpen(false);
       toast.success('Employee saved successfully');
 
@@ -211,7 +222,7 @@ function EmployeesPage() {
 
   // Handle add new employee
   const handleAdd = useCallback(() => {
-    setSelectedEmployee(null);
+    setSelectedEmployees([]);
     // Clear form data when adding new employee
     setModalFormData({
       full_name: '',
@@ -233,23 +244,28 @@ function EmployeesPage() {
     setModalFormData(newFormData);
   }, []);
 
-  // Handle delete employee
-  const handleDelete = useCallback(() => {
-    if (selectedEmployee) {
-      setIsDeleteModalOpen(true);
-    }
-  }, [selectedEmployee]);
+  // Delete employee is currently not supported (no UI button)
+  // const handleDelete = useCallback(() => {
+  //   if (selectedEmployees.length > 0) {
+  //     setIsDeleteModalOpen(true);
+  //   }
+  // }, [selectedEmployees]);
 
-  // Handle confirm delete
+  // Handle confirm delete (multi-delete)
   const handleConfirmDelete = useCallback(async () => {
-    if (!selectedEmployee) return;
+    if (selectedEmployees.length === 0) return;
 
     setDeleteLoading(true);
     try {
-      await employeeService.deleteEmployee(selectedEmployee.id);
-      toast.success('Employee deleted successfully');
+      const ids = selectedEmployees.map((e) => e.id);
+
+      for (const id of ids) {
+        await employeeService.deleteEmployee(id);
+      }
+
+      toast.success(`${ids.length} employee(s) deleted successfully`);
       setIsDeleteModalOpen(false);
-      setSelectedEmployee(null);
+      setSelectedEmployees([]);
       fetchEmployees();
     } catch (error) {
       console.error('Error deleting employee:', error);
@@ -257,7 +273,7 @@ function EmployeesPage() {
     } finally {
       setDeleteLoading(false);
     }
-  }, [selectedEmployee, fetchEmployees]);
+  }, [selectedEmployees, fetchEmployees]);
 
   // Handle cancel delete
   const handleCancelDelete = useCallback(() => {
@@ -274,7 +290,7 @@ function EmployeesPage() {
     });
   }, []);
 
-  // Check if any filters are active
+  // Check if any filters or search are active
   const hasActiveFilters = filters.department_id || filters.gender || filters.work_status;
 
   return (
@@ -294,23 +310,14 @@ function EmployeesPage() {
             onClick={handleEdit}
             variant="outline"
             className="inline-flex items-center"
-            disabled={!selectedEmployee}
+            disabled={selectedEmployees.length !== 1}
           >
             <Icon name="pencil" className="w-5 h-5 mr-2" />
-            Edit Employee
-          </Button>
-          <Button
-            onClick={handleDelete}
-            variant="danger"
-            className="inline-flex items-center"
-            disabled={!selectedEmployee}
-          >
-            <Icon name="trash" className="w-5 h-5 mr-2" />
-            Delete Employee
+            Edit
           </Button>
           <Button onClick={handleAdd} variant="primary" className="inline-flex items-center">
             <Icon name="plus" className="w-5 h-5 mr-2" />
-            Add Employee
+            Add
           </Button>
         </div>
       </div>
@@ -339,7 +346,6 @@ function EmployeesPage() {
               name="department_id"
               value={filters.department_id}
               onChange={handleFilterChange}
-              disabled={loadingOptions}
               options={[
                 { value: '', label: 'All Departments' },
                 ...departments.map((dept) => ({ value: dept.id, label: dept.name })),
@@ -393,36 +399,17 @@ function EmployeesPage() {
         loading={loading}
         pagination={pagination}
         onPageChange={handlePageChange}
-        selectedEmployee={selectedEmployee}
+        selectedEmployees={selectedEmployees}
         onRowSelect={handleRowSelect}
+        onSelectAll={handleSelectAll}
       />
-
-      {/* Empty State */}
-      {/* {!loading && employees.length === 0 && (
-        <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 p-12">
-          <div className="text-center">
-            <Icon
-              name="users"
-              className="w-16 h-16 mx-auto text-secondary-400 dark:text-secondary-600 mb-4"
-            />
-            <h3 className="text-lg font-heading font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
-              No employees found
-            </h3>
-            <p className="text-sm text-secondary-600 dark:text-secondary-400">
-              {hasActiveFilters || search
-                ? 'Try adjusting your search or filters'
-                : 'Get started by adding your first employee'}
-            </p>
-          </div>
-        </div>
-      )} */}
 
       {/* Add/Edit Employee Modal */}
       <EmployeeModal
         isOpen={isModalOpen}
         onClose={handleModalClose}
         onSuccess={handleModalSuccess}
-        employeeToEdit={selectedEmployee}
+        employeeToEdit={selectedEmployees.length === 1 ? selectedEmployees[0] : null}
         initialFormData={modalFormData}
         onFormDataChange={handleFormDataChange}
         departments={departments}
@@ -436,7 +423,11 @@ function EmployeesPage() {
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
         title="Delete Employee"
-        message={`Are you sure you want to delete ${selectedEmployee?.full_name}? This action cannot be undone.`}
+        message={
+          selectedEmployees.length === 1
+            ? `Are you sure you want to delete ${selectedEmployees[0].full_name}? This action cannot be undone.`
+            : `Are you sure you want to delete ${selectedEmployees.length} employees? This action cannot be undone.`
+        }
         loading={deleteLoading}
       />
 

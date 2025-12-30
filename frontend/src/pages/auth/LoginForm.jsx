@@ -12,7 +12,7 @@ export default function LoginForm({
   return (
     <form
       onSubmit={onSubmit}
-      className="w-full max-w-sm mx-auto space-y-6 p-6 bg-white dark:bg-secondary-800 rounded-lg shadow-md"
+      className="w-full max-w-sm mx-auto space-y-6 p-6 bg-white dark:bg-secondary-800 rounded-lg"
       autoComplete="off"
       noValidate
     >

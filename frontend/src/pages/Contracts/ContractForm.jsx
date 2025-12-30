@@ -149,7 +149,7 @@ export default function ContractForm({
           Cancel
         </Button>
         <Button type="submit" variant="primary" loading={loading}>
-          {isEditMode ? 'Update' : 'Create'}
+          {isEditMode ? 'Save Changes' : 'Save'}
         </Button>
       </div>
     </form>

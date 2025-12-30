@@ -107,7 +107,7 @@ export default function ContractModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={isEditMode ? 'Edit Contract' : 'Add Contract'}
+      title={isEditMode ? 'Edit Contract' : 'Add New Contract'}
       size="lg"
     >
       <ContractForm

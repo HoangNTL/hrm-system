@@ -5,7 +5,7 @@ import DashboardPage from '@/pages/Dashboard';
 import EmployeesPage from '@/pages/employees';
 import DepartmentsPage from '@/pages/departments';
 import ContractsPage from '@/pages/Contracts';
-import UsersPage from '@/pages/Users';
+import UsersPage from '@/pages/users';
 import AttendancePage from '@/pages/Attendance';
 import AttendanceHistoryPage from '@/pages/AttendanceHistory';
 import PayrollPage from '@/pages/Payroll';

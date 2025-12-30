@@ -8,8 +8,9 @@ export default function PositionTable({
   loading = false,
   pagination = { page: 1, limit: 10, total: 0, totalPages: 1 },
   onPageChange,
-  selectedPosition = null,
+  selectedPositions = [],
   onRowSelect,
+  onSelectAll,
 }) {
   // Calculate row number based on pagination
   const getRowNumber = useCallback(
@@ -19,8 +20,63 @@ export default function PositionTable({
     [pagination.page, pagination.limit],
   );
 
+  // Selection helpers
+  const isSelected = useCallback(
+    (position) => selectedPositions.some((p) => p.id === position.id),
+    [selectedPositions],
+  );
+
+  const allSelected = positions.length > 0 && selectedPositions.length === positions.length;
+  const someSelected = selectedPositions.length > 0 && selectedPositions.length < positions.length;
+
+  const handleCheckboxChange = useCallback(
+    (position, e) => {
+      e.stopPropagation();
+      onRowSelect?.(position);
+    },
+    [onRowSelect],
+  );
+
+  const handleSelectAllChange = useCallback(
+    (e) => {
+      onSelectAll?.(e.target.checked);
+    },
+    [onSelectAll],
+  );
+
+  const handleRowClick = useCallback(
+    (position) => {
+      onRowSelect?.(position);
+    },
+    [onRowSelect],
+  );
+
   // Table columns configuration
   const columns = [
+    {
+      key: 'checkbox',
+      label: (
+        <input
+          type="checkbox"
+          checked={allSelected}
+          ref={(input) => {
+            if (input) {
+              input.indeterminate = someSelected;
+            }
+          }}
+          onChange={handleSelectAllChange}
+          className="w-4 h-4 rounded border-secondary-300 dark:border-secondary-600 text-primary-600 focus:ring-primary-500 dark:bg-secondary-800"
+        />
+      ),
+      render: (_cell, position) => (
+        <input
+          type="checkbox"
+          checked={isSelected(position)}
+          onChange={(e) => handleCheckboxChange(position, e)}
+          className="w-4 h-4 rounded border-secondary-300 dark:border-secondary-600 text-primary-600 focus:ring-primary-500 dark:bg-secondary-800"
+        />
+      ),
+    },
     {
       key: 'rowNumber',
       label: '#',
@@ -64,32 +120,7 @@ export default function PositionTable({
         </span>
       ),
     },
-    {
-      key: 'created_at',
-      label: 'Created At',
-      render: (value) => (
-        <span className="text-secondary-600 dark:text-secondary-400">
-          {value ? new Date(value).toLocaleDateString() : '-'}
-        </span>
-      ),
-    },
   ];
-
-  // Handle row click
-  const handleRowClick = useCallback(
-    (position) => {
-      onRowSelect?.(position);
-    },
-    [onRowSelect],
-  );
-
-  // Check if row is selected
-  const isRowSelected = useCallback(
-    (position) => {
-      return selectedPosition?.id === position.id;
-    },
-    [selectedPosition],
-  );
 
   return (
     <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 overflow-hidden">
@@ -98,8 +129,6 @@ export default function PositionTable({
         data={positions}
         loading={loading}
         onRowClick={handleRowClick}
-        selectedRow={selectedPosition}
-        isRowSelected={isRowSelected}
       />
 
       {/* Pagination */}

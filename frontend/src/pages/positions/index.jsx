@@ -19,7 +19,7 @@ function PositionsPage() {
     totalPages: 1,
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedPosition, setSelectedPosition] = useState(null);
+  const [selectedPositions, setSelectedPositions] = useState([]);
 
   // Add state for delete confirmation modal
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -74,14 +74,25 @@ function PositionsPage() {
     setPagination((prev) => ({ ...prev, page: newPage }));
   }, []);
 
-  // Handle row selection
+  // Handle row selection (multi-select via checkbox)
   const handleRowSelect = useCallback((position) => {
-    setSelectedPosition((prev) => (prev?.id === position.id ? null : position));
+    setSelectedPositions((prev) => {
+      const exists = prev.some((p) => p.id === position.id);
+      return exists ? prev.filter((p) => p.id !== position.id) : [...prev, position];
+    });
   }, []);
+
+  const handleSelectAll = useCallback(
+    (checked) => {
+      setSelectedPositions(checked ? positions : []);
+    },
+    [positions],
+  );
 
   // Handle edit position
   const handleEdit = useCallback(() => {
-    if (selectedPosition) {
+    if (selectedPositions.length === 1) {
+      const selectedPosition = selectedPositions[0];
       setModalFormData({
         name: selectedPosition.name || '',
         description: selectedPosition.description || '',
@@ -89,11 +100,11 @@ function PositionsPage() {
       });
       setIsModalOpen(true);
     }
-  }, [selectedPosition]);
+  }, [selectedPositions]);
 
   // Handle add new position
   const handleAdd = useCallback(() => {
-    setSelectedPosition(null);
+    setSelectedPositions([]);
     setModalFormData({
       name: '',
       description: '',
@@ -105,7 +116,7 @@ function PositionsPage() {
   // Handle modal success
   const handleModalSuccess = useCallback(() => {
     fetchPositions();
-    setSelectedPosition(null);
+    setSelectedPositions([]);
     setIsModalOpen(false);
   }, [fetchPositions]);
 
@@ -121,21 +132,26 @@ function PositionsPage() {
 
   // Handle delete position
   const handleDelete = useCallback(() => {
-    if (selectedPosition) {
+    if (selectedPositions.length > 0) {
       setIsDeleteModalOpen(true);
     }
-  }, [selectedPosition]);
+  }, [selectedPositions]);
 
   // Handle confirm delete
   const handleConfirmDelete = useCallback(async () => {
-    if (!selectedPosition) return;
+    if (selectedPositions.length === 0) return;
 
     setDeleteLoading(true);
     try {
-      await positionService.deletePosition(selectedPosition.id);
-      toast.success('Position deleted successfully');
+      const ids = selectedPositions.map((p) => p.id);
+
+      for (const id of ids) {
+        await positionService.deletePosition(id);
+      }
+
+      toast.success(`${ids.length} position(s) deleted successfully`);
       setIsDeleteModalOpen(false);
-      setSelectedPosition(null);
+      setSelectedPositions([]);
       fetchPositions();
     } catch (error) {
       console.error('Error deleting position:', error);
@@ -143,7 +159,7 @@ function PositionsPage() {
     } finally {
       setDeleteLoading(false);
     }
-  }, [selectedPosition, fetchPositions]);
+  }, [selectedPositions, fetchPositions]);
 
   return (
     <div className="space-y-6">
@@ -162,23 +178,23 @@ function PositionsPage() {
             onClick={handleEdit}
             variant="outline"
             className="inline-flex items-center"
-            disabled={!selectedPosition}
+            disabled={selectedPositions.length !== 1}
           >
             <Icon name="pencil" className="w-5 h-5 mr-2" />
-            Edit Position
+            Edit
           </Button>
           <Button
             onClick={handleDelete}
             variant="danger"
             className="inline-flex items-center"
-            disabled={!selectedPosition}
+            disabled={selectedPositions.length === 0}
           >
             <Icon name="trash" className="w-5 h-5 mr-2" />
-            Delete Position
+            Delete
           </Button>
           <Button onClick={handleAdd} variant="primary" className="inline-flex items-center">
             <Icon name="plus" className="w-5 h-5 mr-2" />
-            Add Position
+            Add
           </Button>
         </div>
       </div>
@@ -201,36 +217,17 @@ function PositionsPage() {
         loading={loading}
         pagination={pagination}
         onPageChange={handlePageChange}
-        selectedPosition={selectedPosition}
+        selectedPositions={selectedPositions}
         onRowSelect={handleRowSelect}
+        onSelectAll={handleSelectAll}
       />
-
-      {/* Empty State */}
-      {/* {!loading && positions.length === 0 && (
-        <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 p-12">
-          <div className="text-center">
-            <Icon
-              name="briefcase"
-              className="w-16 h-16 mx-auto text-secondary-400 dark:text-secondary-600 mb-4"
-            />
-            <h3 className="text-lg font-heading font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
-              No positions found
-            </h3>
-            <p className="text-sm text-secondary-600 dark:text-secondary-400">
-              {search
-                ? 'Try adjusting your search terms'
-                : 'Get started by adding your first position'}
-            </p>
-          </div>
-        </div>
-      )} */}
 
       {/* Add/Edit Modal */}
       <PositionModal
         isOpen={isModalOpen}
         onClose={handleModalClose}
         onSuccess={handleModalSuccess}
-        positionToEdit={selectedPosition}
+        positionToEdit={selectedPositions.length === 1 ? selectedPositions[0] : null}
         initialFormData={modalFormData}
         onFormDataChange={handleFormDataChange}
       />
@@ -241,7 +238,11 @@ function PositionsPage() {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Delete Position"
-        message={`Are you sure you want to delete "${selectedPosition?.name}"? This action cannot be undone.`}
+        message={
+          selectedPositions.length === 1
+            ? `Are you sure you want to delete "${selectedPositions[0].name}"? This action cannot be undone.`
+            : `Are you sure you want to delete ${selectedPositions.length} positions? This action cannot be undone.`
+        }
         loading={deleteLoading}
       />
     </div>

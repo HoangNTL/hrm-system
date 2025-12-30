@@ -8,8 +8,9 @@ export default function EmployeeTable({
   loading = false,
   pagination = { page: 1, limit: 10, total: 0, totalPages: 1 },
   onPageChange,
-  selectedEmployee = null,
+  selectedEmployees = [],
   onRowSelect,
+  onSelectAll,
 }) {
   // Calculate row number based on pagination
   const getRowNumber = useCallback(
@@ -19,8 +20,65 @@ export default function EmployeeTable({
     [pagination.page, pagination.limit],
   );
 
+  // Helper: check if an employee is selected
+  const isSelected = useCallback(
+    (employee) => selectedEmployees.some((e) => e.id === employee.id),
+    [selectedEmployees],
+  );
+
+  // Select-all state
+  const allSelected = employees.length > 0 && selectedEmployees.length === employees.length;
+  const someSelected = selectedEmployees.length > 0 && selectedEmployees.length < employees.length;
+
+  // Handle checkbox changes
+  const handleCheckboxChange = useCallback(
+    (employee, e) => {
+      e.stopPropagation();
+      onRowSelect?.(employee);
+    },
+    [onRowSelect],
+  );
+
+  const handleSelectAllChange = useCallback(
+    (e) => {
+      onSelectAll?.(e.target.checked);
+    },
+    [onSelectAll],
+  );
+
+  const handleRowClick = useCallback(
+    (employee) => {
+      onRowSelect?.(employee);
+    },
+    [onRowSelect],
+  );
+
   // Table columns configuration
   const columns = [
+    {
+      key: 'checkbox',
+      label: (
+        <input
+          type="checkbox"
+          checked={allSelected}
+          ref={(input) => {
+            if (input) {
+              input.indeterminate = someSelected;
+            }
+          }}
+          onChange={handleSelectAllChange}
+          className="w-4 h-4 rounded border-secondary-300 dark:border-secondary-600 text-primary-600 focus:ring-primary-500 dark:bg-secondary-800"
+        />
+      ),
+      render: (_cell, employee) => (
+        <input
+          type="checkbox"
+          checked={isSelected(employee)}
+          onChange={(e) => handleCheckboxChange(employee, e)}
+          className="w-4 h-4 rounded border-secondary-300 dark:border-secondary-600 text-primary-600 focus:ring-primary-500 dark:bg-secondary-800"
+        />
+      ),
+    },
     {
       key: 'rowNumber',
       label: '#',
@@ -105,22 +163,6 @@ export default function EmployeeTable({
     },
   ];
 
-  // Handle row click
-  const handleRowClick = useCallback(
-    (employee) => {
-      onRowSelect?.(employee);
-    },
-    [onRowSelect],
-  );
-
-  // Check if row is selected
-  const isRowSelected = useCallback(
-    (employee) => {
-      return selectedEmployee?.id === employee.id;
-    },
-    [selectedEmployee],
-  );
-
   return (
     <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 overflow-hidden">
       <Table
@@ -128,8 +170,6 @@ export default function EmployeeTable({
         data={employees}
         loading={loading}
         onRowClick={handleRowClick}
-        selectedRow={selectedEmployee}
-        isRowSelected={isRowSelected}
       />
 
       {/* Pagination */}
