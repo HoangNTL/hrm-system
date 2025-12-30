@@ -4,6 +4,7 @@ export const sidebarMenuItems = [
   { id: 'positions', label: 'Positions', path: '/positions', icon: 'briefcase', roles: ['ADMIN', 'HR'] },
   { id: 'departments', label: 'Departments', path: '/departments', icon: 'building', roles: ['ADMIN', 'HR'] },
   { id: 'contracts', label: 'Contracts', path: '/contracts', icon: 'clipboard', roles: ['ADMIN', 'HR'] },
+  { id: 'shifts', label: 'Shifts', path: '/shifts', icon: 'clock', roles: ['ADMIN', 'HR'] },
   { id: 'users', label: 'Users', path: '/users', icon: 'circle-user-round', roles: ['ADMIN'] },
   // Staff features (to be implemented on frontend later)
   { id: 'attendance', label: 'Attendance', path: '/attendance', icon: 'calendar', roles: ['ADMIN', 'HR', 'STAFF'] },

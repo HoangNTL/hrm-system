@@ -5,11 +5,24 @@ import Sidebar from './SideBar';
 import Header from './Header/index';
 import { useTheme } from '@hooks/useTheme';
 import { selectSidebarCollapsed, toggleSidebar } from '@/store/slices/uiSlice';
+import { useEffect } from 'react';
+import {
+  refreshAccessTokenAsync,
+  selectAuthInitialized,
+} from '@/store/slices/authSlice';
 
 function MainLayout() {
   const dispatch = useDispatch();
   const isSidebarCollapsed = useSelector(selectSidebarCollapsed);
   const { isDarkMode, toggleTheme } = useTheme();
+  const initialized = useSelector(selectAuthInitialized);
+
+  useEffect(() => {
+    // On first mount of protected layout, if auth not initialized, try refresh
+    if (!initialized) {
+      dispatch(refreshAccessTokenAsync());
+    }
+  }, [dispatch, initialized]);
 
   const handleToggleSidebar = () => dispatch(toggleSidebar());
 

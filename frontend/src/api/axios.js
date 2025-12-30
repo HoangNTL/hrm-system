@@ -1,5 +1,11 @@
 import axios from 'axios';
 
+let accessToken = null;
+
+export function setAccessToken(token) {
+  accessToken = token || null;
+}
+
 // Create axios instance with default config
 const apiClient = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -15,11 +21,11 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
     (config) => {
         // Get token from localStorage
-        const token = localStorage.getItem('accessToken');
+        // const token = localStorage.getItem('accessToken');
 
         // Attach token to Authorization header
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+        if (accessToken) {
+            config.headers.Authorization = `Bearer ${accessToken}`;
         }
 
         // Log request in development
@@ -65,19 +71,30 @@ apiClient.interceptors.response.use(
                 // refresh token is stored in HttpOnly cookie; call refresh-token endpoint
                 const response = await apiClient.post('/auth/refresh-token');
 
-                const { accessToken } = response.data?.data || response.data || {};
-                if (accessToken) {
-                    localStorage.setItem('accessToken', accessToken);
+                // const { accessToken } = response.data?.data || response.data || {};
+                // if (accessToken) {
+                //     localStorage.setItem('accessToken', accessToken);
 
-                    // Retry original request with new token
-                    originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-                    return apiClient(originalRequest);
-                }
+                //     // Retry original request with new token
+                //     originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+                //     return apiClient(originalRequest);
+                // }
+                
+                        const { accessToken: newAccessToken } = response.data?.data || response.data || {};
+        if (newAccessToken) {
+          // Update axios-level token
+          setAccessToken(newAccessToken);
+
+          // Attach new token and retry
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          return apiClient(originalRequest);
+        }
             } catch (refreshError) {
                 // Refresh failed - logout user
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
-                localStorage.removeItem('isAuthenticated');
+                // localStorage.removeItem('accessToken');
+                // localStorage.removeItem('isAuthenticated');
+
+                console.error('Refresh token failed: ', refreshError);
                 window.location.href = '/login';
                 return Promise.reject(refreshError);
             }
