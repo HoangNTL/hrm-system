@@ -119,7 +119,7 @@ function StaffAttendanceView() {
       setMessage('');
 
       if (!selectedShiftId) {
-        setMessage('Vui lòng chọn ca làm việc');
+        setMessage('Please select a shift');
         setStatus('error');
         setLoading(false);
         return;
@@ -139,7 +139,7 @@ function StaffAttendanceView() {
       }
     } catch (error) {
       console.error('Check-in error details:', error.response?.data);
-      const errorMsg = error.response?.data?.message || 'Lỗi check-in';
+      const errorMsg = error.response?.data?.message || 'Check-in failed';
       setMessage(errorMsg);
       setStatus('error');
     } finally {
@@ -153,7 +153,7 @@ function StaffAttendanceView() {
       setMessage('');
 
       if (!selectedShiftId) {
-        setMessage('Vui lòng chọn ca làm việc');
+        setMessage('Please select a shift');
         setStatus('error');
         setLoading(false);
         return;
@@ -176,7 +176,7 @@ function StaffAttendanceView() {
       }
     } catch (error) {
       console.error('Check-out error details:', error.response?.data);
-      const errorMsg = error.response?.data?.message || error.message || 'Lỗi check-out';
+      const errorMsg = error.response?.data?.message || error.message || 'Check-out failed';
       console.log('Setting error message:', errorMsg);
       setMessage(errorMsg);
       setStatus('error');
@@ -187,7 +187,7 @@ function StaffAttendanceView() {
 
   const formatTime = (date) => {
     if (!date) return '--:--';
-    return new Date(date).toLocaleTimeString('vi-VN', {
+    return new Date(date).toLocaleTimeString('en-GB', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit'
@@ -196,7 +196,7 @@ function StaffAttendanceView() {
 
   const formatDate = (date) => {
     if (!date) return '';
-    return new Date(date).toLocaleDateString('vi-VN', {
+    return new Date(date).toLocaleDateString('en-GB', {
       weekday: 'long',
       year: 'numeric',
       month: '2-digit',
@@ -226,17 +226,17 @@ function StaffAttendanceView() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 p-4 md:p-8 text-gray-900 dark:text-gray-100">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Chấm Công</h1>
+          <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-2">Attendance</h1>
           <p className="text-gray-600">{formatDate(new Date())}</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-8 mb-6">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Clock className="w-6 h-6 text-blue-500" />
-            <p className="text-gray-600 font-medium">Thời gian hiện tại</p>
+            <p className="text-gray-600 dark:text-gray-300 font-medium">Current time</p>
           </div>
           <div className="text-center">
             <p className="text-6xl font-bold text-blue-600 font-mono">
@@ -245,16 +245,16 @@ function StaffAttendanceView() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Ca làm việc</h2>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-8 mb-6">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Work shift</h2>
           <div className="mb-4">
-            <label className="block text-sm text-gray-600 mb-2">Chọn ca:</label>
+            <label className="block text-sm text-gray-600 dark:text-gray-300 mb-2">Choose shift:</label>
             <select
               value={selectedShiftId || ''}
               onChange={(e) => setSelectedShiftId(parseInt(e.target.value))}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">-- Chọn ca --</option>
+              <option value="">-- Select shift --</option>
               {shifts.map(s => (
                 <option key={s.id} value={s.id}>
                   {s.shift_name} ({getShiftTime(s.start_time)} - {getShiftTime(s.end_time)})
@@ -269,18 +269,18 @@ function StaffAttendanceView() {
               return (
                 <>
                   <div className="text-center">
-                    <p className="text-sm text-gray-500 mb-1">Tên ca</p>
-                    <p className="text-lg font-semibold text-gray-800">{currentShift?.shift_name || '—'}</p>
+                    <p className="text-sm text-gray-500 mb-1">Shift</p>
+                    <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">{currentShift?.shift_name || '—'}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm text-gray-500 mb-1">Vào làm</p>
-                    <p className="text-lg font-semibold text-gray-800">
+                    <p className="text-sm text-gray-500 mb-1">Start</p>
+                    <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                       {getShiftTime(currentShift?.start_time)}
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm text-gray-500 mb-1">Tan ca</p>
-                    <p className="text-lg font-semibold text-gray-800">
+                    <p className="text-sm text-gray-500 mb-1">End</p>
+                    <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                       {getShiftTime(currentShift?.end_time)}
                     </p>
                   </div>
@@ -290,8 +290,8 @@ function StaffAttendanceView() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">Trạng thái hôm nay</h2>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-8 mb-6">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">Today</h2>
 
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div className="border-2 border-gray-200 rounded-xl p-4">
@@ -302,7 +302,7 @@ function StaffAttendanceView() {
                     {formatTime(attendance.check_in)}
                   </p>
                   <p className="text-xs text-green-600 mt-1">
-                    {attendance.status === 'late' ? '⚠️ Đi trễ' : '✅ Đúng giờ'}
+                    {attendance.status === 'late' ? '⚠️ Late' : '✅ On time'}
                   </p>
                 </>
               ) : (
@@ -390,15 +390,15 @@ function StaffAttendanceView() {
 
         {monthlyData && (
           <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">
-              Tổng giờ làm việc tháng {monthlyData.month}/{monthlyData.year}
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+              Total hours in {monthlyData.month}/{monthlyData.year}
             </h2>
             <div className="text-center">
               <p className="text-5xl font-bold text-indigo-600 mb-2">
                 {monthlyData.totalHours}
               </p>
               <p className="text-gray-600">
-                Tổng {monthlyData.attendanceCount} ngày đã chấm công
+                {monthlyData.attendanceCount} attended days
               </p>
             </div>
           </div>

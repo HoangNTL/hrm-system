@@ -78,7 +78,7 @@ function AttendanceHistoryPage() {
   const getDaySummary = (records) => {
     if (!records || records.length === 0) {
       return {
-        label: 'Chưa chấm',
+        label: 'Not recorded',
         color: 'bg-gray-50 text-gray-600 border-gray-200',
         headerColor: 'bg-gray-200 text-gray-800',
         lateMinutes: 0,
@@ -101,9 +101,9 @@ function AttendanceHistoryPage() {
     if (anyAbsent) headerColor = 'bg-red-500 text-white';
     else if (anyLate) headerColor = 'bg-purple-500 text-white';
 
-    let label = 'Đủ giờ';
-    if (anyAbsent) label = 'Nghỉ';
-    else if (anyLate) label = 'Muộn';
+    let label = 'On time';
+    if (anyAbsent) label = 'Absent';
+    else if (anyLate) label = 'Late';
 
     return {
       label,
@@ -145,12 +145,12 @@ function AttendanceHistoryPage() {
   }, [historyRecords]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 p-4 md:p-8 text-gray-900 dark:text-gray-100">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Lịch sử chấm công</h1>
-            <p className="text-gray-600 text-sm">Xem nhanh lịch làm việc theo tháng</p>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Attendance history</h1>
+            <p className="text-gray-600 dark:text-gray-300 text-sm">Monthly attendance calendar</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -179,23 +179,23 @@ function AttendanceHistoryPage() {
 
         <div className="flex flex-wrap items-center gap-3 text-sm mb-4">
           {[{
-            label: 'Số ca',
+            label: 'Shifts',
             value: `${stats.workedShifts}/${stats.totalShifts}`,
             color: 'bg-emerald-100 text-emerald-700 border border-emerald-200'
           }, {
-            label: 'Muộn',
+            label: 'Late',
             value: stats.lateCount,
             color: 'bg-amber-100 text-amber-700 border border-amber-200'
           }, {
-            label: 'Phút muộn',
+            label: 'Late mins',
             value: stats.totalLateMinutes,
             color: 'bg-amber-50 text-amber-700 border border-amber-100'
           }, {
-            label: 'Nghỉ',
+            label: 'Absent',
             value: stats.absentCount,
             color: 'bg-rose-50 text-rose-700 border border-rose-100'
           }, {
-            label: 'Giờ làm',
+            label: 'Hours',
             value: stats.totalHours.toFixed(1),
             color: 'bg-blue-50 text-blue-700 border border-blue-100'
           }].map(item => (
@@ -207,14 +207,14 @@ function AttendanceHistoryPage() {
         </div>
 
         <div className="grid grid-cols-7 text-center text-sm font-semibold text-gray-500 mb-2">
-          {['T2','T3','T4','T5','T6','T7','CN'].map(d => (
+          {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => (
             <div key={d} className="py-2">{d}</div>
           ))}
         </div>
 
         {historyLoading ? (
           <div className="flex items-center justify-center py-10 text-gray-600">
-            <Loader className="w-6 h-6 animate-spin mr-2" /> Đang tải lịch...
+            <Loader className="w-6 h-6 animate-spin mr-2" /> Loading calendar...
           </div>
         ) : (
           <div className="grid grid-cols-7 gap-3">
@@ -240,11 +240,11 @@ function AttendanceHistoryPage() {
                   <div className="flex-1 grid grid-cols-[70px_1fr]">
                     <div className="border-r border-gray-200 flex flex-col items-center justify-center text-sm font-semibold text-gray-800 bg-gray-50">
                       <div className="text-lg">{records.length}</div>
-                      <div className="text-[11px] text-gray-600 mt-1">ca</div>
+                      <div className="text-[11px] text-gray-600 mt-1">shifts</div>
                       <span className="mt-2 text-[10px] text-gray-700">{summary.label}</span>
                     </div>
                     <div className="px-2 py-3 text-xs text-gray-800 space-y-2 overflow-hidden">
-                      {records.length === 0 && <div className="text-gray-500">Chưa chấm</div>}
+                      {records.length === 0 && <div className="text-gray-500">No records</div>}
                       {records.map(r => {
                         const isLate = r.status === 'late';
                         const isAbsent = r.status === 'absent';
@@ -254,7 +254,7 @@ function AttendanceHistoryPage() {
                           <div key={r.id} className="flex items-center justify-between gap-2">
                             <span className="flex items-center gap-1 font-semibold text-gray-900 truncate">
                               <span>{dot}</span>
-                              <span className="truncate text-[11px]">{r.shift?.shift_name || 'Ca'}{lateInfo}</span>
+                              <span className="truncate text-[11px]">{r.shift?.shift_name || 'Shift'}{lateInfo}</span>
                             </span>
                             <span className="font-mono text-[10px] whitespace-nowrap">{formatTimeShort(r.check_in)}-{formatTimeShort(r.check_out)}</span>
                           </div>
@@ -263,8 +263,8 @@ function AttendanceHistoryPage() {
                     </div>
                   </div>
                   <div className="px-3 py-2 text-[11px] font-semibold text-gray-800 border-t border-gray-200 flex items-center justify-between bg-gray-50">
-                    <span>Muộn: {summary.lateMinutes || 0} phút</span>
-                    <span className="text-gray-600">Giờ: {summary.totalHours?.toFixed ? summary.totalHours.toFixed(1) : summary.totalHours}</span>
+                    <span>Late: {summary.lateMinutes || 0} mins</span>
+                    <span className="text-gray-600">Hours: {summary.totalHours?.toFixed ? summary.totalHours.toFixed(1) : summary.totalHours}</span>
                   </div>
                 </div>
               );
