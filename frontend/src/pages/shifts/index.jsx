@@ -95,8 +95,11 @@ function ShiftsPage() {
       const selectedShift = selectedShifts[0];
       const start = new Date(selectedShift.start_time);
       const end = new Date(selectedShift.end_time);
-      const toTimeStr = (d) =>
-        d.toISOString().substring(11, 16); // HH:MM
+      const toTimeStr = (d) => {
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+      };
 
       setModalFormData({
         shift_name: selectedShift.shift_name || '',

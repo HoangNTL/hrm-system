@@ -50,7 +50,7 @@ class AttendanceService {
     console.log('=====================');
 
     const earliestCheckIn = shiftStart - shift.early_check_in_minutes;
-    const gracePeriod = shiftStart + 15; // Grace period: 15 phút
+    const gracePeriod = shiftStart + 15; // Grace period: 15 phút được tính đúng giờ
     const maxLateAllowed = shiftStart + 30; // Muộn tối đa cho phép: 30 phút
 
     if (nowMinutes < earliestCheckIn) {
@@ -72,7 +72,7 @@ class AttendanceService {
       };
     }
 
-    // Muộn 16-30 phút → Cảnh báo nhưng vẫn cho check-in
+    // Muộn 16-30 phút → Cảnh báo và ghi nhận muộn
     if (nowMinutes > gracePeriod) {
       const lateMinutes = nowMinutes - shiftStart;
       return {
@@ -84,18 +84,7 @@ class AttendanceService {
       };
     }
 
-    // Trong grace period (0-15 phút) → Ghi nhận muộn nhưng không cảnh báo nặng
-    if (nowMinutes > shiftStart) {
-      const lateMinutes = nowMinutes - shiftStart;
-      return {
-        valid: true,
-        message: `Check-in thành công. Lưu ý: Đi trễ ${lateMinutes} phút`,
-        status: 'late',
-        isLate: true,
-        lateMinutes
-      };
-    }
-
+    // Trong grace period (0-15 phút sau giờ bắt đầu) → Vẫn tính đúng giờ
     return {
       valid: true,
       message: 'Check-in thành công',
