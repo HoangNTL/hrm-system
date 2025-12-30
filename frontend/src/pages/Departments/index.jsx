@@ -1,182 +1,36 @@
-import { useState, useEffect, useCallback } from 'react';
 import Button from '@components/ui/Button';
 import Icon from '@components/ui/Icon';
 import DepartmentTable from './DepartmentTable';
 import DepartmentModal from './DepartmentModal';
 import SearchBar from '@components/ui/SearchBar';
 import DeleteConfirmModal from '@components/ui/DeleteConfirmModal';
-import { departmentService } from '@services/departmentService';
-import toast from 'react-hot-toast';
+import { useDepartmentsPage } from './useDepartmentsPage';
 
 function DepartmentsPage() {
-  const [departments, setDepartments] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState('');
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 1,
-  });
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDepartments, setSelectedDepartments] = useState([]);
-
-  // Add state for delete confirmation modal
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-
-  // Keep form data state in parent to preserve it when modal closes
-  const [modalFormData, setModalFormData] = useState({
-    name: '',
-    code: '',
-    description: '',
-    status: true,
-  });
-
-  // Fetch departments with search and pagination
-  const fetchDepartments = useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await departmentService.getDepartments({
-        page: pagination.page,
-        limit: pagination.limit,
-        search: search.trim(),
-      });
-
-      setDepartments(result.data || []);
-      setPagination((prev) => ({
-        ...prev,
-        total: result.pagination.total,
-        totalPages: result.pagination.totalPages,
-      }));
-    } catch (error) {
-      toast.error(error.message || 'Failed to fetch departments');
-      setDepartments([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [pagination.page, pagination.limit, search]);
-
-  // Fetch departments on mount and when dependencies change
-  useEffect(() => {
-    fetchDepartments();
-  }, [fetchDepartments]);
-
-  // Handle search
-  const handleSearch = useCallback((value) => {
-    setSearch(value);
-    setPagination((prev) => ({ ...prev, page: 1 }));
-  }, []);
-
-  // Handle page change
-  const handlePageChange = useCallback((newPage) => {
-    setPagination((prev) => ({ ...prev, page: newPage }));
-  }, []);
-
-  // Handle row selection (multi-select via checkbox)
-  const handleRowSelect = useCallback((department) => {
-    setSelectedDepartments((prev) => {
-      const exists = prev.some((d) => d.id === department.id);
-      return exists ? prev.filter((d) => d.id !== department.id) : [...prev, department];
-    });
-  }, []);
-
-  const handleSelectAll = useCallback(
-    (checked) => {
-      setSelectedDepartments(checked ? departments : []);
-    },
-    [departments],
-  );
-
-  // Handle edit department
-  const handleEdit = useCallback(() => {
-    if (selectedDepartments.length === 1) {
-      const selectedDepartment = selectedDepartments[0];
-      // Populate form data when editing
-      setModalFormData({
-        name: selectedDepartment.name || '',
-        code: selectedDepartment.code || '',
-        description: selectedDepartment.description || '',
-        status: selectedDepartment.status !== undefined ? selectedDepartment.status : true,
-      });
-      setIsModalOpen(true);
-    }
-  }, [selectedDepartments]);
-
-  // Handle modal close (just close, don't clear data)
-  const handleModalClose = useCallback(() => {
-    setIsModalOpen(false);
-  }, []);
-
-  // Handle modal success (department created/updated)
-  const handleModalSuccess = useCallback(() => {
-    fetchDepartments();
-    setSelectedDepartments([]);
-    setIsModalOpen(false);
-    toast.success('Department saved successfully');
-
-    // Clear form data after successful submission
-    setModalFormData({
-      name: '',
-      code: '',
-      description: '',
-      status: true,
-    });
-  }, [fetchDepartments]);
-
-  // Handle add new department
-  const handleAdd = useCallback(() => {
-    setSelectedDepartments([]);
-    // Clear form data when adding new department
-    setModalFormData({
-      name: '',
-      code: '',
-      description: '',
-      status: true,
-    });
-    setIsModalOpen(true);
-  }, []);
-
-  // Handle form data change
-  const handleFormDataChange = useCallback((newFormData) => {
-    setModalFormData(newFormData);
-  }, []);
-
-  // Handle delete department
-  const handleDelete = useCallback(() => {
-    if (selectedDepartments.length > 0) {
-      setIsDeleteModalOpen(true);
-    }
-  }, [selectedDepartments]);
-
-  // Handle confirm delete
-  const handleConfirmDelete = useCallback(async () => {
-    if (selectedDepartments.length === 0) return;
-
-    setDeleteLoading(true);
-    try {
-      const ids = selectedDepartments.map((d) => d.id);
-
-      for (const id of ids) {
-        await departmentService.deleteDepartment(id);
-      }
-
-      toast.success(`${ids.length} department(s) deleted successfully`);
-      setIsDeleteModalOpen(false);
-      setSelectedDepartments([]);
-      fetchDepartments();
-    } catch (error) {
-      console.error('Error deleting department:', error);
-      toast.error(error.message || 'Failed to delete department');
-    } finally {
-      setDeleteLoading(false);
-    }
-  }, [selectedDepartments, fetchDepartments]);
-
-  // Handle cancel delete
-  const handleCancelDelete = useCallback(() => {
-    setIsDeleteModalOpen(false);
-  }, []);
+  const {
+    departments,
+    loading,
+    search,
+    pagination,
+    isModalOpen,
+    selectedDepartments,
+    isDeleteModalOpen,
+    deleteLoading,
+    modalFormData,
+    selectedDepartment,
+    handleSearch,
+    handlePageChange,
+    handleRowSelect,
+    handleSelectAll,
+    handleEdit,
+    handleAdd,
+    handleModalClose,
+    handleModalSuccess,
+    handleFormDataChange,
+    handleDelete,
+    handleConfirmDelete,
+    handleCancelDelete,
+  } = useDepartmentsPage();
 
   return (
     <div className="space-y-6">
@@ -248,7 +102,7 @@ function DepartmentsPage() {
         isOpen={isModalOpen}
         onClose={handleModalClose}
         onSuccess={handleModalSuccess}
-        departmentToEdit={selectedDepartments.length === 1 ? selectedDepartments[0] : null}
+  departmentToEdit={selectedDepartment}
         initialFormData={modalFormData}
         onFormDataChange={handleFormDataChange}
       />

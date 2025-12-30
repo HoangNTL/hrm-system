@@ -28,11 +28,16 @@ export default function ShiftModal({
   const [formLoading, setFormLoading] = useState(false);
 
   useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
-      ...initialFormData,
-    }));
-  }, [initialFormData]);
+    if (!isOpen) return;
+
+    setFormData({
+      shift_name: initialFormData.shift_name ?? '',
+      start_time: initialFormData.start_time ?? '',
+      end_time: initialFormData.end_time ?? '',
+      early_check_in_minutes: initialFormData.early_check_in_minutes ?? 15,
+      late_checkout_minutes: initialFormData.late_checkout_minutes ?? 15,
+    });
+  }, [isOpen]);
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;

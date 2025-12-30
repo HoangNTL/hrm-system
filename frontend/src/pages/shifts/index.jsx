@@ -1,172 +1,38 @@
-import { useState, useEffect, useCallback } from 'react';
 import Button from '@components/ui/Button';
 import Icon from '@components/ui/Icon';
 import SearchBar from '@components/ui/SearchBar';
 import DeleteConfirmModal from '@components/ui/DeleteConfirmModal';
-import toast from 'react-hot-toast';
 
 import ShiftTable from './ShiftTable';
 import ShiftModal from './ShiftModal';
-import { shiftService } from '@services/shiftService';
+import { useShiftsPage } from './useShiftsPage';
 
 function ShiftsPage() {
-  const [shifts, setShifts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState('');
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 1,
-  });
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedShifts, setSelectedShifts] = useState([]);
+  const {
+    // state
+    shifts,
+    loading,
+    search,
+    pagination,
+    selectedShifts,
+    isModalOpen,
+    isDeleteModalOpen,
+    deleteLoading,
+    modalFormData,
 
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-
-  const [modalFormData, setModalFormData] = useState({
-    shift_name: '',
-    start_time: '',
-    end_time: '',
-    early_check_in_minutes: 15,
-    late_checkout_minutes: 15,
-  });
-
-  const fetchShifts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await shiftService.getShifts({
-        page: pagination.page,
-        limit: pagination.limit,
-        search: search.trim(),
-      });
-
-      setShifts(result.data || []);
-      setPagination((prev) => ({
-        ...prev,
-        total: result.pagination.total,
-        totalPages: result.pagination.totalPages,
-      }));
-    } catch (error) {
-      toast.error(error.message || 'Failed to fetch shifts');
-      setShifts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [pagination.page, pagination.limit, search]);
-
-  useEffect(() => {
-    fetchShifts();
-  }, [fetchShifts]);
-
-  const handleSearch = useCallback((value) => {
-    setSearch(value);
-    setPagination((prev) => ({ ...prev, page: 1 }));
-  }, []);
-
-  const handlePageChange = useCallback((newPage) => {
-    setPagination((prev) => ({ ...prev, page: newPage }));
-  }, []);
-
-  const handleRowSelect = useCallback((shift) => {
-    setSelectedShifts((prev) => {
-      const exists = prev.some((s) => s.id === shift.id);
-      if (exists) {
-        return prev.filter((s) => s.id !== shift.id);
-      }
-      return [...prev, shift];
-    });
-  }, []);
-
-  const handleSelectAll = useCallback(
-    (checked) => {
-      if (checked) {
-        setSelectedShifts(shifts);
-      } else {
-        setSelectedShifts([]);
-      }
-    },
-    [shifts],
-  );
-
-  const handleEdit = useCallback(() => {
-    if (selectedShifts.length === 1) {
-      const selectedShift = selectedShifts[0];
-      const start = new Date(selectedShift.start_time);
-      const end = new Date(selectedShift.end_time);
-      const toTimeStr = (d) => {
-        const hours = String(d.getHours()).padStart(2, '0');
-        const minutes = String(d.getMinutes()).padStart(2, '0');
-        return `${hours}:${minutes}`;
-      };
-
-      setModalFormData({
-        shift_name: selectedShift.shift_name || '',
-        start_time: toTimeStr(start),
-        end_time: toTimeStr(end),
-        early_check_in_minutes: selectedShift.early_check_in_minutes ?? 15,
-        late_checkout_minutes: selectedShift.late_checkout_minutes ?? 15,
-      });
-      setIsModalOpen(true);
-    }
-  }, [selectedShifts]);
-
-  const handleAdd = useCallback(() => {
-    setSelectedShifts([]);
-    setModalFormData({
-      shift_name: '',
-      start_time: '',
-      end_time: '',
-      early_check_in_minutes: 15,
-      late_checkout_minutes: 15,
-    });
-    setIsModalOpen(true);
-  }, []);
-
-  const handleFormDataChange = useCallback((newFormData) => {
-    setModalFormData(newFormData);
-  }, []);
-
-  const handleModalSuccess = useCallback(() => {
-    fetchShifts();
-    setSelectedShifts([]);
-    setIsModalOpen(false);
-  }, [fetchShifts]);
-
-  const handleModalClose = useCallback(() => {
-    setIsModalOpen(false);
-  }, []);
-
-  const handleDelete = useCallback(() => {
-    if (selectedShifts.length > 0) {
-      setIsDeleteModalOpen(true);
-    }
-  }, [selectedShifts]);
-
-  const handleConfirmDelete = useCallback(async () => {
-    if (selectedShifts.length === 0) return;
-
-    setDeleteLoading(true);
-    try {
-      for (const shift of selectedShifts) {
-        await shiftService.deleteShift(shift.id);
-      }
-      toast.success(
-        selectedShifts.length === 1
-          ? 'Shift deleted successfully'
-          : `${selectedShifts.length} shifts deleted successfully`,
-      );
-      setIsDeleteModalOpen(false);
-      setSelectedShifts([]);
-      fetchShifts();
-    } catch (error) {
-      console.error('Error deleting shift:', error);
-      toast.error(error.message || 'Failed to delete shift');
-    } finally {
-      setDeleteLoading(false);
-    }
-  }, [selectedShifts, fetchShifts]);
+    // handlers
+    handleSearch,
+    handlePageChange,
+    handleRowSelect,
+    handleSelectAll,
+    handleEdit,
+    handleAdd,
+    handleFormDataChange,
+    handleModalSuccess,
+    handleModalClose,
+    handleDelete,
+    handleConfirmDelete,
+  } = useShiftsPage();
 
   return (
     <div className="space-y-6">
@@ -250,7 +116,7 @@ function ShiftsPage() {
       {/* Delete Confirm */}
       <DeleteConfirmModal
         isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
+        onClose={handleModalClose}
         onConfirm={handleConfirmDelete}
         title="Delete Shift"
         message={

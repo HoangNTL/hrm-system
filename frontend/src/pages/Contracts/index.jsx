@@ -1,15 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
 import Button from '@components/ui/Button';
 import Icon from '@components/ui/Icon';
 import SearchBar from '@components/ui/SearchBar';
 import Select from '@components/ui/Select';
-import toast from 'react-hot-toast';
 
 import ContractTable from './ContractTable';
 import ContractModal from './ContractModal';
 import ContractDetailsModal from './ContractDetailsModal';
-import { contractService } from '@services/contractService';
-import { employeeAPI } from '@api/employeeAPI';
+import { useContractsPage } from './useContractsPage';
 
 const statusFilterOptions = [
   { value: '', label: 'All Status' },
@@ -28,189 +25,35 @@ const typeFilterOptions = [
 ];
 
 function ContractsPage() {
-  const [contracts, setContracts] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [employeesLoading, setEmployeesLoading] = useState(false);
-  const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({ status: '', type: '' });
-  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
-  const [selectedContracts, setSelectedContracts] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  // Deletion of contracts is not supported in UI
-
-  const [modalFormData, setModalFormData] = useState({
-    code: '',
-    employee_id: '',
-    contract_type: '',
-    status: 'draft',
-    start_date: '',
-    end_date: '',
-    salary: '',
-    notes: '',
-    work_location: '',
-  });
-
-  const fetchEmployees = useCallback(async () => {
-    setEmployeesLoading(true);
-    try {
-      const response = await employeeAPI.getEmployeesForSelect();
-      console.log('Employees response:', response);
-      setEmployees(response.data?.items || response.items || []);
-    } catch (error) {
-      console.error('Error fetching employees:', error);
-      toast.error('Failed to load employees');
-    } finally {
-      setEmployeesLoading(false);
-    }
-  }, []);
-
-  const fetchContracts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await contractService.getContracts({
-        page: pagination.page,
-        limit: pagination.limit,
-        search: search.trim(),
-        status: filters.status,
-        type: filters.type,
-      });
-
-      setContracts(result.data || []);
-      setPagination((prev) => ({
-        ...prev,
-        total: result.pagination.total,
-        totalPages: result.pagination.totalPages,
-      }));
-    } catch (error) {
-      toast.error(error.message || 'Failed to load contracts');
-      setContracts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [pagination.page, pagination.limit, search, filters.status, filters.type]);
-
-  useEffect(() => {
-    fetchEmployees();
-    fetchContracts();
-  }, [fetchEmployees, fetchContracts]);
-
-  const handleSearch = useCallback((value) => {
-    setSearch(value);
-    setPagination((prev) => ({ ...prev, page: 1 }));
-  }, []);
-
-  const handleFilterChange = useCallback((e) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
-    setPagination((prev) => ({ ...prev, page: 1 }));
-  }, []);
-
-  const handlePageChange = useCallback((newPage) => {
-    setPagination((prev) => ({ ...prev, page: newPage }));
-  }, []);
-
-  // Clear all filters and search
-  const hasActiveFilters = !!(search.trim() || filters.status || filters.type);
-  const handleClearFilters = useCallback(() => {
-    setSearch('');
-    setFilters({ status: '', type: '' });
-    setPagination((prev) => ({ ...prev, page: 1 }));
-  }, []);
-
-  const handleRowSelect = useCallback((contract) => {
-    setSelectedContracts((prev) => {
-      const exists = prev.some((c) => c.id === contract.id);
-      return exists ? prev.filter((c) => c.id !== contract.id) : [...prev, contract];
-    });
-  }, []);
-
-  const handleSelectAll = useCallback(
-    (checked) => {
-      setSelectedContracts(checked ? contracts : []);
-    },
-    [contracts],
-  );
-
-  const handleRowDoubleClick = useCallback((contract) => {
-    setSelectedContracts([contract]);
-    setIsDetailsModalOpen(true);
-  }, []);
-
-  const handleAdd = useCallback(() => {
-    const currentYear = new Date().getFullYear();
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const generatedCode = `CT-${currentYear}-${randomNum}`;
-
-  setSelectedContracts([]);
-    setModalFormData({
-      code: generatedCode,
-      employee_id: '',
-      contract_type: '',
-      status: 'draft',
-      start_date: '',
-      end_date: '',
-      salary: '',
-      notes: '',
-      work_location: '',
-    });
-    setIsModalOpen(true);
-  }, []);
-
-  const handleEdit = useCallback(() => {
-    if (selectedContracts.length !== 1) return;
-
-    const selectedContract = selectedContracts[0];
-    setModalFormData({
-      code: selectedContract.code || '',
-      employee_id: selectedContract.employee_id || '',
-      contract_type: selectedContract.contract_type || '',
-      status: selectedContract.status || 'draft',
-      start_date: selectedContract.start_date || '',
-      end_date: selectedContract.end_date || '',
-      salary: selectedContract.salary || '',
-      notes: selectedContract.notes || '',
-      work_location: selectedContract.work_location || '',
-    });
-    setIsModalOpen(true);
-  }, [selectedContracts]);
-
-  const handleModalClose = useCallback(() => {
-    setIsModalOpen(false);
-  }, []);
-
-  const handleModalSuccess = useCallback(() => {
-    fetchContracts();
-    setSelectedContracts([]);
-    setIsModalOpen(false);
-    toast.success('Contract saved successfully');
-    setModalFormData({
-      code: '',
-      employee_id: '',
-      contract_type: '',
-      status: 'draft',
-      start_date: '',
-      end_date: '',
-      salary: '',
-      notes: '',
-      work_location: '',
-    });
-  }, [fetchContracts]);
-
-  const handleFormDataChange = useCallback((newFormData) => {
-    setModalFormData(newFormData);
-  }, []);
-
-  const handleDetailsModalClose = useCallback(() => {
-    setIsDetailsModalOpen(false);
-  }, []);
-
-  const handleEditFromDetails = useCallback(() => {
-    if (selectedContracts.length !== 1) return;
-    setIsDetailsModalOpen(false);
-    handleEdit();
-  }, [selectedContracts, handleEdit]);
+  const {
+    contracts,
+    employees,
+    loading,
+    employeesLoading,
+    search,
+    filters,
+    pagination,
+    selectedContracts,
+    selectedContract,
+    isModalOpen,
+    isDetailsModalOpen,
+    modalFormData,
+    hasActiveFilters,
+    handleSearch,
+    handleFilterChange,
+    handlePageChange,
+    handleClearFilters,
+    handleRowSelect,
+    handleSelectAll,
+    handleRowDoubleClick,
+    handleAdd,
+    handleEdit,
+    handleModalClose,
+    handleModalSuccess,
+    handleFormDataChange,
+    handleDetailsModalClose,
+    handleEditFromDetails,
+  } = useContractsPage();
 
   return (
     <div className="space-y-6">
@@ -280,14 +123,14 @@ function ContractsPage() {
       </div>
 
       <ContractTable
-        contracts={contracts}
-        loading={loading}
-        pagination={pagination}
-        onPageChange={handlePageChange}
-        selectedContracts={selectedContracts}
-        onRowSelect={handleRowSelect}
-        onRowDoubleClick={handleRowDoubleClick}
-        onSelectAll={handleSelectAll}
+  contracts={contracts}
+  loading={loading}
+  pagination={pagination}
+  onPageChange={handlePageChange}
+  selectedContracts={selectedContracts}
+  onRowSelect={handleRowSelect}
+  onRowDoubleClick={handleRowDoubleClick}
+  onSelectAll={handleSelectAll}
       />
 
       {/* {!loading && contracts.length === 0 && (
@@ -308,7 +151,7 @@ function ContractsPage() {
         isOpen={isModalOpen}
         onClose={handleModalClose}
         onSuccess={handleModalSuccess}
-        contractToEdit={selectedContracts.length === 1 ? selectedContracts[0] : null}
+  contractToEdit={selectedContract}
         initialFormData={modalFormData}
         onFormDataChange={handleFormDataChange}
         employees={employees}
@@ -318,7 +161,7 @@ function ContractsPage() {
       <ContractDetailsModal
         isOpen={isDetailsModalOpen}
         onClose={handleDetailsModalClose}
-        contract={selectedContracts.length === 1 ? selectedContracts[0] : null}
+  contract={selectedContract}
         onEdit={handleEditFromDetails}
       />
     </div>

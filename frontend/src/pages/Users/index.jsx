@@ -1,256 +1,55 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import Button from '@components/ui/Button';
 import Icon from '@components/ui/Icon';
 import SearchBar from '@components/ui/SearchBar';
 import Select from '@components/ui/Select';
 import DeleteConfirmModal from '@components/ui/DeleteConfirmModal';
-import toast from 'react-hot-toast';
 
 import UserTable from './UserTable';
 import UserModal from './UserModal';
 import UserQuickViewModal from './UserQuickViewModal';
-import { userService } from '@services/userService';
-import { employeeAPI } from '@api/employeeAPI';
+import { useUsersPage } from './useUsersPage';
 
 function UsersPage() {
-  const [users, setUsers] = useState([]);
-  const [employeesWithoutUser, setEmployeesWithoutUser] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
-  const [selectedUsers, setSelectedUsers] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-  const [quickViewUser, setQuickViewUser] = useState(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
-  const [toggleLockLoading, setToggleLockLoading] = useState(false);
+  const {
+    // state
+    users,
+    employeesWithoutUser,
+    loading,
+    search,
+    roleFilter,
+    statusFilter,
+    pagination,
+    selectedUsers,
+    isModalOpen,
+    isQuickViewOpen,
+    quickViewUser,
+    isDeleteModalOpen,
+    deleteLoading,
+    resetPasswordLoading,
+    toggleLockLoading,
+    hasActiveFilters,
+    roleOptions,
+    statusOptions,
 
-  const hasActiveFilters = useMemo(
-    () => !!search.trim() || !!roleFilter || !!statusFilter,
-    [search, roleFilter, statusFilter]
-  );
-
-  const fetchEmployeesWithoutUser = useCallback(async () => {
-    try {
-      const resp = await employeeAPI.getEmployeesForSelectWithoutUser();
-      setEmployeesWithoutUser(resp.data?.items || resp.items || []);
-    } catch (error) {
-      console.error('Error fetching employees without user', error);
-    }
-  }, []);
-
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await userService.getUsers({
-        page: pagination.page,
-        limit: pagination.limit,
-        search: search.trim(),
-        role: roleFilter,
-        status: statusFilter,
-      });
-      setUsers(result.data || []);
-      setPagination((prev) => ({
-        ...prev,
-        total: result.pagination.total,
-        totalPages: result.pagination.totalPages,
-      }));
-    } catch (error) {
-      toast.error(error.message || 'Failed to load users');
-      setUsers([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [pagination.page, pagination.limit, search, roleFilter, statusFilter]);
-
-  useEffect(() => {
-    fetchEmployeesWithoutUser();
-    fetchUsers();
-  }, [fetchEmployeesWithoutUser, fetchUsers]);
-
-  const handleSearch = useCallback((value) => {
-    setSearch(value);
-    setPagination((prev) => ({ ...prev, page: 1 }));
-  }, []);
-
-  const handleRoleFilterChange = useCallback((e) => {
-    setRoleFilter(e.target.value);
-    setPagination((prev) => ({ ...prev, page: 1 }));
-  }, []);
-
-  const handleStatusFilterChange = useCallback((e) => {
-    setStatusFilter(e.target.value);
-    setPagination((prev) => ({ ...prev, page: 1 }));
-  }, []);
-
-  const handleClearFilters = useCallback(() => {
-    setSearch('');
-    setRoleFilter('');
-    setStatusFilter('');
-    setPagination((prev) => ({ ...prev, page: 1 }));
-  }, []);
-
-  const handlePageChange = useCallback((newPage) => {
-    setPagination((prev) => ({ ...prev, page: newPage }));
-  }, []);
-
-  const handleRowSelect = useCallback((user) => {
-    setSelectedUsers((prev) => {
-      const isAlreadySelected = prev.some((u) => u.id === user.id);
-      if (isAlreadySelected) {
-        return prev.filter((u) => u.id !== user.id);
-      } else {
-        return [...prev, user];
-      }
-    });
-  }, []);
-
-  const handleSelectAll = useCallback((checked) => {
-    if (checked) {
-      setSelectedUsers(users);
-    } else {
-      setSelectedUsers([]);
-    }
-  }, [users]);
-
-  const handleRowDoubleClick = useCallback((user) => {
-    setQuickViewUser(user);
-    setIsQuickViewOpen(true);
-  }, []);
-
-  const handleAdd = useCallback(() => {
-    setIsModalOpen(true);
-  }, []);
-
-  const handleDelete = useCallback(() => {
-    if (selectedUsers.length > 0) setIsDeleteModalOpen(true);
-  }, [selectedUsers]);
-
-  const handleConfirmDelete = useCallback(async () => {
-    if (selectedUsers.length === 0) return;
-    setDeleteLoading(true);
-    try {
-      const ids = selectedUsers.map((u) => u.id);
-      await userService.bulkDelete(ids);
-  toast.success(`${selectedUsers.length} user(s) deleted successfully`);
-  setSelectedUsers([]);
-  setIsDeleteModalOpen(false);
-  fetchUsers();
-    } catch (error) {
-      toast.error(error.message || 'Failed to delete users');
-    } finally {
-      setDeleteLoading(false);
-    }
-  }, [selectedUsers, fetchUsers]);
-
-  const handleResetPassword = useCallback(async () => {
-    if (selectedUsers.length !== 1) {
-      toast.error('Please select exactly one user to reset password');
-      return;
-    }
-
-    const user = selectedUsers[0];
-    setResetPasswordLoading(true);
-    try {
-      console.log('Starting reset password for user:', user.id);
-      const result = await userService.resetPassword(user.id);
-      console.log('Reset password result:', result);
-      console.log('Has password?', !!result.password);
-
-      toast.success(`Password reset for ${user.email}`);
-
-      if (result && result.password) {
-        console.log('Showing password toast with password:', result.password);
-        const password = result.password;
-
-        toast((t) => (
-          <div className="flex items-center gap-4 p-4">
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
-                New Password
-              </p>
-              <p className="text-sm font-mono bg-secondary-100 dark:bg-secondary-700 px-3 py-2 rounded text-secondary-900 dark:text-secondary-100">
-                {password}
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(password);
-                toast.dismiss(t.id);
-                toast.success('Copied!', { duration: 2000 });
-              }}
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded text-sm font-medium transition-colors whitespace-nowrap"
-            >
-              Copy
-            </button>
-          </div>
-        ), { duration: 10000 });
-      } else {
-        console.log('No password in result, result object:', result);
-      }
-
-  fetchUsers();
-    } catch (error) {
-      toast.error(error.message || 'Failed to reset password');
-    } finally {
-      setResetPasswordLoading(false);
-    }
-  }, [selectedUsers, fetchUsers]);
-
-  const handleToggleLock = useCallback(async () => {
-    if (selectedUsers.length === 0) {
-      toast.error('Please select at least one user');
-      return;
-    }
-
-    setToggleLockLoading(true);
-    try {
-      // Count locked users to determine collective action
-      const lockedCount = selectedUsers.filter(u => u.is_locked).length;
-      const shouldUnlock = lockedCount > selectedUsers.length / 2; // If majority locked, unlock all
-
-      // Toggle each selected user
-      for (const user of selectedUsers) {
-        // Only toggle if state needs to change
-        if ((shouldUnlock && user.is_locked) || (!shouldUnlock && !user.is_locked)) {
-          await userService.toggleLock(user.id);
-        }
-      }
-
-      const action = shouldUnlock ? 'unlocked' : 'locked';
-      toast.success(`${selectedUsers.length} user(s) ${action} successfully`);
-  setSelectedUsers([]);
-  fetchUsers();
-    } catch (error) {
-      toast.error(error.message || 'Failed to toggle lock status');
-    } finally {
-      setToggleLockLoading(false);
-    }
-  }, [selectedUsers, fetchUsers]);
-
-  const handleModalSuccess = useCallback(() => {
-    fetchUsers();
-    fetchEmployeesWithoutUser();
-    setSelectedUsers([]);
-  }, [fetchUsers, fetchEmployeesWithoutUser]);
-
-  const roleOptions = [
-    { value: '', label: 'All Roles' },
-    { value: 'ADMIN', label: 'Admin' },
-    { value: 'HR', label: 'HR' },
-    { value: 'STAFF', label: 'Staff' },
-  ];
-
-  const statusOptions = [
-    { value: '', label: 'All Status' },
-    { value: 'active', label: 'Active' },
-    { value: 'locked', label: 'Locked' },
-    { value: 'never_logged_in', label: 'Never Logged In' },
-  ];
+    // handlers
+    handleSearch,
+    handleRoleFilterChange,
+    handleStatusFilterChange,
+    handleClearFilters,
+    handlePageChange,
+    handleRowSelect,
+    handleSelectAll,
+    handleRowDoubleClick,
+    handleAdd,
+    handleDelete,
+    handleConfirmDelete,
+    handleResetPassword,
+    handleToggleLock,
+    handleModalSuccess,
+    handleModalClose,
+    handleQuickViewClose,
+    handleDeleteModalClose,
+  } = useUsersPage();
 
   return (
     <div className="space-y-6">
@@ -389,7 +188,7 @@ function UsersPage() {
       {/* Modals */}
       <UserModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleModalClose}
         onSuccess={handleModalSuccess}
         userToEdit={null}
         employees={employeesWithoutUser}
@@ -397,13 +196,13 @@ function UsersPage() {
 
       <UserQuickViewModal
         isOpen={isQuickViewOpen}
-        onClose={() => setIsQuickViewOpen(false)}
+        onClose={handleQuickViewClose}
         user={quickViewUser}
       />
 
       <DeleteConfirmModal
         isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
+        onClose={handleDeleteModalClose}
         onConfirm={handleConfirmDelete}
         title="Delete Users"
         message={`Are you sure you want to delete ${selectedUsers.length} user(s)? This action cannot be undone.`}
