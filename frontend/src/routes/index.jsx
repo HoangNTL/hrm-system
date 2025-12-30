@@ -8,6 +8,7 @@ import ContractsPage from '@/pages/Contracts';
 import UsersPage from '@/pages/Users';
 import AttendancePage from '@/pages/Attendance';
 import AttendanceHistoryPage from '@/pages/AttendanceHistory';
+import PayrollPage from '@/pages/Payroll';
 import ProtectedRoute from './ProtectedRoute';
 import NotFoundPage from '@/pages/notFound';
 import PositionsPage from '@/pages/positions';
@@ -47,6 +48,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={["STAFF"]}>
             <AttendanceHistoryPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'payroll',
+        element: (
+          <ProtectedRoute allowedRoles={["STAFF", "ADMIN", "HR"]}>
+            <PayrollPage />
           </ProtectedRoute>
         ),
       },
