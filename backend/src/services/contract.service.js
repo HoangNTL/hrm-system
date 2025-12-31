@@ -60,7 +60,7 @@ const mapContract = (contract) => {
 };
 
 export const contractService = {
-  async getAll({ search = '', status = '', type = '', page = 1, limit = 10 } = {}) {
+  async getAll({ search = '', status = '', type = '', employeeId = null, page = 1, limit = 10 } = {}) {
     const skip = (page - 1) * limit;
 
     const where = { is_deleted: false };
@@ -74,6 +74,7 @@ export const contractService = {
 
     if (status) where.status = status;
     if (type) where.contract_type = type;
+    if (employeeId) where.employee_id = employeeId;
 
     const [data, total] = await Promise.all([
       prisma.contract.findMany({

@@ -7,7 +7,10 @@ import {
   toggleLock,
   getUserStats,
   bulkDeleteUsers,
+  getCurrentUser,
+  updateCurrentUser,
 } from '../controllers/user.controller.js';
+import { verifyToken } from '../middlewares/auth.js';
 
 const router = express.Router();
 
@@ -17,5 +20,7 @@ router.get('/stats', getUserStats);
 router.post('/bulk-delete', bulkDeleteUsers);
 router.post('/:id/reset-password', resetPassword);
 router.patch('/:id/toggle-lock', toggleLock);
+router.get('/me', verifyToken, getCurrentUser);
+router.put('/me', verifyToken, updateCurrentUser);
 
 export default router;

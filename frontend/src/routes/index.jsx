@@ -14,6 +14,7 @@ import NotFoundPage from '@/pages/notFound';
 import PositionsPage from '@/pages/positions';
 import ShiftsPage from '@/pages/shifts';
 import ReportsPage from '@/pages/reports';
+import MyProfilePage from '@/pages/MyProfile';
 
 export const router = createBrowserRouter([
   {
@@ -108,7 +109,15 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-            {
+      {
+        path: 'my-profile',
+        element: (
+          <ProtectedRoute>
+            <MyProfilePage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: 'shifts',
         element: (
           <ProtectedRoute allowedRoles={["ADMIN", "HR"]}>

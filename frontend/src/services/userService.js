@@ -91,4 +91,32 @@ export const userService = {
       };
     }
   },
+
+  async getMe() {
+    try {
+      const response = await userAPI.getMe();
+      return response.data || response; // backend returns {data}
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+      throw {
+        message: error.message || 'Failed to load profile',
+        status: error.status,
+        errors: error.errors || {},
+      };
+    }
+  },
+
+  async updateMe(payload) {
+    try {
+      const response = await userAPI.updateMe(payload);
+      return response.data || response;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      throw {
+        message: error.message || 'Failed to update profile',
+        status: error.status,
+        errors: error.errors || {},
+      };
+    }
+  },
 };

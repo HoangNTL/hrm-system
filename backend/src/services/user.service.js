@@ -5,7 +5,7 @@ import { prisma } from '../config/db.js';
 import ApiError from '../utils/ApiError.js';
 import { ERROR_CODES } from '../utils/errorCodes.js';
 
-// standardized select fields for user
+// standardized select fields for user (Prisma fields only, no methods)
 const userSelect = {
   id: true,
   email: true,
@@ -21,9 +21,86 @@ const userSelect = {
       id: true,
       full_name: true,
       email: true,
+      phone: true,
+      address: true,
+      dob: true,
+      gender: true,
+      hire_date: true,
+      work_status: true,
+      department: { select: { id: true, name: true } },
+      position: { select: { id: true, name: true } },
     },
   },
 };
+
+class UserService {
+  async getCurrentProfile(userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId, is_deleted: false },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        employee_id: true,
+        must_change_password: true,
+        is_locked: true,
+        last_login_at: true,
+        email_verified: true,
+        employee: {
+          select: {
+            id: true,
+            full_name: true,
+            phone: true,
+            email: true,
+            address: true,
+            dob: true,
+            gender: true,
+            hire_date: true,
+            work_status: true,
+            department: { select: { id: true, name: true } },
+            position: { select: { id: true, name: true } },
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new ApiError(ERROR_CODES.NOT_FOUND, 'User not found');
+    }
+    return user;
+  }
+
+  async updateCurrentProfile(userId, { full_name, phone, address }) {
+    const user = await prisma.user.findUnique({ where: { id: userId, is_deleted: false } });
+    if (!user) {
+      throw new ApiError(ERROR_CODES.NOT_FOUND, 'User not found');
+    }
+    if (!user.employee_id) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, 'User has no linked employee profile');
+    }
+
+    const data = {};
+    if (full_name !== undefined) data.full_name = full_name;
+    if (phone !== undefined) data.phone = phone;
+    if (address !== undefined) data.address = address;
+
+    const employee = await prisma.employee.update({
+      where: { id: user.employee_id },
+      data,
+      select: {
+        id: true,
+        full_name: true,
+        phone: true,
+        email: true,
+        address: true,
+        department: { select: { id: true, name: true } },
+        position: { select: { id: true, name: true } },
+      },
+    });
+
+    return employee;
+  }
+}
 
 export const userService = {
   async getAll({ search = '', role = '', status = '', page = 1, limit = 10 } = {}) {
@@ -300,5 +377,14 @@ export const userService = {
     }
 
     return array.join("");
+  },
+
+  // Expose profile methods from UserService class
+  async getCurrentProfile(userId) {
+    return new UserService().getCurrentProfile(userId);
+  },
+
+  async updateCurrentProfile(userId, data) {
+    return new UserService().updateCurrentProfile(userId, data);
   }
 };

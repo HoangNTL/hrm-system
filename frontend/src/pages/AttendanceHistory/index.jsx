@@ -219,7 +219,8 @@ function AttendanceHistoryPage() {
         ) : (
           <div className="grid grid-cols-7 gap-3">
             {calendarCells.map((day, idx) => {
-              if (!day) return <div key={`empty-${idx}`} className="h-48 rounded-xl bg-gray-50 border border-gray-200" />;
+              const emptyKey = `empty-${monthCursor.year}-${monthCursor.month}-${idx}`;
+              if (!day) return <div key={emptyKey} className="h-48 rounded-xl bg-gray-50 border border-gray-200" />;
               // Create key in local timezone format (YYYY-MM-DD) without UTC conversion
               const year = day.getFullYear();
               const month = String(day.getMonth() + 1).padStart(2, '0');
@@ -230,7 +231,7 @@ function AttendanceHistoryPage() {
               const earliest = summary.earliest ? formatTimeShort(summary.earliest) : '--';
               const latest = summary.latest ? formatTimeShort(summary.latest) : '--';
               return (
-                <div key={key} className="rounded-xl border border-gray-200 bg-white shadow-sm flex flex-col min-h-[200px]">
+                <div key={`cell-${key}`} className="rounded-xl border border-gray-200 bg-white shadow-sm flex flex-col min-h-[200px]">
                   <div className={`px-2 py-1.5 text-[10px] font-semibold flex items-center justify-between ${summary.headerColor}`}>
                     <span>{String(day.getDate()).padStart(2,'0')}/{String(day.getMonth()+1).padStart(2,'0')}</span>
                     <span className="inline-flex items-center text-[9px] whitespace-nowrap">

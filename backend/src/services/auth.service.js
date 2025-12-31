@@ -112,4 +112,40 @@ export const authService = {
   async _findUser(userId) {
     return await prisma.user.findUnique({ where: { id: userId } });
   },
+
+  async changePassword(userId, newPassword, currentPassword = null) {
+    if (!userId) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, 'User ID is required');
+    }
+    if (!newPassword) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, 'New password is required');
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new ApiError(ERROR_CODES.NOT_FOUND, 'User not found');
+    }
+
+    // If not forced to change password, require current password verification
+    if (!user.must_change_password) {
+      if (!currentPassword) {
+        throw new ApiError(ERROR_CODES.BAD_REQUEST, 'Current password is required');
+      }
+      const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+      if (!isMatch) {
+        throw new ApiError(ERROR_CODES.UNAUTHORIZED, 'Current password is incorrect');
+      }
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        password_hash: hashed,
+        must_change_password: false,
+      },
+    });
+
+    return { success: true, must_change_password: false };
+  },
 };
