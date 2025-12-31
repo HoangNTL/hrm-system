@@ -1,12 +1,13 @@
 import { contractAPI } from '@api/contractAPI';
 
 export const contractService = {
-  async getContracts({ page = 1, limit = 10, search = '', status = '', type = '' } = {}) {
+  async getContracts({ page = 1, limit = 10, search = '', status = '', type = '', employeeId = '' } = {}) {
     try {
       const params = { page, limit };
       if (search) params.search = search;
       if (status) params.status = status;
       if (type) params.type = type;
+      if (employeeId) params.employeeId = employeeId;
 
       const response = await contractAPI.getContracts(params);
       const { items = [], pagination = {} } = response.data || {};

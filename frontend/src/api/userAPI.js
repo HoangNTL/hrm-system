@@ -30,4 +30,14 @@ export const userAPI = {
     const response = await apiClient.post('/users/bulk-delete', { ids });
     return response.data;
   },
+
+  async getMe() {
+    const response = await apiClient.get('/users/me');
+    return response.data;
+  },
+
+  async updateMe(payload) {
+    const response = await apiClient.put('/users/me', payload);
+    return response.data;
+  },
 };

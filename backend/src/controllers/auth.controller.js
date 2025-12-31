@@ -75,3 +75,21 @@ export const refreshToken = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @route   POST /api/auth/change-password
+ * @desc    Change password for current user
+ * @access  Private
+ */
+export const changePassword = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    const { currentPassword, newPassword } = req.body;
+
+    const result = await authService.changePassword(userId, newPassword, currentPassword);
+
+    return response.success(res, result, 'Password updated successfully', 200);
+  } catch (error) {
+    next(error);
+  }
+};

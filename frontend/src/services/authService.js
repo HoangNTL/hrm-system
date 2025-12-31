@@ -65,6 +65,23 @@ const authService = {
     }
   },
 
+  async changePassword(newPassword, currentPassword = null) {
+    try {
+      const response = await authAPI.changePassword({
+        newPassword,
+        ...(currentPassword && { currentPassword }),
+      });
+      return response.data || response;
+    } catch (error) {
+      console.error('Change password Service error:', error);
+      throw {
+        message: error.message || 'Change password failed',
+        status: error.response?.status,
+        errors: error.response?.data?.errors || {},
+      };
+    }
+  },
+
   // Get current user
   getCurrentUser() {
     const userStr = localStorage.getItem('user');

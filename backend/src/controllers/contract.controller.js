@@ -9,12 +9,13 @@ import { parsePagination } from '../utils/sanitizeQuery.js';
 export const getContracts = async (req, res, next) => {
   try {
     const { search, page, limit } = parsePagination(req.query);
-    const { status, type } = req.query;
+    const { status, type, employeeId } = req.query;
 
     const result = await contractService.getAll({
       search,
       status: status || '',
       type: type || '',
+      employeeId: employeeId ? Number(employeeId) : null,
       page,
       limit,
     });

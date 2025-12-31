@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { contractService } from '@services/contractService';
 import { employeeAPI } from '@api/employeeAPI';
 import { useTableSelection } from '@hooks/useTableSelection';
 
-const initialFilters = { status: '', type: '' };
+const initialFilters = { status: '', type: '', employeeId: '' };
 
 /**
  * Quản lý toàn bộ state + logic cho ContractsPage
@@ -16,6 +17,7 @@ export function useContractsPage() {
   const [employeesLoading, setEmployeesLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState(initialFilters);
+  const location = useLocation();
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -60,6 +62,7 @@ export function useContractsPage() {
         search: search.trim(),
         status: filters.status,
         type: filters.type,
+        employeeId: filters.employeeId,
       });
 
       setContracts(result.data || []);
@@ -74,7 +77,7 @@ export function useContractsPage() {
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.limit, search, filters.status, filters.type]);
+  }, [pagination.page, pagination.limit, search, filters.status, filters.type, filters.employeeId]);
 
   useEffect(() => {
     fetchEmployees();
@@ -97,13 +100,23 @@ export function useContractsPage() {
     setPagination((prev) => ({ ...prev, page: newPage }));
   }, []);
 
-  const hasActiveFilters = !!(search.trim() || filters.status || filters.type);
+  const hasActiveFilters = !!(search.trim() || filters.status || filters.type || filters.employeeId);
 
   const handleClearFilters = useCallback(() => {
     setSearch('');
     setFilters(initialFilters);
     setPagination((prev) => ({ ...prev, page: 1 }));
   }, []);
+
+  // Init filters from query string (employeeId for "My Contract")
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const employeeId = params.get('employeeId') || '';
+    if (employeeId) {
+      setFilters((prev) => ({ ...prev, employeeId }));
+      setPagination((prev) => ({ ...prev, page: 1 }));
+    }
+  }, [location.search]);
 
   // Selection cho bảng contracts dùng hook dùng chung
   const {

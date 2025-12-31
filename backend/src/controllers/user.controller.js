@@ -1,6 +1,8 @@
 import response from '../utils/response.js';
 import { parsePagination } from '../utils/sanitizeQuery.js';
 import { userService } from '../services/user.service.js';
+import ApiError from '../utils/ApiError.js';
+import { ERROR_CODES } from '../utils/errorCodes.js';
 
 /**
  * @route GET /api/users
@@ -152,6 +154,43 @@ export const bulkDeleteUsers = async (req, res, next) => {
     const { ids } = req.body;
     const result = await userService.bulkDelete(ids);
     return response.success(res, result, 'Users deleted successfully', 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route GET /api/users/me
+ * @desc  Get current user profile (user + employee)
+ * @access Private
+ */
+export const getCurrentUser = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new ApiError(ERROR_CODES.UNAUTHORIZED, 'Unauthorized');
+    }
+    const profile = await userService.getCurrentProfile(userId);
+    return response.success(res, profile, 'Success', 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route PUT /api/users/me
+ * @desc  Update current user profile (limited fields)
+ * @access Private
+ */
+export const updateCurrentUser = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new ApiError(ERROR_CODES.UNAUTHORIZED, 'Unauthorized');
+    }
+    const { full_name, phone, address } = req.body;
+    const updated = await userService.updateCurrentProfile(userId, { full_name, phone, address });
+    return response.success(res, updated, 'Profile updated', 200);
   } catch (error) {
     next(error);
   }

@@ -221,16 +221,13 @@ class AttendanceController {
    */
   async getMonthlyHours(req, res) {
     try {
-      const employeeId = req.params.employeeId || req.user.employee_id;
+      const employeeId = req.user.employee_id;
       const { year, month } = req.query;
-      const userId = req.user.id;
-      const userRole = req.user.role;
 
-      // STAFF chỉ có thể xem của chính mình
-      if (userRole === 'STAFF' && parseInt(employeeId) !== req.user.employee_id) {
-        return res.status(403).json({
+      if (!employeeId) {
+        return res.status(400).json({
           success: false,
-          message: 'Bạn không có quyền xem thông tin này'
+          message: 'User không có employee_id'
         });
       }
 
@@ -263,16 +260,14 @@ class AttendanceController {
    */
   async getHistory(req, res) {
     try {
-      const employeeId = req.params.employeeId || req.user.employee_id;
+      const employeeId = req.user.employee_id;
       const { fromDate, toDate } = req.query;
-      const userId = req.user.id;
-      const userRole = req.user.role;
 
-      // STAFF chỉ có thể xem của chính mình
-      if (userRole === 'STAFF' && parseInt(employeeId) !== req.user.employee_id) {
-        return res.status(403).json({
+      // Check if user has employee_id
+      if (!employeeId) {
+        return res.status(400).json({
           success: false,
-          message: 'Bạn không có quyền xem thông tin này'
+          message: 'User không có employee_id'
         });
       }
 
