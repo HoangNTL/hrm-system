@@ -335,7 +335,8 @@ class AttendanceService {
     });
 
     const totalHours = attendances.reduce((sum, att) => {
-      return sum + (att.work_hours || 0);
+      const hours = parseFloat(att.work_hours) || 0;
+      return sum + hours;
     }, 0);
 
     return {
@@ -513,6 +514,44 @@ class AttendanceService {
     });
 
     return updated;
+  }
+
+  /**
+   * Calculate late/early minutes based on shift and check-in/out times
+   */
+  async calculateLateEarlyMinutes(shiftId, checkInTime, checkOutTime) {
+    const shift = await this.getShiftById(shiftId);
+    if (!shift) {
+      throw new Error('Shift không tồn tại');
+    }
+
+    const shiftStart = this.convertTimeToMinutes(shift.start_time);
+    const shiftEnd = this.convertTimeToMinutes(shift.end_time);
+    
+    let lateMinutes = 0;
+    let earlyMinutes = 0;
+
+    // Calculate late minutes
+    if (checkInTime) {
+      const checkInMinutes = this.convertTimeToMinutes(checkInTime);
+      const gracePeriod = shiftStart + 15;
+      
+      if (checkInMinutes > gracePeriod) {
+        lateMinutes = checkInMinutes - shiftStart;
+      }
+    }
+
+    // Calculate early minutes (check-out too early)
+    if (checkOutTime) {
+      const checkOutMinutes = this.convertTimeToMinutes(checkOutTime);
+      const maxEarlyCheckOut = shiftEnd - 15;
+      
+      if (checkOutMinutes < maxEarlyCheckOut) {
+        earlyMinutes = shiftEnd - checkOutMinutes;
+      }
+    }
+
+    return { lateMinutes, earlyMinutes };
   }
 
   /**

@@ -69,31 +69,27 @@ apiClient.interceptors.response.use(
             try {
                 // Try to refresh token
                 // refresh token is stored in HttpOnly cookie; call refresh-token endpoint
+                console.log('Token expired, refreshing...');
                 const response = await apiClient.post('/auth/refresh-token');
 
-                // const { accessToken } = response.data?.data || response.data || {};
-                // if (accessToken) {
-                //     localStorage.setItem('accessToken', accessToken);
-
-                //     // Retry original request with new token
-                //     originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-                //     return apiClient(originalRequest);
-                // }
+                console.log('Refresh response:', response.data);
                 
-                        const { accessToken: newAccessToken } = response.data?.data || response.data || {};
-        if (newAccessToken) {
-          // Update axios-level token
-          setAccessToken(newAccessToken);
+                const newAccessToken = response.data?.data?.accessToken;
+                console.log('New access token:', newAccessToken ? 'obtained' : 'not found');
+                
+                if (newAccessToken) {
+                  // Update axios-level token
+                  setAccessToken(newAccessToken);
+                  console.log('Token updated, retrying original request');
 
-          // Attach new token and retry
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          return apiClient(originalRequest);
-        }
+                  // Attach new token and retry
+                  originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                  return apiClient(originalRequest);
+                } else {
+                  throw new Error('No access token in refresh response');
+                }
             } catch (refreshError) {
                 // Refresh failed - logout user
-                // localStorage.removeItem('accessToken');
-                // localStorage.removeItem('isAuthenticated');
-
                 console.error('Refresh token failed: ', refreshError);
                 window.location.href = '/login';
                 return Promise.reject(refreshError);

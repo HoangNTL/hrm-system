@@ -189,6 +189,8 @@ model AttendanceRequest {
   request_type    String   // "forgot_checkin", "forgot_checkout", "leave"
   reason          String
   requested_date  DateTime @db.Date()
+  new_check_in    DateTime?
+  new_check_out   DateTime?
   status          String   @default("pending") // pending, approved, rejected
   reviewed_by     Int?
   reviewed_at     DateTime?

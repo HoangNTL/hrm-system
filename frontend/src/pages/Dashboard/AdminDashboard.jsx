@@ -12,6 +12,7 @@ export default function AdminDashboard() {
     lateToday: 0,
     absentToday: 0,
     onLeaveToday: 0,
+    pendingRequests: 0,
   });
   const [attendanceTrends, setAttendanceTrends] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,53 +27,30 @@ export default function AdminDashboard() {
 
       // Load employees
       const employeesRes = await axios.get('/employees', { params: { page: 1, limit: 1000 } });
-      console.log('Employees response:', employeesRes.data);
-      
-      // Response structure: {ok: true, status: 200, message: 'Success', data: {employees: [...], pagination: {...}}}
       const employeesData = employeesRes?.data?.data || {};
       const employees = employeesData.employees || [];
       const totalEmployees = employeesData.pagination?.total || employees.length;
 
-      console.log('Employees:', employees.length, 'Total:', totalEmployees);
-
-      // Load departments  
+      // Load departments
       const departmentsRes = await axios.get('/departments', { params: { page: 1, limit: 100 } });
-      console.log('Departments response:', departmentsRes.data);
-      
-      // Response structure: {ok: true, status: 200, message: 'Success', data: {departments: [...], pagination: {...}}}
       const departmentsData = departmentsRes?.data?.data || {};
       const departments = departmentsData.departments || [];
       const totalDepartments = departmentsData.pagination?.total || departments.length;
 
-      console.log('Departments:', departments.length, 'Total:', totalDepartments);
-
-      // Load today's attendance
+      // Today's attendance
       const today = new Date().toISOString().split('T')[0];
       let presentToday = 0;
       let lateToday = 0;
       let absentToday = 0;
-
       try {
         const attendanceRes = await axios.get('/attendance', {
-          params: {
-            fromDate: today,
-            toDate: today,
-            page: 1,
-            limit: 1000,
-          },
+          params: { fromDate: today, toDate: today, page: 1, limit: 1000 },
         });
-        
-        console.log('Attendance response:', attendanceRes.data);
-        
-        // Response structure: {success: true, data: {data: [...], total: 4, page: 1, ...}}
         const attendanceData = attendanceRes?.data?.data || {};
         const attendances = attendanceData.data || attendanceData.attendances || [];
 
-        console.log('Attendances today:', attendances);
-
         const statusPriority = { on_time: 2, present: 2, late: 1 };
         const byEmployee = new Map();
-
         attendances.forEach((a) => {
           const key = a.employee_id || a.employeeId || a.employee?.id || a.id;
           if (!key) return;
@@ -86,38 +64,37 @@ export default function AdminDashboard() {
         presentToday = Array.from(byEmployee.values()).filter((a) => a.status === 'on_time' || a.status === 'present').length;
         lateToday = Array.from(byEmployee.values()).filter((a) => a.status === 'late').length;
         absentToday = Math.max(totalEmployees - presentToday - lateToday, 0);
-
-        console.log('Present:', presentToday, 'Late:', lateToday, 'Absent:', absentToday);
       } catch (e) {
-        console.error('Error loading attendance:', e);
+        console.error('Error loading attendance today:', e);
       }
 
-      // Load attendance trends for last 7 days
+      // Pending requests
+      let pendingRequests = 0;
+      try {
+        const reqRes = await axios.get('/attendance-requests', { params: { status: 'pending', page: 1, limit: 1 } });
+        pendingRequests = reqRes?.data?.data?.total || 0;
+      } catch (e) {
+        console.error('Error loading pending requests:', e);
+      }
+
+      // Attendance trends last 7 days
       const trends = [];
       const currentDate = new Date();
-      
       for (let i = 6; i >= 0; i--) {
         const date = new Date(currentDate);
         date.setDate(date.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
         const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-        
+
         try {
           const res = await axios.get('/attendance', {
-            params: {
-              fromDate: dateStr,
-              toDate: dateStr,
-              page: 1,
-              limit: 1000,
-            },
+            params: { fromDate: dateStr, toDate: dateStr, page: 1, limit: 1000 },
           });
-          
           const attendanceData = res?.data?.data || {};
           const attendances = attendanceData.data || attendanceData.attendances || [];
 
           const statusPriority = { on_time: 2, present: 2, late: 1 };
           const byEmployee = new Map();
-
           attendances.forEach((a) => {
             const key = a.employee_id || a.employeeId || a.employee?.id || a.id;
             if (!key) return;
@@ -131,22 +108,10 @@ export default function AdminDashboard() {
           const onTime = Array.from(byEmployee.values()).filter((a) => a.status === 'on_time' || a.status === 'present').length;
           const late = Array.from(byEmployee.values()).filter((a) => a.status === 'late').length;
           const absent = Math.max(totalEmployees - onTime - late, 0);
-          
-          trends.push({
-            date: dateStr,
-            day: dayName,
-            onTime,
-            late,
-            absent,
-          });
+
+          trends.push({ date: dateStr, day: dayName, onTime, late, absent });
         } catch (e) {
-          trends.push({
-            date: dateStr,
-            day: dayName,
-            onTime: 0,
-            late: 0,
-            absent: totalEmployees,
-          });
+          trends.push({ date: dateStr, day: dayName, onTime: 0, late: 0, absent: totalEmployees });
         }
       }
 
@@ -156,7 +121,8 @@ export default function AdminDashboard() {
         presentToday,
         lateToday,
         absentToday,
-        onLeaveToday: 0, // Would need leave API
+        onLeaveToday: 0,
+        pendingRequests,
       });
       setAttendanceTrends(trends);
     } catch (error) {
@@ -259,16 +225,21 @@ export default function AdminDashboard() {
           </button>
 
           <button
-            onClick={() => navigate('/attendance')}
-            className="flex items-center gap-4 p-5 rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-2 border-green-200 dark:border-green-800 hover:shadow-lg hover:scale-105 transition-all group"
+            onClick={() => navigate('/approve-attendance-requests')}
+            className="flex items-center gap-4 p-5 rounded-lg bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-2 border-green-200 dark:border-green-800 hover:shadow-lg hover:scale-105 transition-all group relative"
           >
             <div className="w-14 h-14 rounded-full bg-green-500 flex items-center justify-center group-hover:bg-green-600 transition-colors">
               <Icon name="clipboard-check" className="w-7 h-7 text-white" />
             </div>
             <div className="text-left">
               <p className="font-bold text-green-900 dark:text-green-100 text-lg">Mark Attendance</p>
-              <p className="text-sm text-green-700 dark:text-green-300">Record attendance</p>
+              <p className="text-sm text-green-700 dark:text-green-300">Approve attendance requests</p>
             </div>
+            {stats.pendingRequests > 0 && (
+              <div className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs font-bold">
+                {stats.pendingRequests}
+              </div>
+            )}
           </button>
 
           <button
@@ -332,25 +303,25 @@ export default function AdminDashboard() {
         {attendanceTrends.length === 0 ? (
           <p className="text-center text-secondary-500 py-8">Loading trends...</p>
         ) : (
-          <div className="space-y-4">
-            {/* Chart Legend */}
-            <div className="flex justify-center gap-6 pb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-green-500"></div>
-                <span className="text-sm text-secondary-700 dark:text-secondary-300">On Time</span>
+          <>
+            {/* Compact Legend */}
+            <div className="flex justify-center gap-4 pb-2 text-xs font-medium text-secondary-700 dark:text-secondary-300">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded bg-green-500" />
+                <span>On Time</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-amber-500"></div>
-                <span className="text-sm text-secondary-700 dark:text-secondary-300">Late</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded bg-amber-500" />
+                <span>Late</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-red-500"></div>
-                <span className="text-sm text-secondary-700 dark:text-secondary-300">Absent</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded bg-red-500" />
+                <span>Absent</span>
               </div>
             </div>
 
-            {/* Simple Bar Chart */}
-            <div className="space-y-4">
+            {/* Compact Bar Chart */}
+            <div className="space-y-2">
               {attendanceTrends.map((trend, index) => {
                 const total = trend.onTime + trend.late + trend.absent;
                 const onTimePercent = total > 0 ? (trend.onTime / total) * 100 : 0;
@@ -358,53 +329,51 @@ export default function AdminDashboard() {
                 const absentPercent = total > 0 ? (trend.absent / total) * 100 : 0;
 
                 return (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-secondary-700 dark:text-secondary-300 min-w-[60px]">
-                        {trend.day}
-                      </span>
-                      <div className="flex-1 mx-4">
-                        <div className="flex h-8 rounded-lg overflow-hidden bg-secondary-100 dark:bg-secondary-700">
-                          {onTimePercent > 0 && (
-                            <div
-                              className="bg-green-500 flex items-center justify-center text-xs font-bold text-white"
-                              style={{ width: `${onTimePercent}%` }}
-                              title={`On Time: ${trend.onTime}`}
-                            >
-                              {onTimePercent > 10 && trend.onTime}
-                            </div>
-                          )}
-                          {latePercent > 0 && (
-                            <div
-                              className="bg-amber-500 flex items-center justify-center text-xs font-bold text-white"
-                              style={{ width: `${latePercent}%` }}
-                              title={`Late: ${trend.late}`}
-                            >
-                              {latePercent > 10 && trend.late}
-                            </div>
-                          )}
-                          {absentPercent > 0 && (
-                            <div
-                              className="bg-red-500 flex items-center justify-center text-xs font-bold text-white"
-                              style={{ width: `${absentPercent}%` }}
-                              title={`Absent: ${trend.absent}`}
-                            >
-                              {absentPercent > 10 && trend.absent}
-                            </div>
-                          )}
-                        </div>
+                  <div key={index} className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-secondary-700 dark:text-secondary-300 min-w-[36px]">
+                      {trend.day}
+                    </span>
+                    <div className="flex-1">
+                      <div className="flex h-4 rounded-md overflow-hidden bg-secondary-100 dark:bg-secondary-700">
+                        {onTimePercent > 0 && (
+                          <div
+                            className="bg-green-500 flex items-center justify-center text-[11px] font-semibold text-white"
+                            style={{ width: `${onTimePercent}%` }}
+                            title={`On Time: ${trend.onTime}`}
+                          >
+                            {onTimePercent > 18 && trend.onTime}
+                          </div>
+                        )}
+                        {latePercent > 0 && (
+                          <div
+                            className="bg-amber-500 flex items-center justify-center text-[11px] font-semibold text-white"
+                            style={{ width: `${latePercent}%` }}
+                            title={`Late: ${trend.late}`}
+                          >
+                            {latePercent > 18 && trend.late}
+                          </div>
+                        )}
+                        {absentPercent > 0 && (
+                          <div
+                            className="bg-red-500 flex items-center justify-center text-[11px] font-semibold text-white"
+                            style={{ width: `${absentPercent}%` }}
+                            title={`Absent: ${trend.absent}`}
+                          >
+                            {absentPercent > 18 && trend.absent}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex gap-3 text-xs font-medium min-w-[120px] justify-end">
-                        <span className="text-green-700 dark:text-green-400">{trend.onTime}</span>
-                        <span className="text-amber-700 dark:text-amber-400">{trend.late}</span>
-                        <span className="text-red-700 dark:text-red-400">{trend.absent}</span>
-                      </div>
+                    </div>
+                    <div className="flex gap-2 text-[10px] font-semibold min-w-[84px] justify-end">
+                      <span className="text-green-700 dark:text-green-400 min-w-[22px] text-right">{trend.onTime}</span>
+                      <span className="text-amber-700 dark:text-amber-400 min-w-[22px] text-right">{trend.late}</span>
+                      <span className="text-red-700 dark:text-red-400 min-w-[22px] text-right">{trend.absent}</span>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>

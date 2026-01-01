@@ -33,7 +33,9 @@ function AttendanceHistoryPage() {
         }
       });
       if (response.data.success) {
-        setHistoryRecords(response.data.data || []);
+        const data = response.data.data || [];
+        console.log('📊 History data received:', data.length, 'records', data);
+        setHistoryRecords(data);
       }
     } catch (error) {
       console.error('Error fetching history:', error);
@@ -126,23 +128,33 @@ function AttendanceHistoryPage() {
     let totalHours = 0;
 
     const records = Array.isArray(historyRecords) ? historyRecords : [];
-    records.forEach(r => {
+    
+    // Filter records to only include records from the selected month
+    // (to handle timezone offset from backend)
+    const filteredRecords = records.filter(r => {
+      const dateStr = typeof r.date === 'string' ? r.date : new Date(r.date).toISOString();
+      const recordYear = parseInt(dateStr.slice(0, 4));
+      const recordMonth = parseInt(dateStr.slice(5, 7)) - 1; // 0-indexed
+      return recordYear === monthCursor.year && recordMonth === monthCursor.month;
+    });
+    
+    filteredRecords.forEach(r => {
       if (r.status === 'absent') absentCount += 1;
       if (r.status === 'late') lateCount += 1;
       totalLateMinutes += r.late_minutes || 0;
       totalHours += parseFloat(r.work_hours) || 0;
     });
 
-    const workedShifts = records.length - absentCount;
+    const workedShifts = filteredRecords.length - absentCount;
     return {
       workedShifts,
-      totalShifts: records.length,
+      totalShifts: filteredRecords.length,
       lateCount,
       absentCount,
       totalLateMinutes,
       totalHours
     };
-  }, [historyRecords]);
+  }, [historyRecords, monthCursor]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 p-4 md:p-8 text-gray-900 dark:text-gray-100">

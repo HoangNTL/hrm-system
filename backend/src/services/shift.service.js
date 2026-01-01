@@ -2,6 +2,41 @@ import { prisma } from '../config/db.js';
 import ApiError from '../utils/ApiError.js';
 import { ERROR_CODES } from '../utils/errorCodes.js';
 
+// Helper: Convert time string (HH:mm or full datetime) to TIME object
+const parseTimeString = (timeStr) => {
+  if (!timeStr) return null;
+  
+  // If already a Date, extract the time
+  if (timeStr instanceof Date) {
+    return timeStr;
+  }
+  
+  // If it's a string
+  if (typeof timeStr === 'string') {
+    // Check if it's ISO datetime (contains 'T')
+    if (timeStr.includes('T')) {
+      // Parse ISO datetime and extract time part
+      const date = new Date(timeStr);
+      if (isNaN(date.getTime())) {
+        throw new ApiError(ERROR_CODES.BAD_REQUEST, 'Invalid datetime format');
+      }
+      return date;
+    }
+    
+    // Parse HH:mm format
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    if (!Number.isInteger(hours) || !Number.isInteger(minutes)) {
+      throw new ApiError(ERROR_CODES.BAD_REQUEST, 'Invalid time format. Use HH:mm or ISO datetime');
+    }
+    // Create time for Prisma TIME type - store as HH:mm:ss
+    const timeObj = new Date();
+    timeObj.setHours(hours, minutes, 0, 0);
+    return timeObj;
+  }
+  
+  return timeStr;
+};
+
 const shiftSelect = {
   id: true,
   shift_name: true,
@@ -74,8 +109,8 @@ export const shiftService = {
     const shift = await prisma.shift.create({
       data: {
         shift_name: shift_name.trim(),
-        start_time: new Date(start_time),
-        end_time: new Date(end_time),
+        start_time: parseTimeString(start_time),
+        end_time: parseTimeString(end_time),
         early_check_in_minutes:
           early_check_in_minutes !== undefined
             ? Number(early_check_in_minutes)
@@ -113,8 +148,8 @@ export const shiftService = {
       }
       data.shift_name = String(shift_name).trim();
     }
-    if (start_time !== undefined) data.start_time = new Date(start_time);
-    if (end_time !== undefined) data.end_time = new Date(end_time);
+    if (start_time !== undefined) data.start_time = parseTimeString(start_time);
+    if (end_time !== undefined) data.end_time = parseTimeString(end_time);
     if (early_check_in_minutes !== undefined)
       data.early_check_in_minutes = Number(early_check_in_minutes);
     if (late_checkout_minutes !== undefined)

@@ -8,8 +8,25 @@ const daysAgo = (n) => {
 };
 
 const formatMillions = (value) => {
-  if (!value) return '0';
-  return `${Math.round(value).toLocaleString()} M`;
+  const num = Number(value) || 0;
+  const opts = num >= 10
+    ? { maximumFractionDigits: 0 }
+    : { minimumFractionDigits: 2, maximumFractionDigits: 2 };
+  return `${num.toLocaleString(undefined, opts)} M`;
+};
+
+const formatMonthLabel = (value) => {
+  if (!value) return '';
+  const [y, m] = value.split('-').map(Number);
+  if (!Number.isFinite(y) || !Number.isFinite(m)) return '';
+  return new Date(y, m - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' });
+};
+
+const parseSelectedMonth = (value) => {
+  const [y, m] = (value || '').split('-').map(Number);
+  if (Number.isFinite(y) && Number.isFinite(m) && m >= 1 && m <= 12) return { year: y, month: m };
+  const today = new Date();
+  return { year: today.getFullYear(), month: today.getMonth() + 1 };
 };
 
 // Color palette for different items
@@ -34,17 +51,18 @@ const getTrendBarColor = (percentage) => {
   return 'bg-green-500';
 };
 
-function BarRow({ label, value, max, colorIndex }) {
-  const numeric = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.]/g, '')) : value;
-  const pct = max ? Math.round(((numeric || 0) / max) * 100) : 0;
+function BarRow({ label, value, display, max, colorIndex }) {
+  const safeMax = max > 0 ? max : 1;
+  const pct = Math.min(Math.max(((value || 0) / safeMax) * 100, 0), 100);
   const barColor = getBarColor(colorIndex);
+  const shown = display ?? value;
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-sm text-secondary-600 dark:text-secondary-300">
         <span>{label}</span>
-        <span className="font-semibold text-secondary-900 dark:text-secondary-50">{value}</span>
+        <span className="font-semibold text-secondary-900 dark:text-secondary-50">{shown}</span>
       </div>
-      <div className="h-2 w-full bg-secondary-100 dark:bg-secondary-700 rounded">
+      <div className="h-2 w-full bg-secondary-100 dark:bg-secondary-700 rounded overflow-hidden">
         <div
           className={`h-2 ${barColor} rounded`}
           style={{ width: `${pct}%` }}
@@ -61,6 +79,10 @@ export default function ReportsPage() {
   const [lateByDept, setLateByDept] = useState([]);
   const [payrollByDept, setPayrollByDept] = useState([]);
   const [attendanceTrend, setAttendanceTrend] = useState([]);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
 
   useEffect(() => {
     (async () => {
@@ -70,6 +92,8 @@ export default function ReportsPage() {
 
         const to = new Date();
         const from = daysAgo(30);
+        const { year: payrollYear, month: payrollMonth } = parseSelectedMonth(selectedMonth);
+        const monthLabel = formatMonthLabel(selectedMonth) || 'This month';
         const params = {
           fromDate: from.toISOString(),
           toDate: to.toISOString(),
@@ -79,7 +103,7 @@ export default function ReportsPage() {
 
         const [attResp, payrollResp, empResp] = await Promise.all([
           axios.get('/attendance', { params }),
-          axios.get('/payroll/monthly', { params: { year: to.getFullYear(), month: to.getMonth() + 1 } }),
+          axios.get('/payroll/monthly', { params: { year: payrollYear, month: payrollMonth } }),
           axios.get('/employees', { params: { page: 1, limit: 1 } }),
         ]);
 
@@ -140,15 +164,21 @@ export default function ReportsPage() {
         // Payroll by department (million VND)
         const payrollMap = {};
         payrollRows.forEach((p) => {
-          const dept = p?.employee?.department || p?.employee?.department_name || 'N/A';
-          payrollMap[dept] = (payrollMap[dept] || 0) + (p?.net || 0);
+          const dept = p?.employee?.department?.name
+            || p?.employee?.department
+            || p?.employee?.department_name
+            || p?.department?.name
+            || p?.department_name
+            || 'N/A';
+          const net = Number(p?.net) || 0;
+          payrollMap[dept] = (payrollMap[dept] || 0) + net;
         });
         const payrollByDeptArr = Object.entries(payrollMap).map(([name, value]) => ({
           name,
           value: value / 1_000_000,
         }));
 
-        const payrollTotal = payrollRows.reduce((s, r) => s + (r?.net || 0), 0);
+        const payrollTotal = payrollRows.reduce((s, r) => s + (Number(r?.net) || 0), 0);
 
         // Attendance trend (last 7 days on-time rate)
         const byDate = {};
@@ -172,7 +202,7 @@ export default function ReportsPage() {
           { label: 'Total employees', value: empTotal || 0 },
           { label: 'On-time rate (30d)', value: `${onTimeRate}%` },
           { label: 'Late count (30d)', value: lateCount },
-          { label: 'Payroll this month', value: `${Math.round(payrollTotal / 1_000_000).toLocaleString()} M VND` },
+          { label: `Payroll (${monthLabel})`, value: `${formatMillions(payrollTotal / 1_000_000)} VND` },
         ]);
         setLateByDept(lateByDeptArr);
         setPayrollByDept(payrollByDeptArr);
@@ -184,10 +214,10 @@ export default function ReportsPage() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [selectedMonth]);
 
-  const maxLate = lateByDept.length ? Math.max(...lateByDept.map((d) => d.late)) : 0;
-  const maxPayroll = payrollByDept.length ? Math.max(...payrollByDept.map((d) => d.value)) : 0;
+  const maxLate = lateByDept.length ? Math.max(...lateByDept.map((d) => d.late)) : 1;
+  const maxPayroll = payrollByDept.length ? Math.max(...payrollByDept.map((d) => d.value)) : 1;
 
   return (
     <div className="space-y-6">
@@ -252,7 +282,7 @@ export default function ReportsPage() {
           </div>
           <div className="space-y-3">
             {lateByDept.map((d, idx) => (
-              <BarRow key={d.name} label={d.name} value={d.late} max={maxLate} colorIndex={idx} />
+              <BarRow key={d.name} label={d.name} value={d.late} display={d.late} max={maxLate} colorIndex={idx} />
             ))}
             {lateByDept.length === 0 && (
               <div className="text-secondary-500 text-sm">No data</div>
@@ -261,23 +291,43 @@ export default function ReportsPage() {
         </div>
       </div>
 
+      {/* Payroll by department (compact) */}
       <div className="bg-white dark:bg-secondary-800 border border-secondary-200 dark:border-secondary-700 rounded-lg p-4 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-lg font-semibold text-secondary-900 dark:text-secondary-50">Payroll by department</h2>
-            <p className="text-sm text-secondary-500">Gross payroll (live)</p>
+            <p className="text-sm text-secondary-500">Gross payroll by month</p>
           </div>
-          <span className="text-xs text-secondary-500">Unit: million VND</span>
+          <div className="flex items-center gap-3 text-sm text-secondary-500">
+            <label className="flex items-center gap-2">
+              <span>Month</span>
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="border border-secondary-200 dark:border-secondary-600 rounded px-2 py-1 text-sm bg-white dark:bg-secondary-800 text-secondary-900 dark:text-secondary-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </label>
+            <span>Unit: million VND</span>
+          </div>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-3 max-w-2xl mx-auto w-full">
           {payrollByDept.map((d, idx) => (
-            <BarRow key={d.name} label={d.name} value={formatMillions(d.value)} max={maxPayroll} colorIndex={idx} />
+            <BarRow
+              key={d.name}
+              label={d.name}
+              value={d.value}
+              display={formatMillions(d.value)}
+              max={maxPayroll}
+              colorIndex={idx}
+            />
           ))}
           {payrollByDept.length === 0 && (
             <div className="text-secondary-500 text-sm">No data</div>
           )}
         </div>
       </div>
+
     </div>
   );
 }
