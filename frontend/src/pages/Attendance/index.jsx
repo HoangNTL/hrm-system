@@ -4,6 +4,7 @@ import { selectUser } from '@/store/slices/userSlice';
 import axios from '@/api/axios';
 import { Clock, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import AdminAttendanceView from './AdminAttendanceView';
+import EditAttendanceModal from '@/components/EditAttendanceModal';
 
 export default function AttendancePage() {
   const user = useSelector(selectUser);
@@ -27,9 +28,9 @@ function StaffAttendanceView() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState('');
-  const [monthlyData, setMonthlyData] = useState(null);
   const [shifts, setShifts] = useState([]);
   const [selectedShiftId, setSelectedShiftId] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const employeeId = user?.employee_id;
 
@@ -67,21 +68,6 @@ function StaffAttendanceView() {
     }
   }, []);
 
-  // Fetch monthly hours
-  const fetchMonthlyHours = useCallback(async () => {
-    try {
-      const now = new Date();
-      const response = await axios.get(
-        `/attendance/monthly?year=${now.getFullYear()}&month=${now.getMonth() + 1}`
-      );
-      if (response.data.success) {
-        setMonthlyData(response.data.data);
-      }
-    } catch (error) {
-      console.error('Error fetching monthly data:', error);
-    }
-  }, []);
-
   // Load shifts on mount
   useEffect(() => {
     fetchShifts();
@@ -98,12 +84,6 @@ function StaffAttendanceView() {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-
-  // Load monthly hours when employee ID available
-  useEffect(() => {
-    if (!employeeId) return;
-    fetchMonthlyHours();
-  }, [employeeId, fetchMonthlyHours]);
 
   // Auto-clear message after timeout
   useEffect(() => {
@@ -388,23 +368,18 @@ function StaffAttendanceView() {
           </div>
         </div>
 
-        {monthlyData && (
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-              Total hours in {monthlyData.month}/{monthlyData.year}
-            </h2>
-            <div className="text-center">
-              <p className="text-5xl font-bold text-indigo-600 mb-2">
-                {monthlyData.totalHours}
-              </p>
-              <p className="text-gray-600">
-                {monthlyData.attendanceCount} attended days
-              </p>
-            </div>
-          </div>
-        )}
-
       </div>
+
+      {/* Modal */}
+      <EditAttendanceModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        attendanceRecord={attendance ? { ...attendance, date: new Date() } : null}
+        onSuccess={() => {
+          setModalOpen(false);
+          fetchTodayStatus(selectedShiftId);
+        }}
+      />
     </div>
   );
 }

@@ -15,11 +15,15 @@ import PositionsPage from '@/pages/positions';
 import ShiftsPage from '@/pages/shifts';
 import ReportsPage from '@/pages/reports';
 import MyProfilePage from '@/pages/MyProfile';
+import AppErrorBoundary from './AppErrorBoundary';
+import MyAttendanceRequestsPage from '@/pages/AttendanceRequests';
+import ApproveAttendanceRequestsPage from '@/pages/ApproveAttendanceRequests';
 
 export const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+    errorElement: <AppErrorBoundary />,
   },
   {
     path: '/',
@@ -28,6 +32,7 @@ export const router = createBrowserRouter([
         <MainLayout />
       </ProtectedRoute>
     ),
+    errorElement: <AppErrorBoundary />,
     children: [
       {
         index: true,
@@ -122,6 +127,22 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={["ADMIN", "HR"]}>
             <ShiftsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'attendance-requests',
+        element: (
+          <ProtectedRoute allowedRoles={["STAFF"]}>
+            <MyAttendanceRequestsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'approve-attendance-requests',
+        element: (
+          <ProtectedRoute allowedRoles={["ADMIN", "HR"]}>
+            <ApproveAttendanceRequestsPage />
           </ProtectedRoute>
         ),
       },
