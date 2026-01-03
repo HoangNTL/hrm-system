@@ -13,7 +13,6 @@ const userSelect = {
   is_locked: true,
   must_change_password: true,
   last_login_at: true,
-  email_verified: true,
   created_at: true,
   updated_at: true,
   employee: {
@@ -45,7 +44,6 @@ class UserService {
         must_change_password: true,
         is_locked: true,
         last_login_at: true,
-        email_verified: true,
         employee: {
           select: {
             id: true,

@@ -96,17 +96,14 @@ export const authService = {
 
   // _helpers
   async _saveRefreshToken(userId, refreshToken) {
-    await prisma.user.update({
-      where: { id: userId },
-      data: { refresh_token: refreshToken },
-    });
+    // refresh_token column đã bị drop khỏi bảng users,
+    // không còn lưu refresh token trong DB nữa.
+    return;
   },
 
   async _clearRefreshToken(userId) {
-    await prisma.user.update({
-      where: { id: userId },
-      data: { refresh_token: null },
-    });
+    // Không còn cột refresh_token, nên không cần clear trong DB.
+    return;
   },
 
   async _findUser(userId) {

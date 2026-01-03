@@ -12,11 +12,9 @@ model User {
   email                String    @unique
   password_hash        String
   role                 UserRole  @default(STAFF)
-  refresh_token        String?
   is_locked            Boolean   @default(false)
   must_change_password Boolean   @default(true)
   last_login_at        DateTime?
-  email_verified       Boolean   @default(false)
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
@@ -50,7 +48,6 @@ model Employee {
   contracts           Contract[]
   attendances         Attendance[]
   attendance_requests AttendanceRequest[]
-  managing_department Department? @relation("DepartmentManager")
   department          Department? @relation("DepartmentEmployees", fields: [department_id], references: [id])
   position            Position?   @relation(fields: [position_id], references: [id])
   user_account        User?
@@ -67,9 +64,7 @@ model Department {
   code        String
   deleted_at  DateTime?
   is_deleted  Boolean    @default(false)
-  manager_id  Int?       @unique
   status      Boolean    @default(true)
-  manager     Employee?  @relation("DepartmentManager", fields: [manager_id], references: [id])
   employees   Employee[] @relation("DepartmentEmployees")
 
   @@map("departments")
@@ -152,9 +147,9 @@ model Shift {
   updated_at               DateTime @updatedAt
   is_deleted               Boolean  @default(false)
   deleted_at               DateTime?
-  
+
   attendances              Attendance[]
-  
+
   @@map("shifts")
 }
 
@@ -174,10 +169,10 @@ model Attendance {
   updated_at    DateTime @updatedAt
   is_deleted    Boolean  @default(false)
   deleted_at    DateTime?
-  
+
   employee      Employee @relation(fields: [employee_id], references: [id])
   shift         Shift    @relation(fields: [shift_id], references: [id])
-  
+
   @@unique([employee_id, date, shift_id])
   @@map("attendances")
 }
@@ -199,9 +194,9 @@ model AttendanceRequest {
   updated_at      DateTime @updatedAt
   is_deleted      Boolean  @default(false)
   deleted_at      DateTime?
-  
+
   employee        Employee @relation(fields: [employee_id], references: [id])
   reviewer        User?    @relation(fields: [reviewed_by], references: [id])
-  
+
   @@map("attendance_requests")
 }

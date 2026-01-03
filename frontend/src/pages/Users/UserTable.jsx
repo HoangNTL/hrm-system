@@ -28,38 +28,7 @@ export default function UserTable({
     return badges[role] || badges.STAFF;
   };
 
-  const getStatusBadges = (user) => {
-    const badges = [];
-
-    if (user.is_locked) {
-      badges.push(
-        <span key="locked" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
-          <Icon name="lock" className="w-3 h-3" />
-          Locked
-        </span>
-      );
-    }
-
-    if (!user.last_login_at) {
-      badges.push(
-        <span key="never-logged-in" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
-          <Icon name="user-x" className="w-3 h-3" />
-          New
-        </span>
-      );
-    }
-
-    if (user.must_change_password) {
-      badges.push(
-        <span key="must-change" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
-          <Icon name="key" className="w-3 h-3" />
-          Reset Required
-        </span>
-      );
-    }
-
-    return badges;
-  };
+  // Status badges (locked/new/reset required) đã được yêu cầu bỏ nên không còn sử dụng ở bảng
 
   const handleRowClick = useCallback((user) => {
     onRowSelect?.(user);
@@ -160,15 +129,6 @@ export default function UserTable({
         <span className="text-sm text-secondary-700 dark:text-secondary-300">
           {formatDate(cell)}
         </span>
-      ),
-    },
-    {
-      label: 'Status',
-      key: 'status',
-      render: (_cell, user) => (
-        <div className="flex flex-wrap gap-1">
-          {getStatusBadges(user)}
-        </div>
       ),
     },
   ];

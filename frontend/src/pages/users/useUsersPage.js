@@ -14,7 +14,6 @@ export function useUsersPage() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -24,14 +23,12 @@ export function useUsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const [quickViewUser, setQuickViewUser] = useState(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
   const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
   const [toggleLockLoading, setToggleLockLoading] = useState(false);
 
   const hasActiveFilters = useMemo(
-    () => !!search.trim() || !!roleFilter || !!statusFilter,
-    [search, roleFilter, statusFilter],
+    () => !!search.trim() || !!roleFilter,
+    [search, roleFilter],
   );
 
   const fetchEmployeesWithoutUser = useCallback(async () => {
@@ -51,7 +48,6 @@ export function useUsersPage() {
         limit: pagination.limit,
         search: search.trim(),
         role: roleFilter,
-        status: statusFilter,
       });
       setUsers(result.data || []);
       setPagination((prev) => ({
@@ -65,7 +61,7 @@ export function useUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.limit, search, roleFilter, statusFilter]);
+  }, [pagination.page, pagination.limit, search, roleFilter]);
 
   useEffect(() => {
     fetchEmployeesWithoutUser();
@@ -83,15 +79,9 @@ export function useUsersPage() {
     setPagination((prev) => ({ ...prev, page: 1 }));
   }, []);
 
-  const handleStatusFilterChange = useCallback((e) => {
-    setStatusFilter(e.target.value);
-    setPagination((prev) => ({ ...prev, page: 1 }));
-  }, []);
-
   const handleClearFilters = useCallback(() => {
     setSearch('');
     setRoleFilter('');
-    setStatusFilter('');
     setPagination((prev) => ({ ...prev, page: 1 }));
   }, []);
 
@@ -116,26 +106,7 @@ export function useUsersPage() {
     setIsModalOpen(true);
   }, []);
 
-  const handleDelete = useCallback(() => {
-    if (selectedUsers.length > 0) setIsDeleteModalOpen(true);
-  }, [selectedUsers]);
-
-  const handleConfirmDelete = useCallback(async () => {
-    if (selectedUsers.length === 0) return;
-    setDeleteLoading(true);
-    try {
-      const ids = selectedUsers.map((u) => u.id);
-      await userService.bulkDelete(ids);
-      toast.success(`${selectedUsers.length} user(s) deleted successfully`);
-      clearSelection();
-      setIsDeleteModalOpen(false);
-      fetchUsers();
-    } catch (error) {
-      toast.error(error.message || 'Failed to delete users');
-    } finally {
-      setDeleteLoading(false);
-    }
-  }, [selectedUsers, fetchUsers, clearSelection]);
+  // Delete user đã được yêu cầu bỏ, nên không còn handler delete/bulk delete
 
   const handleResetPassword = useCallback(async () => {
     if (selectedUsers.length !== 1) {
@@ -216,22 +187,11 @@ export function useUsersPage() {
     setQuickViewUser(null);
   }, []);
 
-  const handleDeleteModalClose = useCallback(() => {
-    setIsDeleteModalOpen(false);
-  }, []);
-
   const roleOptions = [
     { value: '', label: 'All Roles' },
     { value: 'ADMIN', label: 'Admin' },
     { value: 'HR', label: 'HR' },
     { value: 'STAFF', label: 'Staff' },
-  ];
-
-  const statusOptions = [
-    { value: '', label: 'All Status' },
-    { value: 'active', label: 'Active' },
-    { value: 'locked', label: 'Locked' },
-    { value: 'never_logged_in', label: 'Never Logged In' },
   ];
 
   return {
@@ -241,37 +201,29 @@ export function useUsersPage() {
     loading,
     search,
     roleFilter,
-    statusFilter,
     pagination,
     selectedUsers,
     isModalOpen,
     isQuickViewOpen,
     quickViewUser,
-    isDeleteModalOpen,
-    deleteLoading,
     resetPasswordLoading,
     toggleLockLoading,
     hasActiveFilters,
     roleOptions,
-    statusOptions,
 
     // handlers
     handleSearch,
-    handleRoleFilterChange,
-    handleStatusFilterChange,
+  handleRoleFilterChange,
     handleClearFilters,
     handlePageChange,
     handleRowSelect,
     handleSelectAll,
-    handleRowDoubleClick,
-    handleAdd,
-    handleDelete,
-    handleConfirmDelete,
+  handleRowDoubleClick,
+  handleAdd,
     handleResetPassword,
     handleToggleLock,
     handleModalSuccess,
     handleModalClose,
     handleQuickViewClose,
-    handleDeleteModalClose,
   };
 }

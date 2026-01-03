@@ -2,7 +2,6 @@ import Button from '@components/ui/Button';
 import Icon from '@components/ui/Icon';
 import SearchBar from '@components/ui/SearchBar';
 import Select from '@components/ui/Select';
-import DeleteConfirmModal from '@components/ui/DeleteConfirmModal';
 
 import UserTable from './UserTable';
 import UserModal from './UserModal';
@@ -17,38 +16,31 @@ function UsersPage() {
     loading,
     search,
     roleFilter,
-    statusFilter,
     pagination,
     selectedUsers,
     isModalOpen,
     isQuickViewOpen,
     quickViewUser,
-    isDeleteModalOpen,
-    deleteLoading,
     resetPasswordLoading,
     toggleLockLoading,
     hasActiveFilters,
     roleOptions,
-    statusOptions,
+  // statusFilter and statusOptions removed per requirement
 
     // handlers
     handleSearch,
     handleRoleFilterChange,
-    handleStatusFilterChange,
     handleClearFilters,
     handlePageChange,
     handleRowSelect,
     handleSelectAll,
     handleRowDoubleClick,
-    handleAdd,
-    handleDelete,
-    handleConfirmDelete,
+  handleAdd,
     handleResetPassword,
     handleToggleLock,
     handleModalSuccess,
     handleModalClose,
     handleQuickViewClose,
-    handleDeleteModalClose,
   } = useUsersPage();
 
   return (
@@ -103,15 +95,6 @@ function UsersPage() {
               </>
             )}
           </Button>
-          <Button
-            onClick={handleDelete}
-            variant="danger"
-            disabled={selectedUsers.length === 0}
-            className="inline-flex items-center"
-          >
-            <Icon name="trash" className="w-5 h-5 mr-2" />
-            Delete
-          </Button>
           <Button onClick={handleAdd} variant="primary" className="inline-flex items-center">
             <Icon name="plus" className="w-5 h-5 mr-2" />
             Add
@@ -136,13 +119,7 @@ function UsersPage() {
               options={roleOptions}
             />
           </div>
-          <div className="w-full md:w-48">
-            <Select
-              value={statusFilter}
-              onChange={handleStatusFilterChange}
-              options={statusOptions}
-            />
-          </div>
+          {/* Status filter removed as requested */}
           <Button
             onClick={handleClearFilters}
             variant="outline"
@@ -170,21 +147,6 @@ function UsersPage() {
         onSelectAll={handleSelectAll}
       />
 
-      {/* Empty State */}
-      {!loading && users.length === 0 && (
-        <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 p-12">
-          <div className="text-center">
-            <Icon name="circle-user-round" className="w-16 h-16 mx-auto text-secondary-400 dark:text-secondary-600 mb-4" />
-            <h3 className="text-lg font-heading font-semibold text-secondary-900 dark:text-secondary-100 mb-2">
-              No Users
-            </h3>
-            <p className="text-sm text-secondary-600 dark:text-secondary-400">
-              {hasActiveFilters ? 'Try adjusting your filters' : 'Start by adding a new user'}
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* Modals */}
       <UserModal
         isOpen={isModalOpen}
@@ -200,14 +162,6 @@ function UsersPage() {
         user={quickViewUser}
       />
 
-      <DeleteConfirmModal
-        isOpen={isDeleteModalOpen}
-        onClose={handleDeleteModalClose}
-        onConfirm={handleConfirmDelete}
-        title="Delete Users"
-        message={`Are you sure you want to delete ${selectedUsers.length} user(s)? This action cannot be undone.`}
-        loading={deleteLoading}
-      />
     </div>
   );
 }
