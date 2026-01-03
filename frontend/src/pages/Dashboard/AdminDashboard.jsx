@@ -305,7 +305,7 @@ export default function AdminDashboard() {
         ) : (
           <>
             {/* Compact Legend */}
-            <div className="flex justify-center gap-4 pb-2 text-xs font-medium text-secondary-700 dark:text-secondary-300">
+            <div className="flex justify-center gap-4 pb-4 text-xs font-medium text-secondary-700 dark:text-secondary-300">
               <div className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded bg-green-500" />
                 <span>On Time</span>
@@ -320,54 +320,61 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Compact Bar Chart */}
-            <div className="space-y-2">
+            {/* Column Chart */}
+            <div className="flex items-end justify-between gap-2 h-64 px-4">
               {attendanceTrends.map((trend, index) => {
                 const total = trend.onTime + trend.late + trend.absent;
-                const onTimePercent = total > 0 ? (trend.onTime / total) * 100 : 0;
-                const latePercent = total > 0 ? (trend.late / total) * 100 : 0;
-                const absentPercent = total > 0 ? (trend.absent / total) * 100 : 0;
+                const maxValue = Math.max(...attendanceTrends.map(t => t.onTime + t.late + t.absent));
+                const heightPercent = maxValue > 0 ? ((total / maxValue) * 100) : 0;
+                const onTimeHeight = total > 0 ? (trend.onTime / total) * heightPercent : 0;
+                const lateHeight = total > 0 ? (trend.late / total) * heightPercent : 0;
+                const absentHeight = total > 0 ? (trend.absent / total) * heightPercent : 0;
 
                 return (
-                  <div key={index} className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold text-secondary-700 dark:text-secondary-300 min-w-[36px]">
-                      {trend.day}
-                    </span>
-                    <div className="flex-1">
-                      <div className="flex h-4 rounded-md overflow-hidden bg-secondary-100 dark:bg-secondary-700">
-                        {onTimePercent > 0 && (
+                  <div key={index} className="flex flex-col items-center flex-1 gap-2">
+                    {/* Column */}
+                    <div className="flex flex-col-reverse justify-start w-full rounded-t-lg overflow-hidden" style={{ height: '100%' }}>
+                      <div className="flex flex-col w-full" style={{ height: `${heightPercent}%` }}>
+                        {trend.absent > 0 && (
                           <div
-                            className="bg-green-500 flex items-center justify-center text-[11px] font-semibold text-white"
-                            style={{ width: `${onTimePercent}%` }}
-                            title={`On Time: ${trend.onTime}`}
-                          >
-                            {onTimePercent > 18 && trend.onTime}
-                          </div>
-                        )}
-                        {latePercent > 0 && (
-                          <div
-                            className="bg-amber-500 flex items-center justify-center text-[11px] font-semibold text-white"
-                            style={{ width: `${latePercent}%` }}
-                            title={`Late: ${trend.late}`}
-                          >
-                            {latePercent > 18 && trend.late}
-                          </div>
-                        )}
-                        {absentPercent > 0 && (
-                          <div
-                            className="bg-red-500 flex items-center justify-center text-[11px] font-semibold text-white"
-                            style={{ width: `${absentPercent}%` }}
+                            className="bg-red-500 flex items-center justify-center text-[10px] font-semibold text-white w-full"
+                            style={{ height: `${(trend.absent / total) * 100}%` }}
                             title={`Absent: ${trend.absent}`}
                           >
-                            {absentPercent > 18 && trend.absent}
+                            {absentHeight > 12 && trend.absent}
+                          </div>
+                        )}
+                        {trend.late > 0 && (
+                          <div
+                            className="bg-amber-500 flex items-center justify-center text-[10px] font-semibold text-white w-full"
+                            style={{ height: `${(trend.late / total) * 100}%` }}
+                            title={`Late: ${trend.late}`}
+                          >
+                            {lateHeight > 12 && trend.late}
+                          </div>
+                        )}
+                        {trend.onTime > 0 && (
+                          <div
+                            className="bg-green-500 flex items-center justify-center text-[10px] font-semibold text-white w-full"
+                            style={{ height: `${(trend.onTime / total) * 100}%` }}
+                            title={`On Time: ${trend.onTime}`}
+                          >
+                            {onTimeHeight > 12 && trend.onTime}
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-2 text-[10px] font-semibold min-w-[84px] justify-end">
-                      <span className="text-green-700 dark:text-green-400 min-w-[22px] text-right">{trend.onTime}</span>
-                      <span className="text-amber-700 dark:text-amber-400 min-w-[22px] text-right">{trend.late}</span>
-                      <span className="text-red-700 dark:text-red-400 min-w-[22px] text-right">{trend.absent}</span>
+                    
+                    {/* Day Label */}
+                    <div className="text-center pt-2 border-t border-secondary-200 dark:border-secondary-700 w-full">
+                      <span className="text-[11px] font-semibold text-secondary-700 dark:text-secondary-300 block">
+                        {trend.day}
+                      </span>
+                      <div className="flex gap-1 justify-center mt-1 text-[9px] font-medium">
+                        <span className="text-green-700 dark:text-green-400">{trend.onTime}</span>
+                        <span className="text-amber-700 dark:text-amber-400">{trend.late}</span>
+                        <span className="text-red-700 dark:text-red-400">{trend.absent}</span>
+                      </div>
                     </div>
                   </div>
                 );
