@@ -12,7 +12,6 @@ export const sidebarMenuItems = [
   { id: 'attendance-requests', label: 'My Requests', path: '/attendance-requests', icon: 'file-text', roles: ['STAFF'] },
   { id: 'approve-attendance-requests', label: 'Approve Requests', path: '/approve-attendance-requests', icon: 'check-circle', roles: ['ADMIN', 'HR'] },
   { id: 'payroll', label: 'Payroll', path: '/payroll', icon: 'circle-dollar-sign', roles: ['ADMIN', 'HR', 'STAFF'] },
-  { id: 'my-profile', label: 'My Profile', path: '/my-profile', icon: 'circle-user-round', roles: ['STAFF'] },
   { id: 'reports', label: 'Reports', path: '/reports', icon: 'chart-column-big', roles: ['ADMIN', 'HR'] },
   { id: 'settings', label: 'Settings', path: '/settings', icon: 'settings', roles: ['ADMIN'] },
 ];

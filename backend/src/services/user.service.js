@@ -68,7 +68,7 @@ class UserService {
     return user;
   }
 
-  async updateCurrentProfile(userId, { full_name, phone, address }) {
+  async updateCurrentProfile(userId, { full_name, phone, address, gender, dob }) {
     const user = await prisma.user.findUnique({ where: { id: userId, is_deleted: false } });
     if (!user) {
       throw new ApiError(ERROR_CODES.NOT_FOUND, 'User not found');
@@ -81,6 +81,14 @@ class UserService {
     if (full_name !== undefined) data.full_name = full_name;
     if (phone !== undefined) data.phone = phone;
     if (address !== undefined) data.address = address;
+    if (gender !== undefined) data.gender = gender;
+    if (dob !== undefined) {
+      const dobDate = new Date(dob);
+      if (isNaN(dobDate.getTime())) {
+        throw new ApiError(ERROR_CODES.BAD_REQUEST, 'Invalid date format for dob');
+      }
+      data.dob = dobDate;
+    }
 
     const employee = await prisma.employee.update({
       where: { id: user.employee_id },
@@ -91,6 +99,8 @@ class UserService {
         phone: true,
         email: true,
         address: true,
+        gender: true,
+        dob: true,
         department: { select: { id: true, name: true } },
         position: { select: { id: true, name: true } },
       },

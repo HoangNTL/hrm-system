@@ -188,8 +188,8 @@ export const updateCurrentUser = async (req, res, next) => {
     if (!userId) {
       throw new ApiError(ERROR_CODES.UNAUTHORIZED, 'Unauthorized');
     }
-    const { full_name, phone, address } = req.body;
-    const updated = await userService.updateCurrentProfile(userId, { full_name, phone, address });
+    const { full_name, phone, address, gender, dob } = req.body;
+    const updated = await userService.updateCurrentProfile(userId, { full_name, phone, address, gender, dob });
     return response.success(res, updated, 'Profile updated', 200);
   } catch (error) {
     next(error);
