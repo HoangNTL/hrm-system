@@ -4,12 +4,14 @@ import {
   selectAuthLoading,
   selectAuthInitialized,
 } from '@/store/slices/authSlice';
+import { selectUser } from '@/store/slices/userSlice';
 import { Navigate, useLocation } from 'react-router-dom';
 
 function ProtectedRoute({ children, allowedRoles }) {
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const loading = useSelector(selectAuthLoading);
   const initialized = useSelector(selectAuthInitialized);
+  const currentUser = useSelector(selectUser);
   const location = useLocation();
 
   // Chỉ block khi đang có 1 request auth (login / logout / refresh) đang chạy
@@ -28,8 +30,20 @@ function ProtectedRoute({ children, allowedRoles }) {
 
   // Nếu có truyền allowedRoles thì kiểm tra quyền từ user trong Redux
   if (allowedRoles && allowedRoles.length > 0) {
-    // NOTE: role check nên làm qua selector, nhưng để đơn giản tạm bỏ qua ở đây
-    // Nếu bạn đã có trang /access-denied và logic role, có thể thêm lại sau.
+    const userRole = currentUser?.role?.toUpperCase();
+
+    // Nếu đã đăng nhập nhưng không có role phù hợp → chặn truy cập
+    if (userRole && !allowedRoles.includes(userRole)) {
+      // Nếu đã có route /access-denied thì điều hướng sang đó,
+      // còn không thì đá về dashboard (hoặc trang chủ tuỳ bạn cấu hình router)
+      return (
+        <Navigate
+          to="/access-denied"
+          replace
+          state={{ from: location, requiredRoles: allowedRoles }}
+        />
+      );
+    }
   }
 
   // Nếu chưa initialized (F5 lần đầu), vẫn cho render children (MainLayout),

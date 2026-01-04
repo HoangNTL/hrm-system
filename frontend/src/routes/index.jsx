@@ -6,18 +6,19 @@ import EmployeesPage from '@/pages/employees';
 import DepartmentsPage from '@/pages/departments';
 import ContractsPage from '@/pages/Contracts';
 import UsersPage from '@/pages/users';
-import AttendancePage from '@/pages/Attendance';
-import AttendanceHistoryPage from '@/pages/AttendanceHistory';
-import PayrollPage from '@/pages/Payroll';
+import AttendancePage from '@/pages/attendance';
+import AttendanceHistoryPage from '@/pages/attendanceHistory';
+import PayrollPage from '@/pages/payroll';
 import ProtectedRoute from './ProtectedRoute';
 import NotFoundPage from '@/pages/notFound';
 import PositionsPage from '@/pages/positions';
 import ShiftsPage from '@/pages/shifts';
 import ReportsPage from '@/pages/reports';
-import MyProfilePage from '@/pages/MyProfile';
+import UserProfilePage from '@/pages/userProfile';
+import AccessDeniedPage from '@/pages/accessDenied';
 import AppErrorBoundary from './AppErrorBoundary';
-import MyAttendanceRequestsPage from '@/pages/AttendanceRequests';
-import ApproveAttendanceRequestsPage from '@/pages/ApproveAttendanceRequests';
+import MyAttendanceRequestsPage from '@/pages/attendanceRequests';
+import ApproveAttendanceRequestsPage from '@/pages/approveAttendanceRequests';
 
 export const router = createBrowserRouter([
   {
@@ -118,7 +119,7 @@ export const router = createBrowserRouter([
         path: 'my-profile',
         element: (
           <ProtectedRoute>
-            <MyProfilePage />
+            <UserProfilePage />
           </ProtectedRoute>
         ),
       },
@@ -147,6 +148,11 @@ export const router = createBrowserRouter([
         ),
       },
     ],
+  },
+  {
+    path: '/access-denied',
+    element: <AccessDeniedPage />,
+    errorElement: <AppErrorBoundary />,
   },
   {
     path: '*',

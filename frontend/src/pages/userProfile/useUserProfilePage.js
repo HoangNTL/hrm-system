@@ -6,7 +6,7 @@ import authService from '@/services/authService';
 import toast from 'react-hot-toast';
 
 /**
- * Hook quản lý toàn bộ state + logic cho trang MyProfile
+ * Hook quản lý toàn bộ state + logic cho trang User Profile
  */
 export function useMyProfilePage() {
   const dispatch = useDispatch();

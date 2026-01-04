@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader, ChevronDown, ChevronUp, Check, X } from 'lucide-react';
+import Icon from '@components/ui/Icon';
 import { getRequestTypeLabel, formatDateTime } from './RequestUtils';
 
 export default function RequestList({
@@ -16,7 +16,7 @@ export default function RequestList({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader className="w-6 h-6 animate-spin text-blue-600" />
+        <Icon name="loader" className="w-6 h-6 animate-spin text-blue-600" />
       </div>
     );
   }
@@ -25,7 +25,7 @@ export default function RequestList({
     return (
       <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-8 text-center">
         <p className="text-gray-600 dark:text-gray-400">
-          Không có đơn nào chờ duyệt. 🎉
+          Không có đơn nào chờ duyệt.
         </p>
       </div>
     );
@@ -66,9 +66,9 @@ export default function RequestList({
               </div>
             </div>
             {expandedId === request.id ? (
-              <ChevronUp className="w-5 h-5 text-gray-500" />
+              <Icon name="chevron-up" className="w-5 h-5 text-gray-500" />
             ) : (
-              <ChevronDown className="w-5 h-5 text-gray-500" />
+              <Icon name="chevron-down" className="w-5 h-5 text-gray-500" />
             )}
           </button>
 
@@ -139,9 +139,9 @@ export default function RequestList({
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-lg font-semibold transition"
                 >
                   {actionLoading === request.id ? (
-                    <Loader className="w-4 h-4 animate-spin" />
+                    <Icon name="loader" className="w-4 h-4 animate-spin" />
                   ) : (
-                    <X className="w-4 h-4" />
+                    <Icon name="x" className="w-4 h-4" />
                   )}
                   Từ chối
                 </button>
@@ -151,9 +151,9 @@ export default function RequestList({
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg font-semibold transition"
                 >
                   {actionLoading === request.id ? (
-                    <Loader className="w-4 h-4 animate-spin" />
+                    <Icon name="loader" className="w-4 h-4 animate-spin" />
                   ) : (
-                    <Check className="w-4 h-4" />
+                    <Icon name="check" className="w-4 h-4" />
                   )}
                   Duyệt
                 </button>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
+import Icon from '@components/ui/Icon';
 import EditAttendanceModal from '@/components/EditAttendanceModal';
 import StatusFilter from './StatusFilter';
 import RequestList from './RequestList';
@@ -44,7 +44,7 @@ export default function MyAttendanceRequestsPage() {
             onClick={() => openModal()}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition"
           >
-            <Plus className="w-5 h-5" />
+            <Icon name="plus" className="w-5 h-5" />
             Gửi đơn mới
           </button>
         </div>

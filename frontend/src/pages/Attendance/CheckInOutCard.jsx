@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader, CheckCircle, AlertCircle } from 'lucide-react';
+import Icon from '@components/ui/Icon';
 import { formatTime } from './StaffUtils';
 
 export default function CheckInOutCard({
@@ -51,19 +51,19 @@ export default function CheckInOutCard({
       </div>
 
       {message && (
-        <div className="mb-6 p-4 rounded-lg flex items-start gap-3" 
+        <div className="mb-6 p-4 rounded-lg flex items-start gap-3"
           style={{
             backgroundColor: status === 'success' ? '#ecfdf5' : '#fef2f2',
             border: status === 'success' ? '1px solid #10b981' : '1px solid #ef4444'
           }}>
-          {status === 'success' && <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />}
-          {status === 'error' && <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0" />}
+          {status === 'success' && <Icon name="check-circle" className="w-6 h-6 text-green-600 flex-shrink-0" />}
+          {status === 'error' && <Icon name="alert-circle" className="w-6 h-6 text-red-600 flex-shrink-0" />}
           <p style={{
             color: status === 'success' ? '#059669' : '#dc2626'
           }} className="font-medium flex-1">
             {message}
           </p>
-          <button 
+          <button
             onClick={onClearMessage}
             className="text-gray-400 hover:text-gray-600"
           >
@@ -84,7 +84,7 @@ export default function CheckInOutCard({
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
-              <Loader className="w-5 h-5 animate-spin" />
+              <Icon name="loader" className="w-5 h-5 animate-spin" />
             </span>
           ) : (
             '📍 CHECK-IN'
@@ -102,7 +102,7 @@ export default function CheckInOutCard({
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
-              <Loader className="w-5 h-5 animate-spin" />
+              <Icon name="loader" className="w-5 h-5 animate-spin" />
             </span>
           ) : (
             '🚪 CHECK-OUT'

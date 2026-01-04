@@ -18,7 +18,9 @@ export default function LoginForm({
     >
       {/* Global Error */}
       {globalError && (
-        <div className="text-error text-sm text-center mb-4 font-medium">{globalError}</div>
+        <div className="text-error text-sm text-center mb-4 font-medium">
+          {globalError}
+        </div>
       )}
 
       {/* Email */}

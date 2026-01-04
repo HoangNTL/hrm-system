@@ -1,12 +1,12 @@
 import React from 'react';
-import { Loader, ChevronDown, ChevronUp } from 'lucide-react';
+import Icon from '@components/ui/Icon';
 import { formatDateTime } from './AdminUtils';
 
 export default function EmployeeList({ loading, employees, expandedEmployee, onToggleExpanded }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-10 text-gray-600">
-        <Loader className="w-6 h-6 animate-spin mr-2" /> Loading...
+        <Icon name="loader" className="w-6 h-6 animate-spin mr-2" /> Loading...
       </div>
     );
   }
@@ -43,9 +43,9 @@ export default function EmployeeList({ loading, employees, expandedEmployee, onT
           >
             <div className="flex-shrink-0">
               {expandedEmployee === group.employee.id ? (
-                <ChevronUp className="w-5 h-5 text-gray-600" />
+                <Icon name="chevron-up" className="w-5 h-5 text-gray-600" />
               ) : (
-                <ChevronDown className="w-5 h-5 text-gray-600" />
+                <Icon name="chevron-down" className="w-5 h-5 text-gray-600" />
               )}
             </div>
 

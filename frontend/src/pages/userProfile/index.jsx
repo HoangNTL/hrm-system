@@ -5,9 +5,9 @@ import PersonalInfoTab from './PersonalInfoTab';
 import WorkInfoTab from './WorkInfoTab';
 import SecurityTab from './SecurityTab';
 import ChangePasswordModal from './ChangePasswordModal';
-import { useMyProfilePage } from './useMyProfilePage';
+import { useMyProfilePage } from './useUserProfilePage';
 
-export default function MyProfilePage() {
+export default function UserProfilePage() {
   const {
     // state
     user,

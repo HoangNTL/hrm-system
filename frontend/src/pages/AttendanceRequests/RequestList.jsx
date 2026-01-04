@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, ChevronUp, Loader } from 'lucide-react';
+import Icon from '@components/ui/Icon';
 import {
   getStatusColor,
   getStatusLabel,
@@ -11,7 +11,7 @@ export default function RequestList({ requests, loading, expandedId, onToggleExp
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader className="w-6 h-6 animate-spin text-blue-600" />
+        <Icon name="loader" className="w-6 h-6 animate-spin text-blue-600" />
       </div>
     );
   }
@@ -62,9 +62,9 @@ export default function RequestList({ requests, loading, expandedId, onToggleExp
               </div>
             </div>
             {expandedId === request.id ? (
-              <ChevronUp className="w-5 h-5 text-gray-500" />
+              <Icon name="chevron-up" className="w-5 h-5 text-gray-500" />
             ) : (
-              <ChevronDown className="w-5 h-5 text-gray-500" />
+              <Icon name="chevron-down" className="w-5 h-5 text-gray-500" />
             )}
           </button>
 

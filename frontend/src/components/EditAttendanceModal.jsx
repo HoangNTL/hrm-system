@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import Icon from '@components/ui/Icon';
 import { attendanceRequestAPI } from '@/api/attendanceRequestAPI';
 
 export default function EditAttendanceModal({ isOpen, onClose, attendanceRecord, onSuccess }) {
@@ -62,7 +62,7 @@ export default function EditAttendanceModal({ isOpen, onClose, attendanceRecord,
       if (response.data.ok || response.data.success) {
         setMessage('Gửi đơn thành công! HR sẽ duyệt trong thời gian sớm nhất.');
         setMessageType('success');
-        
+
         // Reset form immediately
         setTimeout(() => {
           resetForm();
@@ -90,17 +90,6 @@ export default function EditAttendanceModal({ isOpen, onClose, attendanceRecord,
   const handleClose = () => {
     resetForm();
     onClose();
-  };
-
-  const formatDateTime = (date) => {
-    if (!date) return '';
-    const d = new Date(date);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   return (
@@ -213,9 +202,9 @@ export default function EditAttendanceModal({ isOpen, onClose, attendanceRecord,
               }`}
             >
               {messageType === 'success' ? (
-                <CheckCircle className={`w-5 h-5 flex-shrink-0 text-green-600 dark:text-green-400 mt-0.5`} />
+                <Icon name="check-circle" className={`w-5 h-5 flex-shrink-0 text-green-600 dark:text-green-400 mt-0.5`} />
               ) : (
-                <AlertCircle className={`w-5 h-5 flex-shrink-0 text-red-600 dark:text-red-400 mt-0.5`} />
+                <Icon name="alert-circle" className={`w-5 h-5 flex-shrink-0 text-red-600 dark:text-red-400 mt-0.5`} />
               )}
               <p
                 className={`text-sm ${
@@ -246,7 +235,7 @@ export default function EditAttendanceModal({ isOpen, onClose, attendanceRecord,
           >
             {loading ? (
               <>
-                <Loader className="w-4 h-4 animate-spin" />
+                <Icon name="loader" className="w-4 h-4 animate-spin" />
                 Đang gửi...
               </>
             ) : (

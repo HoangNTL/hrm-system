@@ -1,18 +1,18 @@
 import React from 'react';
-import { Loader } from 'lucide-react';
+import Icon from '@components/ui/Icon';
 import { buildCalendar, getDaySummary, formatTimeShort } from './CalendarUtils';
 
-export default function CalendarGrid({ 
-  monthCursor, 
-  historyLoading, 
-  mapByDate 
+export default function CalendarGrid({
+  monthCursor,
+  historyLoading,
+  mapByDate
 }) {
   const calendarCells = buildCalendar(monthCursor.year, monthCursor.month);
 
   if (historyLoading) {
     return (
       <div className="flex items-center justify-center py-10 text-gray-600">
-        <Loader className="w-6 h-6 animate-spin mr-2" /> Loading calendar...
+        <Icon name="loader" className="w-6 h-6 animate-spin mr-2" /> Loading calendar...
       </div>
     );
   }

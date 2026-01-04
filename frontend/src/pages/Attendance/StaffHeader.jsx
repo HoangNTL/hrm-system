@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock } from 'lucide-react';
+import Icon from '@components/ui/Icon';
 import { formatDate, formatTime } from './StaffUtils';
 
 export default function StaffHeader({ currentTime }) {
@@ -12,7 +12,7 @@ export default function StaffHeader({ currentTime }) {
 
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-8 mb-6">
         <div className="flex items-center justify-center gap-3 mb-4">
-          <Clock className="w-6 h-6 text-blue-500" />
+          <Icon name="clock" className="w-6 h-6 text-blue-500" />
           <p className="text-gray-600 dark:text-gray-300 font-medium">Current time</p>
         </div>
         <div className="text-center">
