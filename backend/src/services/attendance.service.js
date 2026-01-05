@@ -1,15 +1,16 @@
 import { prisma } from '../config/db.js';
 import logger from '../utils/logger.js';
 
-class AttendanceService {
+// Convert class-based service to function/object-based for consistency
+const attendanceService = {
   /**
    * Get shift by ID
    */
   async getShiftById(shiftId) {
     return prisma.shift.findUnique({
-      where: { id: shiftId }
+      where: { id: shiftId },
     });
-  }
+  },
 
   /**
    * Get employee's current shift (mặc định shift đầu tiên, sau này có thể add shift_id vào employee)
@@ -18,10 +19,10 @@ class AttendanceService {
     // TODO: Sau này thêm shift_id vào employee model để liên kết
     // Tạm thời lấy shift đầu tiên
     const shift = await prisma.shift.findFirst({
-      where: { is_deleted: false }
+      where: { is_deleted: false },
     });
     return shift;
-  }
+  },
 
   /**
    * Validate check-in time
@@ -32,7 +33,7 @@ class AttendanceService {
       return {
         valid: false,
         message: 'Bạn đã check-in hôm nay rồi',
-        status: 'already_checked_in'
+        status: 'already_checked_in',
       };
     }
 
@@ -58,7 +59,7 @@ class AttendanceService {
       return {
         valid: false,
         message: `Sớm quá. Bạn có thể check-in sau ${minutesLeft} phút`,
-        status: 'too_early'
+        status: 'too_early',
       };
     }
 
@@ -68,7 +69,7 @@ class AttendanceService {
       return {
         valid: false,
         message: `Quá muộn (${lateBy} phút). Vui lòng liên hệ HR để xin phép`,
-        status: 'too_late'
+        status: 'too_late',
       };
     }
 
@@ -80,7 +81,7 @@ class AttendanceService {
         message: `⚠️ Cảnh báo: Bạn đi trễ ${lateMinutes} phút`,
         status: 'late',
         isLate: true,
-        lateMinutes
+        lateMinutes,
       };
     }
 
@@ -88,9 +89,9 @@ class AttendanceService {
     return {
       valid: true,
       message: 'Check-in thành công',
-      status: 'on_time'
+      status: 'on_time',
     };
-  }
+  },
 
   /**
    * Validate check-out time
@@ -100,7 +101,7 @@ class AttendanceService {
     if (!checkInTime) {
       return {
         valid: false,
-        message: 'Bạn chưa check-in. Vui lòng check-in trước'
+        message: 'Bạn chưa check-in. Vui lòng check-in trước',
       };
     }
 
@@ -115,20 +116,20 @@ class AttendanceService {
       const minutesEarly = shiftEnd - nowMinutes;
       return {
         valid: false,
-        message: `Về quá sớm (${minutesEarly} phút). Vui lòng liên hệ HR để xin phép`
+        message: `Về quá sớm (${minutesEarly} phút). Vui lòng liên hệ HR để xin phép`,
       };
     }
 
     if (nowMinutes > latestCheckOut) {
       return {
         valid: false,
-        message: 'Quá giờ check-out. Vui lòng liên hệ HR'
+        message: 'Quá giờ check-out. Vui lòng liên hệ HR',
       };
     }
 
     // Tính work minutes
     const workMinutes = this.getWorkMinutes(checkInTime, now);
-    
+
     // Kiểm tra về sớm 1-15 phút → Cảnh báo
     const isEarly = nowMinutes < shiftEnd;
     const earlyMinutes = isEarly ? shiftEnd - nowMinutes : 0;
@@ -138,9 +139,9 @@ class AttendanceService {
       message: isEarly ? `⚠️ Cảnh báo: Bạn về sớm ${earlyMinutes} phút` : 'Check-out thành công',
       workMinutes,
       isEarly,
-      earlyMinutes
+      earlyMinutes,
     };
-  }
+  },
 
   /**
    * Check-in employee
@@ -154,7 +155,15 @@ class AttendanceService {
 
       const now = new Date();
       // Set date at noon to avoid timezone conversion issues
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0);
+      const today = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        12,
+        0,
+        0,
+        0
+      );
 
       // Kiểm tra đã check-in ca này hôm nay chưa
       const existingAttendance = await prisma.attendance.findUnique({
@@ -163,8 +172,8 @@ class AttendanceService {
             employee_id: employeeId,
             date: today,
             shift_id: shiftId,
-          }
-        }
+          },
+        },
       });
 
       // Validate
@@ -180,12 +189,12 @@ class AttendanceService {
             employee_id: employeeId,
             date: today,
             shift_id: shiftId,
-          }
+          },
         },
         update: {
           check_in: now,
           status: validation.isLate ? 'late' : 'present',
-          late_minutes: validation.lateMinutes || 0
+          late_minutes: validation.lateMinutes || 0,
         },
         create: {
           employee_id: employeeId,
@@ -193,27 +202,28 @@ class AttendanceService {
           date: today,
           check_in: now,
           status: validation.isLate ? 'late' : 'present',
-          late_minutes: validation.lateMinutes || 0
-        }
+          late_minutes: validation.lateMinutes || 0,
+        },
       });
 
       console.log('Check-in success:', attendance);
 
       return {
         valid: true,
-        message: `Check-in lúc ${this.formatTime(now)} ${validation.isLate ? '⚠️ (đi trễ)' : '✅'}`,
+        message: `Check-in lúc ${this.formatTime(now)} ${validation.isLate ? '⚠️ (đi trễ)' : '✅'
+          }`,
         status: validation.status,
-        attendance
+        attendance,
       };
     } catch (error) {
       logger.error('Check-in error:', error);
       return {
         valid: false,
         message: 'Lỗi khi check-in. Vui lòng thử lại',
-        error: error.message
+        error: error.message,
       };
     }
-  }
+  },
 
   /**
    * Check-out employee
@@ -227,7 +237,15 @@ class AttendanceService {
 
       const now = new Date();
       // Set date at noon to avoid timezone conversion issues
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0);
+      const today = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        12,
+        0,
+        0,
+        0
+      );
 
       // Lấy attendance của hôm nay
       const attendance = await prisma.attendance.findUnique({
@@ -236,8 +254,8 @@ class AttendanceService {
             employee_id: employeeId,
             date: today,
             shift_id: shiftId,
-          }
-        }
+          },
+        },
       });
 
       // Validate
@@ -256,30 +274,30 @@ class AttendanceService {
             employee_id: employeeId,
             date: today,
             shift_id: shiftId,
-          }
+          },
         },
         data: {
           check_out: now,
           work_hours: parseFloat(workHours),
-          early_minutes: validation.earlyMinutes || 0
-        }
+          early_minutes: validation.earlyMinutes || 0,
+        },
       });
 
       return {
         valid: true,
         message: `Check-out lúc ${this.formatTime(now)} ✅`,
         workHours,
-        attendance: updatedAttendance
+        attendance: updatedAttendance,
       };
     } catch (error) {
       logger.error('Check-out error:', error);
       return {
         valid: false,
         message: 'Lỗi khi check-out. Vui lòng thử lại',
-        error: error.message
+        error: error.message,
       };
     }
-  }
+  },
 
   /**
    * Get today's attendance for employee
@@ -308,13 +326,13 @@ class AttendanceService {
         is_deleted: false,
       },
       orderBy: {
-        check_in: 'desc'
+        check_in: 'desc',
       },
       include: {
-        shift: true
-      }
+        shift: true,
+      },
     });
-  }
+  },
 
   /**
    * Get monthly work hours for employee
@@ -328,10 +346,10 @@ class AttendanceService {
         employee_id: employeeId,
         date: {
           gte: startDate,
-          lte: endDate
+          lte: endDate,
         },
-        is_deleted: false
-      }
+        is_deleted: false,
+      },
     });
 
     const totalHours = attendances.reduce((sum, att) => {
@@ -344,9 +362,9 @@ class AttendanceService {
       month,
       totalHours: parseFloat(totalHours.toFixed(2)),
       attendanceCount: attendances.length,
-      attendances
+      attendances,
     };
-  }
+  },
 
   /**
    * Get attendance history for employee
@@ -357,18 +375,18 @@ class AttendanceService {
         employee_id: employeeId,
         date: {
           gte: fromDate,
-          lte: toDate
+          lte: toDate,
         },
-        is_deleted: false
+        is_deleted: false,
       },
       include: {
-        shift: true
+        shift: true,
       },
       orderBy: {
-        date: 'desc'
-      }
+        date: 'desc',
+      },
     });
-  }
+  },
 
   /**
    * Get all attendances (admin/hr)
@@ -397,18 +415,18 @@ class AttendanceService {
               department: {
                 select: {
                   id: true,
-                  name: true
-                }
-              }
-            }
+                  name: true,
+                },
+              },
+            },
           },
-          shift: true
+          shift: true,
         },
         orderBy: { date: 'desc' },
         skip,
-        take
+        take,
       }),
-      prisma.attendance.count({ where })
+      prisma.attendance.count({ where }),
     ]);
 
     return {
@@ -416,9 +434,9 @@ class AttendanceService {
       total,
       page: Math.floor(skip / take) + 1,
       pageSize: take,
-      pages: Math.ceil(total / take)
+      pages: Math.ceil(total / take),
     };
-  }
+  },
 
   // ==================== HELPERS ====================
 
@@ -443,7 +461,7 @@ class AttendanceService {
       const minutes = timeObj.getMinutes();
       return hours * 60 + minutes;
     }
-  }
+  },
 
   /**
    * Tính số phút làm việc giữa check-in và check-out
@@ -451,7 +469,7 @@ class AttendanceService {
   getWorkMinutes(checkInTime, checkOutTime) {
     const diffMs = checkOutTime - new Date(checkInTime);
     return Math.floor(diffMs / 60000); // Convert ms to minutes
-  }
+  },
 
   /**
    * Format time for display
@@ -459,9 +477,9 @@ class AttendanceService {
   formatTime(date) {
     return date.toLocaleTimeString('vi-VN', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
-  }
+  },
 
   /**
    * Format date for display
@@ -470,9 +488,9 @@ class AttendanceService {
     return date.toLocaleDateString('vi-VN', {
       year: 'numeric',
       month: '2-digit',
-      day: '2-digit'
+      day: '2-digit',
     });
-  }
+  },
 
   /**
    * Update attendance record (HR/Admin only)
@@ -480,7 +498,7 @@ class AttendanceService {
   async updateAttendance(attendanceId, updates) {
     const attendance = await prisma.attendance.findUnique({
       where: { id: attendanceId },
-      include: { shift: true }
+      include: { shift: true },
     });
 
     if (!attendance) {
@@ -501,20 +519,20 @@ class AttendanceService {
       data: {
         ...updates,
         work_hours: workHours,
-        updated_at: new Date()
+        updated_at: new Date(),
       },
       include: {
         employee: {
           include: {
-            department: true
-          }
+            department: true,
+          },
         },
-        shift: true
-      }
+        shift: true,
+      },
     });
 
     return updated;
-  }
+  },
 
   /**
    * Calculate late/early minutes based on shift and check-in/out times
@@ -527,7 +545,7 @@ class AttendanceService {
 
     const shiftStart = this.convertTimeToMinutes(shift.start_time);
     const shiftEnd = this.convertTimeToMinutes(shift.end_time);
-    
+
     let lateMinutes = 0;
     let earlyMinutes = 0;
 
@@ -535,7 +553,7 @@ class AttendanceService {
     if (checkInTime) {
       const checkInMinutes = this.convertTimeToMinutes(checkInTime);
       const gracePeriod = shiftStart + 15;
-      
+
       if (checkInMinutes > gracePeriod) {
         lateMinutes = checkInMinutes - shiftStart;
       }
@@ -545,21 +563,21 @@ class AttendanceService {
     if (checkOutTime) {
       const checkOutMinutes = this.convertTimeToMinutes(checkOutTime);
       const maxEarlyCheckOut = shiftEnd - 15;
-      
+
       if (checkOutMinutes < maxEarlyCheckOut) {
         earlyMinutes = shiftEnd - checkOutMinutes;
       }
     }
 
     return { lateMinutes, earlyMinutes };
-  }
+  },
 
   /**
    * Delete attendance record (soft delete - HR/Admin only)
    */
   async deleteAttendance(attendanceId) {
     const attendance = await prisma.attendance.findUnique({
-      where: { id: attendanceId }
+      where: { id: attendanceId },
     });
 
     if (!attendance) {
@@ -570,12 +588,12 @@ class AttendanceService {
       where: { id: attendanceId },
       data: {
         is_deleted: true,
-        deleted_at: new Date()
-      }
+        deleted_at: new Date(),
+      },
     });
 
     return deleted;
-  }
-}
+  },
+};
 
-export default new AttendanceService();
+export default attendanceService;

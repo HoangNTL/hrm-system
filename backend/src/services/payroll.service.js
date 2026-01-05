@@ -3,7 +3,8 @@ import ExcelJS from 'exceljs';
 
 const STANDARD_MONTHLY_HOURS = 160; // simple baseline for hourly rate
 
-class PayrollService {
+// Convert class-based service to function/object-based for consistency
+const payrollService = {
   async getLatestActiveContract(employeeId) {
     const contract = await prisma.contract.findFirst({
       where: {
@@ -14,7 +15,7 @@ class PayrollService {
       orderBy: { start_date: 'desc' },
     });
     return contract;
-  }
+  },
 
   async getMonthlyTotals(employeeId, year, month) {
     const start = new Date(year, month - 1, 1, 12, 0, 0, 0);
@@ -28,13 +29,16 @@ class PayrollService {
       },
     });
 
-    const totalHours = attendances.reduce((sum, a) => sum + (parseFloat(a.work_hours || 0)), 0);
+    const totalHours = attendances.reduce(
+      (sum, a) => sum + parseFloat(a.work_hours || 0),
+      0
+    );
     const lateMinutes = attendances.reduce((sum, a) => sum + (a.late_minutes || 0), 0);
-    const absentCount = attendances.filter(a => a.status === 'absent').length;
-    const lateCount = attendances.filter(a => a.status === 'late').length;
+    const absentCount = attendances.filter((a) => a.status === 'absent').length;
+    const lateCount = attendances.filter((a) => a.status === 'late').length;
 
     return { totalHours, lateMinutes, absentCount, lateCount };
-  }
+  },
 
   async getPayslip(employeeId, year, month) {
     const employee = await prisma.employee.findUnique({
@@ -68,7 +72,7 @@ class PayrollService {
       deductions,
       net,
     };
-  }
+  },
 
   async getMonthlyPayroll(year, month, departmentId = null) {
     const employeeWhere = { is_deleted: false };
@@ -92,12 +96,14 @@ class PayrollService {
     }
 
     return rows;
-  }
+  },
 
   async exportMonthlyPayroll(year, month, departmentId = null) {
     const rows = await this.getMonthlyPayroll(year, month, departmentId);
     const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet(`Payroll_${year}_${String(month).padStart(2, '0')}`);
+    const sheet = workbook.addWorksheet(
+      `Payroll_${year}_${String(month).padStart(2, '0')}`
+    );
 
     sheet.columns = [
       { header: 'Employee', key: 'employee', width: 28 },
@@ -113,7 +119,7 @@ class PayrollService {
       { header: 'Net Pay', key: 'net', width: 12 },
     ];
 
-    rows.forEach(r => {
+    rows.forEach((r) => {
       sheet.addRow({
         employee: r.employee.full_name,
         email: r.employee.email,
@@ -132,7 +138,7 @@ class PayrollService {
     sheet.getRow(1).font = { bold: true };
     const buffer = await workbook.xlsx.writeBuffer();
     return buffer;
-  }
-}
+  },
+};
 
-export default new PayrollService();
+export default payrollService;
