@@ -60,17 +60,15 @@ export default function ShiftModal({
         ...formData,
       };
 
-      // convert time-only values to ISO date-time (backend expects Date)
-      // User inputs local VN time, we need to convert to UTC (subtract 7 hours)
-      const toIso = (timeStr) => {
-        if (!timeStr) return `1970-01-01T00:00:00Z`;
-        const [hours, minutes] = timeStr.split(':').map(Number);
-        const localDate = new Date(1970, 0, 1, hours, minutes, 0);
-        return localDate.toISOString();
+      // Convert time input (HH:mm) to HH:mm:ss format for database
+      const formatTime = (timeStr) => {
+        if (!timeStr) return null;
+        // timeStr is already in HH:mm format from input[type="time"]
+        return `${timeStr}:00`; // Just add seconds
       };
 
-      payload.start_time = toIso(formData.start_time);
-      payload.end_time = toIso(formData.end_time);
+      payload.start_time = formatTime(formData.start_time);
+      payload.end_time = formatTime(formData.end_time);
 
       let response;
       if (isEditMode) {

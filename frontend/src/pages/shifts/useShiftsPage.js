@@ -77,17 +77,19 @@ export function useShiftsPage() {
     if (selectedShifts.length === 1) {
       const selectedShift = selectedShifts[0];
 
-      // Dùng cùng logic hiển thị thời gian như ShiftTable (local time, HH:MM)
-      const toLocalTimeString = (value) => {
+      // Convert Date to HH:mm format for input[type="time"]
+      const toTimeInputFormat = (value) => {
         if (!value) return '';
         const d = new Date(value);
-        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
       };
 
       setModalFormData({
         shift_name: selectedShift.shift_name || '',
-        start_time: toLocalTimeString(selectedShift.start_time),
-        end_time: toLocalTimeString(selectedShift.end_time),
+        start_time: toTimeInputFormat(selectedShift.start_time),
+        end_time: toTimeInputFormat(selectedShift.end_time),
         early_check_in_minutes: selectedShift.early_check_in_minutes ?? 15,
         late_checkout_minutes: selectedShift.late_checkout_minutes ?? 15,
       });

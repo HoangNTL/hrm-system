@@ -54,7 +54,7 @@ export default function AdminAttendanceView() {
             searchText={searchText}
             onSearchChange={setSearchText}
             selectedDepartment={selectedDepartment}
-            onDepartmentChange={setSelectedDepartment}
+            onDepartmentChange={(e) => setSelectedDepartment(e.target.value)}
             departments={departments}
           />
         )}
