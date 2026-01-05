@@ -1,24 +1,28 @@
 import React from 'react';
+import Button from '@components/ui/Button';
 import { getStatusLabel } from './RequestUtils';
 
 export default function StatusFilter({ statusFilter, onFilterChange }) {
   const statuses = ['', 'pending', 'approved', 'rejected'];
 
   return (
-    <div className="mb-6 flex gap-2">
-      {statuses.map((status) => (
-        <button
-          key={status}
-          onClick={() => onFilterChange(status)}
-          className={`px-4 py-2 rounded-lg font-medium transition ${
-            statusFilter === status
-              ? 'bg-blue-600 text-white'
-              : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-slate-700 hover:border-blue-400'
-          }`}
-        >
-          {status === '' ? 'Tất cả' : getStatusLabel(status)}
-        </button>
-      ))}
+    <div className="mb-6 flex flex-wrap gap-2">
+      {statuses.map((status) => {
+        const isActive = statusFilter === status;
+
+        return (
+          <Button
+            key={status || 'all'}
+            type="button"
+            size="sm"
+            variant={isActive ? 'primary' : 'secondary'}
+            onClick={() => onFilterChange(status)}
+            className={!isActive ? 'bg-white dark:bg-secondary-800' : ''}
+          >
+            {status === '' ? 'All' : getStatusLabel(status)}
+          </Button>
+        );
+      })}
     </div>
   );
 }

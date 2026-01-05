@@ -1,5 +1,6 @@
 import React from 'react';
 import Icon from '@components/ui/Icon';
+import Button from '@components/ui/Button';
 import { formatTime } from './StaffUtils';
 
 export default function CheckInOutCard({
@@ -24,8 +25,18 @@ export default function CheckInOutCard({
               <p className="text-2xl font-bold text-green-600">
                 {formatTime(attendance.check_in)}
               </p>
-              <p className="text-xs text-green-600 mt-1">
-                {attendance.status === 'late' ? '⚠️ Late' : '✅ On time'}
+              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                {attendance.status === 'late' ? (
+                  <>
+                    <Icon name="alert-circle" className="w-4 h-4" />
+                    <span>Late</span>
+                  </>
+                ) : (
+                  <>
+                    <Icon name="check-circle" className="w-4 h-4" />
+                    <span>On time</span>
+                  </>
+                )}
               </p>
             </>
           ) : (
@@ -40,8 +51,9 @@ export default function CheckInOutCard({
               <p className="text-2xl font-bold text-green-600">
                 {formatTime(attendance.check_out)}
               </p>
-              <p className="text-xs text-green-600 mt-1">
-                ✅ {attendance.work_hours}h
+              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                <Icon name="clock" className="w-4 h-4" />
+                <span>{attendance.work_hours}h</span>
               </p>
             </>
           ) : (
@@ -73,41 +85,40 @@ export default function CheckInOutCard({
       )}
 
       <div className="flex gap-4">
-        <button
+        <Button
+          type="button"
           onClick={onCheckIn}
           disabled={!selectedShiftId || !!attendance?.check_in || loading}
-          className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${
-            !selectedShiftId || !!attendance?.check_in || loading
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-green-500 text-white hover:bg-green-600 active:scale-95'
-          }`}
+          variant="success"
+          fullWidth
         >
           {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <Icon name="loader" className="w-5 h-5 animate-spin" />
-            </span>
+            <Icon name="loader" className="w-5 h-5 animate-spin" />
           ) : (
-            '📍 CHECK-IN'
+            <span className="flex items-center justify-center gap-2">
+              <Icon name="log-in" className="w-5 h-5" />
+              <span>Check-in</span>
+            </span>
           )}
-        </button>
+        </Button>
 
-        <button
+        <Button
+          type="button"
           onClick={onCheckOut}
           disabled={!selectedShiftId || !attendance?.check_in || !!attendance?.check_out || loading}
-          className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${
-            !selectedShiftId || !attendance?.check_in || !!attendance?.check_out || loading
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-orange-500 text-white hover:bg-orange-600 active:scale-95'
-          }`}
+          variant="outline"
+          fullWidth
+          className="border-orange-500 text-orange-600 hover:bg-orange-50"
         >
           {loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <Icon name="loader" className="w-5 h-5 animate-spin" />
-            </span>
+            <Icon name="loader" className="w-5 h-5 animate-spin" />
           ) : (
-            '🚪 CHECK-OUT'
+            <span className="flex items-center justify-center gap-2">
+              <Icon name="log-out" className="w-5 h-5" />
+              <span>Check-out</span>
+            </span>
           )}
-        </button>
+        </Button>
       </div>
     </div>
   );

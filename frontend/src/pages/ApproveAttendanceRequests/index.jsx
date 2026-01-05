@@ -1,6 +1,6 @@
 import React from 'react';
 import RequestList from './RequestList';
-import Pagination from './Pagination';
+import PaginationBase from '@components/ui/Pagination';
 import { useApproveAttendanceRequests } from './useApproveAttendanceRequests';
 
 export default function ApproveAttendanceRequestsPage() {
@@ -29,10 +29,10 @@ export default function ApproveAttendanceRequestsPage() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Duyệt đơn xin sửa chấm công
+            Approve attendance correction requests
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
-            Có {total} đơn chờ duyệt
+            There are {total} requests pending approval
           </p>
         </div>
 
@@ -50,7 +50,16 @@ export default function ApproveAttendanceRequestsPage() {
         />
 
         {/* Pagination */}
-        <Pagination page={page} totalPages={totalPages} onPageChange={handlePageChange} />
+        {totalPages > 1 && (
+          <div className="mt-6">
+            <PaginationBase
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={total}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

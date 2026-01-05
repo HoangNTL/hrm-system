@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import Icon from '@components/ui/Icon';
+import Button from '@components/ui/Button';
+import Input from '@components/ui/Input';
+import Textarea from '@components/ui/Textarea';
 import { attendanceRequestAPI } from '@/api/attendanceRequestAPI';
 
 export default function EditAttendanceModal({ isOpen, onClose, attendanceRecord, onSuccess }) {
@@ -17,19 +20,19 @@ export default function EditAttendanceModal({ isOpen, onClose, attendanceRecord,
   const handleSubmit = async () => {
     try {
       if (!requestedDate) {
-        setMessage('Vui lòng chọn ngày cần sửa chấm công');
+        setMessage('Please select the date you want to correct.');
         setMessageType('error');
         return;
       }
 
       if (!reason.trim()) {
-        setMessage('Vui lòng nhập lý do');
+        setMessage('Please enter a reason.');
         setMessageType('error');
         return;
       }
 
       if (!newCheckIn && !newCheckOut && requestType !== 'leave') {
-        setMessage('Vui lòng nhập giờ check-in hoặc check-out thực tế');
+        setMessage('Please provide the actual check-in or check-out time.');
         setMessageType('error');
         return;
       }
@@ -60,7 +63,7 @@ export default function EditAttendanceModal({ isOpen, onClose, attendanceRecord,
       const response = await attendanceRequestAPI.createRequest(payload);
 
       if (response.data.ok || response.data.success) {
-        setMessage('Gửi đơn thành công! HR sẽ duyệt trong thời gian sớm nhất.');
+        setMessage('Request submitted successfully! HR will review it as soon as possible.');
         setMessageType('success');
 
         // Reset form immediately
@@ -71,7 +74,7 @@ export default function EditAttendanceModal({ isOpen, onClose, attendanceRecord,
         }, 1500);
       }
     } catch (error) {
-      setMessage(error.response?.data?.message || 'Có lỗi khi gửi đơn');
+      setMessage(error.response?.data?.message || 'An error occurred while submitting the request.');
       setMessageType('error');
     } finally {
       setLoading(false);
@@ -98,11 +101,11 @@ export default function EditAttendanceModal({ isOpen, onClose, attendanceRecord,
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-            Xin sửa chấm công
+            Attendance correction request
           </h2>
           {attendanceRecord && (
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Ngày: {new Date(attendanceRecord.date).toLocaleDateString('vi-VN')}
+              Date: {new Date(attendanceRecord.date).toLocaleDateString('en-GB')}
             </p>
           )}
         </div>
@@ -112,33 +115,32 @@ export default function EditAttendanceModal({ isOpen, onClose, attendanceRecord,
           {/* Request Type */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Loại yêu cầu
+              Request type
             </label>
             <select
               value={requestType}
               onChange={(e) => setRequestType(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="forgot_checkout">Quên check-out</option>
-              <option value="forgot_checkin">Quên check-in</option>
-              <option value="edit_time">Sửa giờ làm việc</option>
+              <option value="forgot_checkout">Forgot check-out</option>
+              <option value="forgot_checkin">Forgot check-in</option>
+              <option value="edit_time">Edit working time</option>
             </select>
           </div>
 
           {/* Ngày cần sửa */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Ngày cần sửa chấm công *
+              Date to correct *
             </label>
-            <input
+            <Input
               type="date"
               value={requestedDate}
               onChange={(e) => setRequestedDate(e.target.value)}
               max={new Date().toISOString().split('T')[0]}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Chọn ngày bạn quên chấm công (ví dụ: hôm qua)
+              Select the date you forgot to check in/out (e.g. yesterday).
             </p>
           </div>
 
@@ -146,16 +148,15 @@ export default function EditAttendanceModal({ isOpen, onClose, attendanceRecord,
           {(requestType === 'forgot_checkin' || requestType === 'edit_time') && (
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Giờ check-in thực tế *
+                Actual check-in time *
               </label>
-              <input
+              <Input
                 type="time"
                 value={newCheckIn}
                 onChange={(e) => setNewCheckIn(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Nhập giờ bạn thực tế bắt đầu làm việc (ví dụ: 08:00)
+                Enter the time you actually started working (e.g. 08:00).
               </p>
             </div>
           )}
@@ -164,31 +165,27 @@ export default function EditAttendanceModal({ isOpen, onClose, attendanceRecord,
           {(requestType === 'forgot_checkout' || requestType === 'edit_time') && (
             <div>
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Giờ check-out thực tế *
+                Actual check-out time *
               </label>
-              <input
+              <Input
                 type="time"
                 value={newCheckOut}
                 onChange={(e) => setNewCheckOut(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Nhập giờ bạn thực tế kết thúc làm việc (ví dụ: 18:00)
+                Enter the time you actually finished working (e.g. 18:00).
               </p>
             </div>
           )}
 
           {/* Reason */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Lý do *
-            </label>
-            <textarea
+            <Textarea
+              label="Reason *"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Nhập lý do xin sửa chấm công..."
-              rows="3"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Describe why you need to correct this attendance record..."
+              rows={3}
             />
           </div>
 
@@ -221,27 +218,30 @@ export default function EditAttendanceModal({ isOpen, onClose, attendanceRecord,
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-200 dark:border-slate-700 flex gap-3">
-          <button
+          <Button
+            type="button"
+            variant="secondary"
             onClick={handleClose}
             disabled={loading}
-            className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 transition"
+            className="flex-1"
           >
-            Đóng
-          </button>
-          <button
+            Close
+          </Button>
+          <Button
+            type="button"
             onClick={handleSubmit}
             disabled={loading}
-            className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-semibold transition flex items-center justify-center gap-2"
+            className="flex-1 flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
                 <Icon name="loader" className="w-4 h-4 animate-spin" />
-                Đang gửi...
+                Sending...
               </>
             ) : (
-              'Gửi đơn'
+              'Submit request'
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

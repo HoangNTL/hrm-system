@@ -1,5 +1,7 @@
 import React from 'react';
 
+import Icon from '@components/ui/Icon';
+import Button from '@components/ui/Button';
 import StatsBadges from './StatsBadges';
 import CalendarGrid from './CalendarGrid';
 import { useAttendanceHistory } from './useAttendanceHistory';
@@ -29,21 +31,27 @@ function AttendanceHistoryPage() {
             <p className="text-gray-600 dark:text-gray-300 text-sm">Monthly attendance calendar</p>
           </div>
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
               onClick={handlePreviousMonth}
-              className="px-3 py-2 border rounded-md hover:bg-gray-50"
+              className="px-3 py-2 flex items-center justify-center"
             >
-              ←
-            </button>
+              <Icon name="chevron-left" className="w-4 h-4" />
+            </Button>
             <div className="font-semibold text-gray-800 min-w-[140px] text-center">
               {monthCursor.month + 1}/{monthCursor.year}
             </div>
-            <button
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
               onClick={handleNextMonth}
-              className="px-3 py-2 border rounded-md hover:bg-gray-50"
+              className="px-3 py-2 flex items-center justify-center"
             >
-              →
-            </button>
+              <Icon name="chevron-right" className="w-4 h-4" />
+            </Button>
           </div>
         </div>
 

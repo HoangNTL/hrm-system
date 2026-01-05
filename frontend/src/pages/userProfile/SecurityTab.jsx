@@ -1,6 +1,9 @@
 import React from 'react';
+import Button from '@components/ui/Button';
 
 export default function SecurityTab({ profile, onChangePasswordClick }) {
+  const isMustChange = profile?.must_change_password;
+
   return (
     <div className="space-y-1">
       {/* Password */}
@@ -8,14 +11,14 @@ export default function SecurityTab({ profile, onChangePasswordClick }) {
         <div className="text-sm text-secondary-600 dark:text-secondary-400">Password</div>
         <div className="col-span-2 flex items-center justify-between">
           <p className="text-sm font-medium text-secondary-900 dark:text-secondary-50">
-            {profile?.must_change_password ? '⚠ Change required' : 'Strong password'}
+            {isMustChange ? '⚠ Change required' : 'Strong password'}
           </p>
-          <button
+          <Button
             onClick={onChangePasswordClick}
-            className="px-4 py-1.5 rounded bg-primary-600 text-white hover:bg-primary-700 transition-colors text-sm font-medium"
+            size="sm"
           >
             Change Password
-          </button>
+          </Button>
         </div>
       </div>
     </div>

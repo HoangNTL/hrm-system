@@ -14,11 +14,11 @@ export const getStatusColor = (status) => {
 export const getStatusLabel = (status) => {
   switch (status) {
     case 'pending':
-      return '⏳ Chờ duyệt';
+      return 'Pending';
     case 'approved':
-      return '✅ Đã duyệt';
+      return 'Approved';
     case 'rejected':
-      return '❌ Bị từ chối';
+      return 'Rejected';
     default:
       return status;
   }
@@ -27,13 +27,13 @@ export const getStatusLabel = (status) => {
 export const getRequestTypeLabel = (type) => {
   switch (type) {
     case 'forgot_checkin':
-      return 'Quên check-in';
+      return 'Forgot check-in';
     case 'forgot_checkout':
-      return 'Quên check-out';
+      return 'Forgot check-out';
     case 'edit_time':
-      return 'Sửa giờ làm';
+      return 'Edit working time';
     case 'leave':
-      return 'Xin nghỉ';
+      return 'Leave request';
     default:
       return type;
   }
@@ -41,5 +41,5 @@ export const getRequestTypeLabel = (type) => {
 
 export const formatDateTime = (date) => {
   if (!date) return '--';
-  return new Date(date).toLocaleString('vi-VN');
+  return new Date(date).toLocaleString('en-US');
 };

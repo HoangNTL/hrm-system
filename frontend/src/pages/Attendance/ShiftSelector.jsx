@@ -1,4 +1,5 @@
 import React from 'react';
+import Select from '@components/ui/Select';
 import { getShiftTime } from './StaffUtils';
 
 export default function ShiftSelector({ shifts, selectedShiftId, shift, onShiftChange }) {
@@ -9,18 +10,18 @@ export default function ShiftSelector({ shifts, selectedShiftId, shift, onShiftC
       <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Work shift</h2>
       <div className="mb-4">
         <label className="block text-sm text-gray-600 dark:text-gray-300 mb-2">Choose shift:</label>
-        <select
+        <Select
+          name="shift"
           value={selectedShiftId || ''}
-          onChange={(e) => onShiftChange(parseInt(e.target.value))}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">-- Select shift --</option>
-          {shifts.map(s => (
-            <option key={s.id} value={s.id}>
-              {s.shift_name} ({getShiftTime(s.start_time)} - {getShiftTime(s.end_time)})
-            </option>
-          ))}
-        </select>
+          onChange={(e) => onShiftChange(e.target.value ? parseInt(e.target.value, 10) : null)}
+          options={[
+            { value: '', label: '-- Select shift --' },
+            ...shifts.map((s) => ({
+              value: String(s.id),
+              label: `${s.shift_name} (${getShiftTime(s.start_time)} - ${getShiftTime(s.end_time)})`,
+            })),
+          ]}
+        />
       </div>
 
       <div className="grid grid-cols-3 gap-4">

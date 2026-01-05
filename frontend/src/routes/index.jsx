@@ -17,7 +17,7 @@ import ReportsPage from '@/pages/reports';
 import UserProfilePage from '@/pages/userProfile';
 import AccessDeniedPage from '@/pages/accessDenied';
 import AppErrorBoundary from './AppErrorBoundary';
-import MyAttendanceRequestsPage from '@/pages/attendanceRequests';
+import AttendanceRequestsPage from '@/pages/attendanceRequests';
 import ApproveAttendanceRequestsPage from '@/pages/approveAttendanceRequests';
 
 export const router = createBrowserRouter([
@@ -135,7 +135,7 @@ export const router = createBrowserRouter([
         path: 'attendance-requests',
         element: (
           <ProtectedRoute allowedRoles={["STAFF"]}>
-            <MyAttendanceRequestsPage />
+            <AttendanceRequestsPage />
           </ProtectedRoute>
         ),
       },

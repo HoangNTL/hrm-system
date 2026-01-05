@@ -1,5 +1,7 @@
 import React from 'react';
 import Icon from '@components/ui/Icon';
+import Button from '@components/ui/Button';
+import Textarea from '@components/ui/Textarea';
 import { getRequestTypeLabel, formatDateTime } from './RequestUtils';
 
 export default function RequestList({
@@ -25,7 +27,7 @@ export default function RequestList({
     return (
       <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-8 text-center">
         <p className="text-gray-600 dark:text-gray-400">
-          Không có đơn nào chờ duyệt.
+          There are no requests pending approval.
         </p>
       </div>
     );
@@ -58,10 +60,10 @@ export default function RequestList({
                   </span>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {request.employee?.email} • Ngày: {new Date(request.requested_date).toLocaleDateString('vi-VN')}
+                  {request.employee?.email} • Date: {new Date(request.requested_date).toLocaleDateString('en-GB')}
                 </p>
                 <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
-                  Lý do: {request.reason}
+                  Reason: {request.reason}
                 </p>
               </div>
             </div>
@@ -79,7 +81,7 @@ export default function RequestList({
                 {request.new_check_in && (
                   <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                      Check-in mới
+                      New check-in
                     </p>
                     <p className="text-sm font-mono text-gray-900 dark:text-white">
                       {formatDateTime(request.new_check_in)}
@@ -90,7 +92,7 @@ export default function RequestList({
                 {request.new_check_out && (
                   <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                      Check-out mới
+                      New check-out
                     </p>
                     <p className="text-sm font-mono text-gray-900 dark:text-white">
                       {formatDateTime(request.new_check_out)}
@@ -100,7 +102,7 @@ export default function RequestList({
 
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    Phòng ban
+                    Department
                   </p>
                   <p className="text-sm text-gray-900 dark:text-white">
                     {request.employee?.department?.name || 'N/A'}
@@ -109,7 +111,7 @@ export default function RequestList({
 
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    Ngày gửi
+                    Submitted at
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {formatDateTime(request.created_at)}
@@ -119,44 +121,50 @@ export default function RequestList({
 
               {/* Notes Input */}
               <div>
-                <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">
-                  Ghi chú (tùy chọn)
-                </label>
-                <textarea
+                <Textarea
+                  label="Notes (optional)"
+                  name={`notes-${request.id}`}
+                  rows={2}
+                  placeholder="Enter notes..."
                   value={notes[request.id] || ''}
                   onChange={(e) => onUpdateNotes(request.id, e.target.value)}
-                  placeholder="Nhập ghi chú..."
-                  rows="2"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               {/* Action Buttons */}
               <div className="flex gap-2">
-                <button
+                <Button
+                  type="button"
                   onClick={() => onReject(request.id)}
                   disabled={actionLoading === request.id}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-lg font-semibold transition"
+                  variant="danger"
+                  fullWidth
+                  size="sm"
+                  className="flex items-center justify-center gap-2"
                 >
                   {actionLoading === request.id ? (
                     <Icon name="loader" className="w-4 h-4 animate-spin" />
                   ) : (
                     <Icon name="x" className="w-4 h-4" />
                   )}
-                  Từ chối
-                </button>
-                <button
+                  Reject
+                </Button>
+                <Button
+                  type="button"
                   onClick={() => onApprove(request.id)}
                   disabled={actionLoading === request.id}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg font-semibold transition"
+                  variant="success"
+                  fullWidth
+                  size="sm"
+                  className="flex items-center justify-center gap-2"
                 >
                   {actionLoading === request.id ? (
                     <Icon name="loader" className="w-4 h-4 animate-spin" />
                   ) : (
                     <Icon name="check" className="w-4 h-4" />
                   )}
-                  Duyệt
-                </button>
+                  Approve
+                </Button>
               </div>
             </div>
           )}

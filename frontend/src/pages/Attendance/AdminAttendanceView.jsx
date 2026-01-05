@@ -3,6 +3,10 @@ import AdminHeader from './AdminHeader';
 import SearchFilter from './SearchFilter';
 import EmployeeList from './EmployeeList';
 import { useAdminAttendance } from './useAdminAttendance';
+import Modal from '@components/ui/Modal';
+import Button from '@components/ui/Button';
+import Input from '@components/ui/Input';
+import Textarea from '@components/ui/Textarea';
 
 export default function AdminAttendanceView() {
   const {
@@ -65,85 +69,110 @@ export default function AdminAttendanceView() {
       </div>
 
       {/* Edit Modal */}
-      {editModal.isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Edit attendance</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Check-in</label>
-                <input
-                  type="datetime-local"
-                  value={editModal.checkIn}
-                  onChange={(e) => setEditModal({ ...editModal, checkIn: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Check-out</label>
-                <input
-                  type="datetime-local"
-                  value={editModal.checkOut}
-                  onChange={(e) => setEditModal({ ...editModal, checkOut: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Notes</label>
-                <textarea
-                  value={editModal.notes}
-                  onChange={(e) => setEditModal({ ...editModal, notes: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows="3"
-                />
-              </div>
-            </div>
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => setEditModal({ isOpen: false, record: null, checkIn: '', checkOut: '', notes: '' })}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveEdit}
-                disabled={loading}
-                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 transition"
-              >
-                {loading ? 'Saving...' : 'Save'}
-              </button>
-            </div>
-          </div>
+      <Modal
+        isOpen={editModal.isOpen}
+        onClose={() =>
+          setEditModal({ isOpen: false, record: null, checkIn: '', checkOut: '', notes: '' })
+        }
+        title="Edit attendance"
+        size="md"
+      >
+        <div className="space-y-4">
+          <Input
+            type="datetime-local"
+            name="checkIn"
+            label="Check-in"
+            value={editModal.checkIn}
+            onChange={(e) =>
+              setEditModal({ ...editModal, checkIn: e.target.value })
+            }
+          />
+          <Input
+            type="datetime-local"
+            name="checkOut"
+            label="Check-out"
+            value={editModal.checkOut}
+            onChange={(e) =>
+              setEditModal({ ...editModal, checkOut: e.target.value })
+            }
+          />
+          <Textarea
+            name="notes"
+            label="Notes"
+            rows={3}
+            value={editModal.notes}
+            onChange={(e) =>
+              setEditModal({ ...editModal, notes: e.target.value })
+            }
+          />
         </div>
-      )}
+        <div className="mt-6 flex gap-3">
+          <Button
+            type="button"
+            variant="secondary"
+            className="flex-1"
+            onClick={() =>
+              setEditModal({
+                isOpen: false,
+                record: null,
+                checkIn: '',
+                checkOut: '',
+                notes: '',
+              })
+            }
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            className="flex-1"
+            onClick={handleSaveEdit}
+            loading={loading}
+          >
+            Save
+          </Button>
+        </div>
+      </Modal>
 
       {/* Delete Confirmation Modal */}
-      {deleteConfirm.isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Confirm delete</h2>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to delete the attendance record for {deleteConfirm.employeeName}?
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setDeleteConfirm({ isOpen: false, recordId: null, employeeName: '' })}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                disabled={deleteLoading}
-                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-400 transition"
-              >
-                {deleteLoading ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
+      <Modal
+        isOpen={deleteConfirm.isOpen}
+        onClose={() =>
+          setDeleteConfirm({ isOpen: false, recordId: null, employeeName: '' })
+        }
+        title="Confirm delete"
+        size="md"
+      >
+        <p className="text-gray-600 dark:text-secondary-200 mb-6">
+          Are you sure you want to delete the attendance record for{' '}
+          <span className="font-semibold">{deleteConfirm.employeeName}</span>?
+        </p>
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            variant="secondary"
+            className="flex-1"
+            onClick={() =>
+              setDeleteConfirm({
+                isOpen: false,
+                recordId: null,
+                employeeName: '',
+              })
+            }
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            className="flex-1"
+            onClick={handleConfirmDelete}
+            loading={deleteLoading}
+          >
+            Delete
+          </Button>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }
-   

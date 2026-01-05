@@ -1,70 +1,34 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import { useSelector } from 'react-redux';
 import { selectUser } from '@/store/slices/userSlice';
-import { payrollAPI } from '@/api/payrollAPI';
-import { departmentAPI } from '@/api/departmentAPI';
 import Table from '@components/ui/Table';
 import Select from '@components/ui/Select';
+import Button from '@components/ui/Button';
+import Icon from '@components/ui/Icon';
+import Input from '@components/ui/Input';
+import { useHRPayrollPage, useStaffPayslip } from './usePayrollPage';
 
 function HRPayrollView() {
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const [departmentId, setDepartmentId] = useState('');
-  const [departments, setDepartments] = useState([]);
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const resp = await departmentAPI.getDepartments();
-        console.log('Departments API response:', resp);
-        // Normalize payload from backend: it may be { success, data: [...] } or { data: { items: [...] } }
-        let list = [];
-        if (Array.isArray(resp)) list = resp;
-        else if (Array.isArray(resp?.data?.items)) list = resp.data.items; // <-- FIX: Check items first
-        else if (Array.isArray(resp?.data)) list = resp.data;
-        else if (Array.isArray(resp?.data?.data)) list = resp.data.data;
-        else if (Array.isArray(resp?.records)) list = resp.records;
-        else list = [];
-        console.log('Normalized departments list:', list);
-        setDepartments(list);
-      } catch (e) {
-        console.error('Error loading departments:', e);
-        setDepartments([]);
-      }
-    })();
-  }, []);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      // Convert departmentId to number or leave undefined
-      const deptId = departmentId && departmentId !== '' ? parseInt(departmentId) : undefined;
-      const resp = await payrollAPI.getMonthly(year, month, deptId);
-      setRows(resp.data || resp || []);
-    } finally { setLoading(false); }
-  };
-
-  useEffect(() => { fetchData(); }, [year, month, departmentId]);
-
-  const totalNet = useMemo(() => rows.reduce((s, r) => s + (r.net || 0), 0), [rows]);
-
-  const handleExport = async () => {
-    const deptId = departmentId && departmentId !== '' ? parseInt(departmentId) : undefined;
-    const blob = await payrollAPI.exportMonthly(year, month, deptId);
-    const url = window.URL.createObjectURL(new Blob([blob]));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Payroll_${year}_${String(month).padStart(2, '0')}.xlsx`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  const {
+    year,
+    month,
+    departmentId,
+    departments,
+    rows,
+    loading,
+    totalNet,
+    setYear,
+    setMonth,
+    setDepartmentId,
+    handleExport,
+  } = useHRPayrollPage();
 
   return (
     <div className="p-4 md:p-8">
-      <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Payroll Management</h1>
-      <div className="flex flex-wrap gap-3 mb-4">
+      <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+        Payroll Management
+      </h1>
+      <div className="flex flex-wrap gap-3 mb-4 items-end">
         <Select
           label="Month"
           value={month}
@@ -101,6 +65,19 @@ function HRPayrollView() {
           ]}
           className="min-w-[200px]"
         />
+
+        <Button
+          variant="outline"
+          className="ml-auto flex items-center gap-2"
+          onClick={handleExport}
+        >
+          <span className="inline-flex items-center justify-center">
+            <span className="w-5 h-5">
+              <Icon name="file-spreadsheet" className="w-5 h-5" />
+            </span>
+          </span>
+          <span>Export</span>
+        </Button>
       </div>
 
       {loading ? (
@@ -127,7 +104,7 @@ function HRPayrollView() {
                 label: 'Department',
                 render: (_cell, row) => (
                   <span className="text-secondary-700 dark:text-secondary-300">
-                    {row.employee?.department?.name || row.employee?.department_name || ''}
+                    {row.employee?.department?.name || row.employee?.department_name || '-'}
                   </span>
                 ),
               },
@@ -184,39 +161,74 @@ function HRPayrollView() {
 }
 
 function StaffPayslipView() {
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const [data, setData] = useState(null);
+  const { year, month, data, loading, setYear, setMonth } = useStaffPayslip();
 
-  useEffect(()=>{
-    (async ()=>{
-      const resp = await payrollAPI.getPayslip(year, month);
-      setData(resp.data || resp);
-    })();
-  }, [year, month]);
-
-  if (!data) return <div className="p-6">Đang tải...</div>;
+  if (loading || !data) {
+    return (
+      <div className="p-6 flex items-center gap-2 text-gray-700 dark:text-gray-200">
+        <Icon name="loader" className="w-5 h-5 animate-spin" />
+        <span>Loading payslip...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-8">
-      <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Payslip for {month}/{year}</h1>
+      <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+        Payslip for {month}/{year}
+      </h1>
       <div className="flex gap-3 mb-4">
-        <select value={month} onChange={e=>setMonth(parseInt(e.target.value))} className="border rounded px-3 py-2">
-          {Array.from({length:12}, (_,i)=>i+1).map(m=> <option key={m} value={m}>{m}</option>)}
-        </select>
-        <input type="number" className="border rounded px-3 py-2 w-24" value={year} onChange={e=>setYear(parseInt(e.target.value)||year)} />
+        <Select
+          label="Month"
+          value={month}
+          onChange={(value) => setMonth(Number(value))}
+          options={Array.from({ length: 12 }, (_, i) => {
+            const m = i + 1;
+            return { value: m, label: `${m}` };
+          })}
+          className="w-32"
+        />
+
+        <Input
+          type="number"
+          label="Year"
+          className="w-28"
+          value={year}
+          onChange={(e) => setYear(parseInt(e.target.value) || year)}
+        />
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded shadow p-6 text-gray-900 dark:text-gray-100">
-        <div className="mb-3 font-semibold">{data.employee.full_name} ({data.employee.email})</div>
+        <div className="mb-3 font-semibold">
+          {data.employee.full_name} ({data.employee.email})
+        </div>
         <div className="grid grid-cols-2 gap-3">
-          <div>Department: <span className="font-medium">{data.employee.department || '—'}</span></div>
-          <div>Base salary: <span className="font-medium">{(data.contract?.salary ?? 0).toLocaleString()}</span></div>
-          <div>Working hours: <span className="font-medium">{data.totals.totalHours.toFixed(2)} h</span></div>
-          <div>Hourly rate: <span className="font-medium">{data.hourlyRate.toFixed(2)}</span></div>
-          <div>Late: <span className="font-medium">{data.totals.lateMinutes} mins</span></div>
-          <div>Absent: <span className="font-medium">{data.totals.absentCount} shifts</span></div>
-          <div className="col-span-2 mt-2">Net pay: <span className="font-bold text-indigo-400 dark:text-indigo-300">{data.net.toLocaleString()} đ</span></div>
+          <div>
+            Department: <span className="font-medium">{data.employee.department || '—'}</span>
+          </div>
+          <div>
+            Base salary:{' '}
+            <span className="font-medium">{(data.contract?.salary ?? 0).toLocaleString()}</span>
+          </div>
+          <div>
+            Working hours:{' '}
+            <span className="font-medium">{data.totals.totalHours.toFixed(2)} h</span>
+          </div>
+          <div>
+            Hourly rate: <span className="font-medium">{data.hourlyRate.toFixed(2)}</span>
+          </div>
+          <div>
+            Late: <span className="font-medium">{data.totals.lateMinutes} mins</span>
+          </div>
+          <div>
+            Absent: <span className="font-medium">{data.totals.absentCount} shifts</span>
+          </div>
+          <div className="col-span-2 mt-2">
+            Net pay:{' '}
+            <span className="font-bold text-indigo-400 dark:text-indigo-300">
+              {data.net.toLocaleString()} đ
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -226,6 +238,6 @@ function StaffPayslipView() {
 export default function PayrollPage() {
   const user = useSelector(selectUser);
   const role = user?.role;
-  if (role === 'STAFF') return <StaffPayslipView/>;
-  return <HRPayrollView/>;
+  if (role === 'STAFF') return <StaffPayslipView />;
+  return <HRPayrollView />;
 }

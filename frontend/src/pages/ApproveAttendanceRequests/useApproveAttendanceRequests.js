@@ -27,7 +27,7 @@ export function useApproveAttendanceRequests() {
       });
 
       console.log('getAllRequests response:', response.data);
-      
+
       if (response.data.ok) {
         const data = response.data.data || {};
         setRequests(data.requests || []);
@@ -35,7 +35,7 @@ export function useApproveAttendanceRequests() {
       }
     } catch (error) {
       console.error('Error fetching requests:', error);
-      toast.error('Lỗi khi lấy danh sách đơn');
+      toast.error('Failed to fetch requests');
     } finally {
       setLoading(false);
     }
@@ -49,13 +49,13 @@ export function useApproveAttendanceRequests() {
       });
 
       if (response.data.ok) {
-        toast.success('Duyệt đơn thành công');
+        toast.success('Request approved successfully');
         setExpandedId(null);
         setNotes((prev) => ({ ...prev, [requestId]: '' }));
         await fetchRequests();
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Lỗi khi duyệt đơn');
+      toast.error(error.response?.data?.message || 'Failed to approve request');
     } finally {
       setActionLoading(null);
     }
@@ -69,13 +69,13 @@ export function useApproveAttendanceRequests() {
       });
 
       if (response.data.ok) {
-        toast.success('Từ chối đơn thành công');
+        toast.success('Request rejected successfully');
         setExpandedId(null);
         setNotes((prev) => ({ ...prev, [requestId]: '' }));
         await fetchRequests();
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Lỗi khi từ chối đơn');
+      toast.error(error.response?.data?.message || 'Failed to reject request');
     } finally {
       setActionLoading(null);
     }

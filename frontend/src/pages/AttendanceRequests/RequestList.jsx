@@ -20,7 +20,7 @@ export default function RequestList({ requests, loading, expandedId, onToggleExp
     return (
       <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-8 text-center">
         <p className="text-gray-600 dark:text-gray-400">
-          Bạn chưa gửi đơn nào. Bấm "Gửi đơn mới" để bắt đầu.
+          You haven't submitted any requests yet. Click "New request" to create one.
         </p>
       </div>
     );
@@ -57,7 +57,7 @@ export default function RequestList({ requests, loading, expandedId, onToggleExp
                   </span>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Ngày: {new Date(request.requested_date).toLocaleDateString('vi-VN')}
+                  Date: {new Date(request.requested_date).toLocaleDateString('en-US')}
                 </p>
               </div>
             </div>
@@ -73,7 +73,7 @@ export default function RequestList({ requests, loading, expandedId, onToggleExp
             <div className="bg-gray-50 dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 p-4 space-y-3">
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  Loại yêu cầu
+                  Request type
                 </p>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
                   {getRequestTypeLabel(request.request_type)}
@@ -82,7 +82,7 @@ export default function RequestList({ requests, loading, expandedId, onToggleExp
 
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  Lý do
+                  Reason
                 </p>
                 <p className="text-sm text-gray-900 dark:text-gray-100">
                   {request.reason}
@@ -92,7 +92,7 @@ export default function RequestList({ requests, loading, expandedId, onToggleExp
               {request.new_check_in && (
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    Check-in mới
+                    New check-in
                   </p>
                   <p className="text-sm font-mono text-gray-900 dark:text-white">
                     {formatDateTime(request.new_check_in)}
@@ -103,7 +103,7 @@ export default function RequestList({ requests, loading, expandedId, onToggleExp
               {request.new_check_out && (
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    Check-out mới
+                    New check-out
                   </p>
                   <p className="text-sm font-mono text-gray-900 dark:text-white">
                     {formatDateTime(request.new_check_out)}
@@ -113,7 +113,7 @@ export default function RequestList({ requests, loading, expandedId, onToggleExp
 
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  Ngày gửi
+                  Submitted at
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {formatDateTime(request.created_at)}
@@ -124,7 +124,7 @@ export default function RequestList({ requests, loading, expandedId, onToggleExp
                 <>
                   <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                      Ngày xử lý
+                      Reviewed at
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {formatDateTime(request.reviewed_at)}
@@ -134,7 +134,7 @@ export default function RequestList({ requests, loading, expandedId, onToggleExp
                   {request.reviewer && (
                     <div>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                        Người xử lý
+                        Reviewer
                       </p>
                       <p className="text-sm text-gray-900 dark:text-white">
                         {request.reviewer.email}
@@ -145,7 +145,7 @@ export default function RequestList({ requests, loading, expandedId, onToggleExp
                   {request.notes && (
                     <div>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                        Ghi chú
+                        Notes
                       </p>
                       <p className="text-sm text-gray-900 dark:text-white">
                         {request.notes}

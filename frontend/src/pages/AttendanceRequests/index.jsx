@@ -1,12 +1,13 @@
 import React from 'react';
 import Icon from '@components/ui/Icon';
+import Button from '@components/ui/Button';
 import EditAttendanceModal from '@/components/EditAttendanceModal';
 import StatusFilter from './StatusFilter';
 import RequestList from './RequestList';
-import Pagination from './Pagination';
+import Pagination from '@components/ui/Pagination';
 import { useAttendanceRequests } from './useAttendanceRequests';
 
-export default function MyAttendanceRequestsPage() {
+export default function AttendanceRequestsPage() {
   const {
     // State
     requests,
@@ -34,19 +35,20 @@ export default function MyAttendanceRequestsPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Các đơn xin sửa chấm công
+              Attendance correction requests
             </h1>
             <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
-              Quản lý các đơn xin sửa chấm công của bạn
+              Manage your attendance correction requests.
             </p>
           </div>
-          <button
+          <Button
+            type="button"
             onClick={() => openModal()}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition"
+            className="flex items-center gap-2"
           >
             <Icon name="plus" className="w-5 h-5" />
-            Gửi đơn mới
-          </button>
+            <span>New request</span>
+          </Button>
         </div>
 
         {/* Filter */}
@@ -61,7 +63,16 @@ export default function MyAttendanceRequestsPage() {
         />
 
         {/* Pagination */}
-        <Pagination page={page} totalPages={totalPages} onPageChange={handlePageChange} />
+        {totalPages > 1 && (
+          <div className="mt-6">
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={requests.length}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        )}
       </div>
 
       {/* Modal */}
