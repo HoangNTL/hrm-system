@@ -57,8 +57,14 @@ class PayrollService {
         id: employee.id,
         full_name: employee.full_name,
         email: employee.email,
-        department: employee.department?.name || null,
-        position: employee.position?.name || null,
+        department: employee.department ? { 
+          id: employee.department.id,
+          name: employee.department.name 
+        } : null,
+        position: employee.position ? {
+          id: employee.position.id,
+          name: employee.position.name
+        } : null,
       },
       period: { year, month },
       contract: contract ? { id: contract.id, code: contract.code, salary } : null,
@@ -117,7 +123,7 @@ class PayrollService {
       sheet.addRow({
         employee: r.employee.full_name,
         email: r.employee.email,
-        department: r.employee.department || '',
+        department: r.employee.department?.name || '',
         hours: r.totals.totalHours,
         salary: r.contract?.salary ?? 0,
         rate: r.hourlyRate,

@@ -32,7 +32,7 @@ function HRPayrollView() {
         <Select
           label="Month"
           value={month}
-          onChange={(value) => setMonth(Number(value))}
+          onChange={(e) => setMonth(Number(e.target.value))}
           options={Array.from({ length: 12 }, (_, i) => {
             const m = i + 1;
             return { value: m, label: `${m}` };
@@ -43,7 +43,7 @@ function HRPayrollView() {
         <Select
           label="Year"
           value={year}
-          onChange={(value) => setYear(Number(value))}
+          onChange={(e) => setYear(Number(e.target.value))}
           options={Array.from({ length: 7 }, (_, i) => {
             const current = new Date().getFullYear();
             const y = current - 3 + i; // range: current-3 .. current+3
@@ -55,7 +55,7 @@ function HRPayrollView() {
         <Select
           label="Department"
           value={departmentId}
-          onChange={(value) => setDepartmentId(value)}
+          onChange={(e) => setDepartmentId(e.target.value)}
           options={[
             { value: '', label: 'All departments' },
             ...(Array.isArray(departments) ? departments : []).map((d) => ({
@@ -181,7 +181,7 @@ function StaffPayslipView() {
         <Select
           label="Month"
           value={month}
-          onChange={(value) => setMonth(Number(value))}
+          onChange={(e) => setMonth(Number(e.target.value))}
           options={Array.from({ length: 12 }, (_, i) => {
             const m = i + 1;
             return { value: m, label: `${m}` };
@@ -204,7 +204,7 @@ function StaffPayslipView() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            Department: <span className="font-medium">{data.employee.department || '—'}</span>
+            Department: <span className="font-medium">{data.employee.department?.name || data.employee.department || '—'}</span>
           </div>
           <div>
             Base salary:{' '}

@@ -201,14 +201,21 @@ export const userService = {
     const plainPassword = password || this._generatePassword();
     const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
+    const data = {
+      email,
+      password_hash: hashedPassword,
+      role: normalizedRole,
+    };
+
+    // Connect to employee if provided
+    if (employee_id) {
+      data.employee = {
+        connect: { id: employee_id }
+      };
+    }
+
     const user = await tx.user.create({
-      data: {
-        email,
-        password_hash: hashedPassword,
-        role: normalizedRole,
-        employee_id: employee_id || null,
-        email_verified: true,
-      },
+      data,
       select: {
         id: true,
         email: true,

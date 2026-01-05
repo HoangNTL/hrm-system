@@ -164,21 +164,44 @@ export function useAdminAttendance() {
   const allEmployees = groupByEmployee();
   const today = new Date().toISOString().slice(0, 10);
 
+  console.log('👥 All employees:', allEmployees);
+  console.log('🔍 Search text:', searchText);
+  console.log('🏢 Selected department:', selectedDepartment);
+
   // Get unique departments
   const departments = Array.from(new Set(
     allEmployees
-      .map(emp => emp.employee.department?.name || emp.employee.department?.department_name || 'N/A')
+      .map(emp => {
+        const dept = emp.employee.department;
+        const deptName = dept?.name || dept?.department_name || null;
+        console.log('📋 Employee dept:', emp.employee.full_name, '→', deptName);
+        return deptName;
+      })
       .filter(Boolean)
   )).sort();
+
+  console.log('📚 All departments:', departments);
 
   // Filter employees by search and department
   const filteredEmployees = allEmployees.filter(emp => {
     const matchesSearch = emp.employee.full_name.toLowerCase().includes(searchText.toLowerCase()) ||
                           emp.employee.email.toLowerCase().includes(searchText.toLowerCase());
-    const empDept = emp.employee.department?.name || emp.employee.department?.department_name || 'N/A';
-    const matchesDept = !selectedDepartment || empDept === selectedDepartment;
+    
+    const empDept = emp.employee.department?.name || emp.employee.department?.department_name;
+    const matchesDept = !selectedDepartment || selectedDepartment === '' || empDept === selectedDepartment;
+    
+    console.log(`✓ Filter ${emp.employee.full_name}:`, {
+      empDept,
+      selectedDepartment,
+      matchesSearch,
+      matchesDept,
+      result: matchesSearch && matchesDept
+    });
+    
     return matchesSearch && matchesDept;
   });
+
+  console.log('✅ Filtered employees:', filteredEmployees.length);
 
   return {
     // State
