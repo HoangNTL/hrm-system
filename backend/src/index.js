@@ -1,85 +1,20 @@
 // Set timezone to Vietnam
 process.env.TZ = 'Asia/Ho_Chi_Minh';
 
-import express from 'express';
 import { config } from 'dotenv';
-import cors from 'cors';
-// import https from 'https';
-// import fs from 'fs';
-import cookieParser from 'cookie-parser';
-// import path from 'path';
-
-import { connectDB, disconnectDB } from './config/db.js';
-import authRoutes from './routes/auth.routes.js';
-import userRoutes from './routes/user.routes.js';
-import employeeRoutes from './routes/employee.routes.js';
-import departmentRoutes from './routes/department.routes.js';
-import positionRoutes from './routes/position.routes.js';
-import contractRoutes from './routes/contract.routes.js';
-import attendanceRoutes from './routes/attendance.routes.js';
-import attendanceRequestRoutes from './routes/attendanceRequest.routes.js';
-import payrollRoutes from './routes/payroll.routes.js';
-import { errorHandler } from './middlewares/errorHandler.js';
+import app from './app.js';
 import logger from './utils/logger.js';
-import shiftRoutes from './routes/shift.routes.js';
+import { connectDB, disconnectDB } from './config/db.js';
 
 config();
 connectDB();
 
-const app = express();
 const PORT = process.env.PORT;
 // HTTPS options
 // const options = {
 //   key: fs.readFileSync(path.join(process.cwd(), 'certs', 'localhost-key.pem')),
 //   cert: fs.readFileSync(path.join(process.cwd(), 'certs', 'localhost.pem')),
 // };
-
-const FRONTEND_ORIGIN = process.env.FRONTEND_URL || 'http://localhost:5173';
-const corsOrigins = [
-  FRONTEND_ORIGIN,
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:3000',
-];
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || corsOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  }),
-);
-
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
-// Routes
-app.get('/', (req, res) => {
-  res.send('HRM System API is running');
-});
-
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/employees', employeeRoutes);
-app.use('/api/departments', departmentRoutes);
-app.use('/api/positions', positionRoutes);
-app.use('/api/contracts', contractRoutes);
-app.use('/api/attendance', attendanceRoutes);
-app.use('/api/attendance-requests', attendanceRequestRoutes);
-app.use('/api/payroll', payrollRoutes);
-app.use('/api/shifts', shiftRoutes);
-
-// Error handling middleware
-app.use(errorHandler);
 
 const server = app.listen(PORT, () => {
   logger.info(`Server is running on http://localhost:${PORT}`);
