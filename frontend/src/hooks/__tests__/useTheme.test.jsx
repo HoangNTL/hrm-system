@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { ThemeProvider } from '@context/ThemeContext.jsx';
+import { ThemeProvider } from '../../context/ThemeContext.jsx';
 import { useTheme } from '../useTheme';
 
 describe('useTheme', () => {

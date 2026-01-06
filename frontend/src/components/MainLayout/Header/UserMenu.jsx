@@ -15,7 +15,7 @@ function UserMenu() {
   const [open, setOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [profile, setProfile] = useState(null);
-  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [, setLoadingProfile] = useState(false);
   const [pwdLoading, setPwdLoading] = useState(false);
   const [pwdForm, setPwdForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [message, setMessage] = useState('');
