@@ -1,24 +1,24 @@
 import { createBrowserRouter } from 'react-router-dom';
-import MainLayout from '@/components/MainLayout/index';
-import LoginPage from '@/pages/auth/LoginPage';
-import DashboardPage from '@/pages/dashboard/index';
-import EmployeesPage from '@/pages/employees/index';
-import DepartmentsPage from '@/pages/departments/index';
-import ContractsPage from '@/pages/contracts/index';
-import UsersPage from '@/pages/users/index';
-import AttendancePage from '@/pages/attendance/index';
-import AttendanceHistoryPage from '@/pages/attendanceHistory/index';
-import PayrollPage from '@/pages/payroll/index';
-import ProtectedRoute from './ProtectedRoute';
-import NotFoundPage from '@/pages/notFound/index';
-import PositionsPage from '@/pages/positions/index';
-import ShiftsPage from '@/pages/shifts/index';
-import ReportsPage from '@/pages/reports/index';
-import UserProfilePage from '@/pages/userProfile/index';
-import AccessDeniedPage from '@/pages/accessDenied/index';
-import AppErrorBoundary from './AppErrorBoundary';
-import AttendanceRequestsPage from '@/pages/attendanceRequests/index';
-import ApproveAttendanceRequestsPage from '@/pages/approveAttendanceRequests/index';
+import MainLayout from '@/components/MainLayout/index.jsx';
+import LoginPage from '@/pages/auth/LoginPage.jsx';
+import DashboardPage from '@/pages/dashboard/index.jsx';
+import EmployeesPage from '@/pages/employees/index.jsx';
+import DepartmentsPage from '@/pages/departments/index.jsx';
+import ContractsPage from '@/pages/contracts/index.jsx';
+import UsersPage from '@/pages/users/index.jsx';
+import AttendancePage from '@/pages/attendance/index.jsx';
+import AttendanceHistoryPage from '@/pages/attendanceHistory/index.jsx';
+import PayrollPage from '@/pages/payroll/index.jsx';
+import ProtectedRoute from './ProtectedRoute.jsx';
+import NotFoundPage from '@/pages/notFound/index.jsx';
+import PositionsPage from '@/pages/positions/index.jsx';
+import ShiftsPage from '@/pages/shifts/index.jsx';
+import ReportsPage from '@/pages/reports/index.jsx';
+import UserProfilePage from '@/pages/userProfile/index.jsx';
+import AccessDeniedPage from '@/pages/accessDenied/index.jsx';
+import AppErrorBoundary from './AppErrorBoundary.jsx';
+import AttendanceRequestsPage from '@/pages/attendanceRequests/index.jsx';
+import ApproveAttendanceRequestsPage from '@/pages/approveAttendanceRequests/index.jsx';
 
 export const router = createBrowserRouter([
   {

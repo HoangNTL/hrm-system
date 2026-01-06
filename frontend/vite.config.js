@@ -12,7 +12,8 @@ export default defineConfig({
   plugins: [
     react(),
   ],
- resolve: {
+  resolve: {
+    extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@api': path.resolve(__dirname, './src/api'),
