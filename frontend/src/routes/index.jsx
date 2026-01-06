@@ -1,24 +1,24 @@
 import { createBrowserRouter } from 'react-router-dom';
-import MainLayout from '@/components/MainLayout';
+import MainLayout from '@/components/MainLayout/index';
 import LoginPage from '@/pages/auth/LoginPage';
-import DashboardPage from '@/pages/dashBoard';
-import EmployeesPage from '@/pages/employees';
-import DepartmentsPage from '@/pages/departments';
-import ContractsPage from '@/pages/contracts';
-import UsersPage from '@/pages/users';
-import AttendancePage from '@/pages/attendance';
-import AttendanceHistoryPage from '@/pages/attendanceHistory';
-import PayrollPage from '@/pages/payroll';
+import DashboardPage from '@/pages/dashBoard/index';
+import EmployeesPage from '@/pages/employees/index';
+import DepartmentsPage from '@/pages/departments/index';
+import ContractsPage from '@/pages/contracts/index';
+import UsersPage from '@/pages/users/index';
+import AttendancePage from '@/pages/attendance/index';
+import AttendanceHistoryPage from '@/pages/attendanceHistory/index';
+import PayrollPage from '@/pages/payroll/index';
 import ProtectedRoute from './ProtectedRoute';
-import NotFoundPage from '@/pages/notFound';
-import PositionsPage from '@/pages/positions';
-import ShiftsPage from '@/pages/shifts';
-import ReportsPage from '@/pages/reports';
-import UserProfilePage from '@/pages/userProfile';
-import AccessDeniedPage from '@/pages/accessDenied';
+import NotFoundPage from '@/pages/notFound/index';
+import PositionsPage from '@/pages/positions/index';
+import ShiftsPage from '@/pages/shifts/index';
+import ReportsPage from '@/pages/reports/index';
+import UserProfilePage from '@/pages/userProfile/index';
+import AccessDeniedPage from '@/pages/accessDenied/index';
 import AppErrorBoundary from './AppErrorBoundary';
-import AttendanceRequestsPage from '@/pages/attendanceRequests';
-import ApproveAttendanceRequestsPage from '@/pages/approveAttendanceRequests';
+import AttendanceRequestsPage from '@/pages/attendanceRequests/index';
+import ApproveAttendanceRequestsPage from '@/pages/approveAttendanceRequests/index';
 
 export const router = createBrowserRouter([
   {
@@ -46,7 +46,7 @@ export const router = createBrowserRouter([
       {
         path: 'attendance',
         element: (
-          <ProtectedRoute allowedRoles={["STAFF", "ADMIN", "HR"]}>
+          <ProtectedRoute allowedRoles={['STAFF', 'ADMIN', 'HR']}>
             <AttendancePage />
           </ProtectedRoute>
         ),
@@ -54,7 +54,7 @@ export const router = createBrowserRouter([
       {
         path: 'attendance-history',
         element: (
-          <ProtectedRoute allowedRoles={["STAFF"]}>
+          <ProtectedRoute allowedRoles={['STAFF']}>
             <AttendanceHistoryPage />
           </ProtectedRoute>
         ),
@@ -62,7 +62,7 @@ export const router = createBrowserRouter([
       {
         path: 'payroll',
         element: (
-          <ProtectedRoute allowedRoles={["STAFF", "ADMIN", "HR"]}>
+          <ProtectedRoute allowedRoles={['STAFF', 'ADMIN', 'HR']}>
             <PayrollPage />
           </ProtectedRoute>
         ),
@@ -70,7 +70,7 @@ export const router = createBrowserRouter([
       {
         path: 'employees',
         element: (
-          <ProtectedRoute allowedRoles={["ADMIN", "HR"]}>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
             <EmployeesPage />
           </ProtectedRoute>
         ),
@@ -78,7 +78,7 @@ export const router = createBrowserRouter([
       {
         path: 'positions',
         element: (
-          <ProtectedRoute allowedRoles={["ADMIN", "HR"]}>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
             <PositionsPage />
           </ProtectedRoute>
         ),
@@ -86,7 +86,7 @@ export const router = createBrowserRouter([
       {
         path: 'departments',
         element: (
-          <ProtectedRoute allowedRoles={["ADMIN", "HR"]}>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
             <DepartmentsPage />
           </ProtectedRoute>
         ),
@@ -94,7 +94,7 @@ export const router = createBrowserRouter([
       {
         path: 'contracts',
         element: (
-          <ProtectedRoute allowedRoles={["ADMIN", "HR"]}>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
             <ContractsPage />
           </ProtectedRoute>
         ),
@@ -102,7 +102,7 @@ export const router = createBrowserRouter([
       {
         path: 'users',
         element: (
-          <ProtectedRoute allowedRoles={["ADMIN"]}>
+          <ProtectedRoute allowedRoles={['ADMIN']}>
             <UsersPage />
           </ProtectedRoute>
         ),
@@ -110,7 +110,7 @@ export const router = createBrowserRouter([
       {
         path: 'reports',
         element: (
-          <ProtectedRoute allowedRoles={["ADMIN", "HR"]}>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
             <ReportsPage />
           </ProtectedRoute>
         ),
@@ -126,7 +126,7 @@ export const router = createBrowserRouter([
       {
         path: 'shifts',
         element: (
-          <ProtectedRoute allowedRoles={["ADMIN", "HR"]}>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
             <ShiftsPage />
           </ProtectedRoute>
         ),
@@ -134,7 +134,7 @@ export const router = createBrowserRouter([
       {
         path: 'attendance-requests',
         element: (
-          <ProtectedRoute allowedRoles={["STAFF"]}>
+          <ProtectedRoute allowedRoles={['STAFF']}>
             <AttendanceRequestsPage />
           </ProtectedRoute>
         ),
@@ -142,7 +142,7 @@ export const router = createBrowserRouter([
       {
         path: 'approve-attendance-requests',
         element: (
-          <ProtectedRoute allowedRoles={["ADMIN", "HR"]}>
+          <ProtectedRoute allowedRoles={['ADMIN', 'HR']}>
             <ApproveAttendanceRequestsPage />
           </ProtectedRoute>
         ),
