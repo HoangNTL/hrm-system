@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mocks
-vi.mock('../src/config/db.js', () => {
+vi.mock('../../src/config/db.js', () => {
   return {
     prisma: {
       user: {
@@ -25,21 +25,21 @@ vi.mock('jsonwebtoken', () => ({
   },
 }));
 
-vi.mock('../src/services/token.service.js', () => ({
+vi.mock('../../src/services/token.service.js', () => ({
   tokenService: {
     generateAccessToken: vi.fn(() => 'access-token'),
     generateRefreshToken: vi.fn(() => 'refresh-token'),
   },
 }));
 
-import { prisma } from '../src/config/db.js';
+import { prisma } from '../../src/config/db.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { tokenService } from '../src/services/token.service.js';
+import { tokenService } from '../../src/services/token.service.js';
 
-import { authService } from '../src/services/auth.service.js';
-import ApiError from '../src/utils/ApiError.js';
-import { ERROR_CODES } from '../src/utils/errorCodes.js';
+import { authService } from '../../src/services/auth.service.js';
+import ApiError from '../../src/utils/ApiError.js';
+import { ERROR_CODES } from '../../src/utils/errorCodes.js';
 
 beforeEach(() => {
   vi.clearAllMocks();

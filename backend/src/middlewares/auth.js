@@ -28,7 +28,7 @@ export const verifyToken = (req, res, next) => {
 };
 
 // Role-based access control middleware
-// roles: ADMIN, MANAGER, STAFF
+// roles: ADMIN, HR, STAFF
 export const verifyRole = (roles = []) => {
   return (req, res, next) => {
     if (!req.user) throw new ApiError(ERROR_CODES.UNAUTHORIZED, 'Unauthorized');

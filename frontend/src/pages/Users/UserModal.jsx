@@ -91,7 +91,6 @@ export default function UserModal({
     } catch (error) {
       if (error?.errors) setFieldErrors(error.errors);
       setGlobalError(error.message || 'Action failed');
-      toast.error(error.message || 'Action failed');
     } finally {
       setLoading(false);
     }

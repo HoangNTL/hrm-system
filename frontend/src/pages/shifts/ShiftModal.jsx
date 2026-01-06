@@ -86,10 +86,8 @@ export default function ShiftModal({
       console.error(`${isEditMode ? 'Update' : 'Create'} shift error:`, error);
       if (error.errors) {
         setFieldErrors(error.errors);
-      } else {
-        setGlobalError(error.message || 'Failed to save shift');
-        toast.error(error.message || 'Failed to save shift');
       }
+      setGlobalError(error.message || 'Failed to save shift');
     } finally {
       setFormLoading(false);
     }

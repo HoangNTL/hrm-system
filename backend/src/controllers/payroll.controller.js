@@ -1,5 +1,6 @@
 import payrollService from '../services/payroll.service.js';
 import logger from '../utils/logger.js';
+import { ErrorMessages } from '../utils/errorMessages.js';
 
 // Convert to function-based handlers with named exports
 export const getMonthly = async (req, res) => {
@@ -19,7 +20,7 @@ export const getMonthly = async (req, res) => {
     logger.error('Get monthly payroll error:', error);
     return res
       .status(500)
-      .json({ success: false, message: error.message || 'Payroll error' });
+      .json({ success: false, message: ErrorMessages.PAYROLL.FETCH_FAILED });
   }
 };
 
@@ -38,7 +39,7 @@ export const getPayslip = async (req, res) => {
     logger.error('Get payslip error:', error);
     return res
       .status(500)
-      .json({ success: false, message: error.message || 'Payslip error' });
+      .json({ success: false, message: ErrorMessages.PAYROLL.PAYSLIP_FAILED });
   }
 };
 
@@ -66,6 +67,6 @@ export const exportMonthly = async (req, res) => {
     logger.error('Export payroll error:', error);
     return res
       .status(500)
-      .json({ success: false, message: error.message || 'Export error' });
+      .json({ success: false, message: ErrorMessages.PAYROLL.EXPORT_FAILED });
   }
 };

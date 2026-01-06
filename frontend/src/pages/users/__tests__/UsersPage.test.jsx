@@ -1,45 +1,52 @@
 import { render, screen } from '@testing-library/react';
 import UsersPage from '..';
+import { useUsersPage } from '../useUsersPage';
 
 vi.mock('../useUsersPage', () => ({
-  useUsersPage: () => ({
-    // state
-    users: [{ id: 1, email: 'user1@example.com', is_locked: false }],
-    employeesWithoutUser: [],
-    loading: false,
-    search: '',
-    roleFilter: '',
-    pagination: { page: 1, total: 1, totalPages: 1 },
-    selectedUsers: [],
-    isModalOpen: false,
-    isQuickViewOpen: false,
-    quickViewUser: null,
-    resetPasswordLoading: false,
-    toggleLockLoading: false,
-    hasActiveFilters: false,
-    roleOptions: [
-      { value: '', label: 'All roles' },
-      { value: 'ADMIN', label: 'Admin' },
-    ],
-
-    // handlers
-    handleSearch: vi.fn(),
-    handleRoleFilterChange: vi.fn(),
-    handleClearFilters: vi.fn(),
-    handlePageChange: vi.fn(),
-    handleRowSelect: vi.fn(),
-    handleSelectAll: vi.fn(),
-    handleRowDoubleClick: vi.fn(),
-    handleAdd: vi.fn(),
-    handleResetPassword: vi.fn(),
-    handleToggleLock: vi.fn(),
-    handleModalSuccess: vi.fn(),
-    handleModalClose: vi.fn(),
-    handleQuickViewClose: vi.fn(),
-  }),
+  useUsersPage: vi.fn(),
 }));
 
+const createMockHookReturn = (overrides = {}) => ({
+  // state
+  users: [{ id: 1, email: 'user1@example.com', is_locked: false }],
+  employeesWithoutUser: [],
+  loading: false,
+  search: '',
+  roleFilter: '',
+  pagination: { page: 1, total: 1, totalPages: 1 },
+  selectedUsers: [],
+  isModalOpen: false,
+  isQuickViewOpen: false,
+  quickViewUser: null,
+  resetPasswordLoading: false,
+  toggleLockLoading: false,
+  hasActiveFilters: false,
+  roleOptions: [
+    { value: '', label: 'All roles' },
+    { value: 'ADMIN', label: 'Admin' },
+  ],
+
+  // handlers
+  handleSearch: vi.fn(),
+  handleRoleFilterChange: vi.fn(),
+  handleClearFilters: vi.fn(),
+  handlePageChange: vi.fn(),
+  handleRowSelect: vi.fn(),
+  handleSelectAll: vi.fn(),
+  handleRowDoubleClick: vi.fn(),
+  handleAdd: vi.fn(),
+  handleResetPassword: vi.fn(),
+  handleToggleLock: vi.fn(),
+  handleModalSuccess: vi.fn(),
+  handleModalClose: vi.fn(),
+  handleQuickViewClose: vi.fn(),
+  ...overrides,
+});
+
 describe('UsersPage', () => {
+  beforeEach(() => {
+    vi.mocked(useUsersPage).mockReturnValue(createMockHookReturn());
+  });
   it('renders header and actions', () => {
     render(<UsersPage />);
 
@@ -81,48 +88,14 @@ describe('UsersPage', () => {
   });
 
   it('enables Reset Password when exactly one user is selected', () => {
-    // Re-mock hook with one selected user
-    vi.doMock('../useUsersPage', () => ({
-      useUsersPage: () => ({
-        users: [{ id: 1, email: 'user1@example.com', is_locked: false }],
-        employeesWithoutUser: [],
-        loading: false,
-        search: '',
-        roleFilter: '',
-        pagination: { page: 1, total: 1, totalPages: 1 },
+    // Mock hook with one selected user
+    vi.mocked(useUsersPage).mockReturnValue(
+      createMockHookReturn({
         selectedUsers: [{ id: 1, email: 'user1@example.com', is_locked: false }],
-        isModalOpen: false,
-        isQuickViewOpen: false,
-        quickViewUser: null,
-        resetPasswordLoading: false,
-        toggleLockLoading: false,
-        hasActiveFilters: false,
-        roleOptions: [
-          { value: '', label: 'All roles' },
-          { value: 'ADMIN', label: 'Admin' },
-        ],
-
-        // handlers as no-op
-        handleSearch: vi.fn(),
-        handleRoleFilterChange: vi.fn(),
-        handleClearFilters: vi.fn(),
-        handlePageChange: vi.fn(),
-        handleRowSelect: vi.fn(),
-        handleSelectAll: vi.fn(),
-        handleRowDoubleClick: vi.fn(),
-        handleAdd: vi.fn(),
-        handleResetPassword: vi.fn(),
-        handleToggleLock: vi.fn(),
-        handleModalSuccess: vi.fn(),
-        handleModalClose: vi.fn(),
-        handleQuickViewClose: vi.fn(),
       }),
-    }));
+    );
 
-    // Need to re-import after doMock
-    const { default: UsersPageWithSelected } = require('..');
-
-    render(<UsersPageWithSelected />);
+    render(<UsersPage />);
 
     const resetButton = screen.getByRole('button', { name: /reset password/i });
     expect(resetButton).not.toBeDisabled();

@@ -7,11 +7,6 @@ export const departmentAPI = {
     return response.data;
   },
 
-  async getDepartmentById(id) {
-    const response = await apiClient.get(`/departments/${id}`);
-    return response.data;
-  },
-
   async createDepartment(departmentData) {
     const response = await apiClient.post('/departments', departmentData);
     return response.data;

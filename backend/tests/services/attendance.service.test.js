@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock prisma used by attendance service
-vi.mock('../src/config/db.js', () => ({
+vi.mock('../../src/config/db.js', () => ({
   prisma: {
     shift: {
       findUnique: vi.fn(),
@@ -18,15 +18,15 @@ vi.mock('../src/config/db.js', () => ({
   },
 }));
 
-vi.mock('../src/utils/logger.js', () => ({
+vi.mock('../../src/utils/logger.js', () => ({
   default: {
     info: vi.fn(),
     error: vi.fn(),
   },
 }));
 
-import { prisma } from '../src/config/db.js';
-import attendanceService from '../src/services/attendance.service.js';
+import { prisma } from '../../src/config/db.js';
+import attendanceService from '../../src/services/attendance.service.js';
 
 beforeEach(() => {
   vi.clearAllMocks();

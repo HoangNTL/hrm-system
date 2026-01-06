@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../src/config/db.js', () => ({
+vi.mock('../../src/config/db.js', () => ({
     prisma: {
         user: {
             findMany: vi.fn(),
@@ -26,8 +26,8 @@ vi.mock('crypto', () => ({
     },
 }));
 
-import { prisma } from '../src/config/db.js';
-import { userService } from '../src/services/user.service.js';
+import { prisma } from '../../src/config/db.js';
+import { userService } from '../../src/services/user.service.js';
 
 beforeEach(() => {
     vi.clearAllMocks();

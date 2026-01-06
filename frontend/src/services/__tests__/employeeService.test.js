@@ -4,7 +4,6 @@ import { employeeAPI } from '@api/employeeAPI';
 vi.mock('@api/employeeAPI', () => ({
     employeeAPI: {
         getEmployees: vi.fn(),
-        getEmployeeById: vi.fn(),
         createEmployee: vi.fn(),
         updateEmployee: vi.fn(),
         deleteEmployee: vi.fn(),
@@ -33,7 +32,7 @@ describe('employeeService', () => {
         });
     });
 
-    it('getEmployees throws normalized error on failure', async () => {
+    it('getEmployees throws error from API on failure', async () => {
         const error = {
             message: 'Failed to fetch employees',
             status: 500,
@@ -42,20 +41,7 @@ describe('employeeService', () => {
 
         employeeAPI.getEmployees.mockRejectedValue(error);
 
-        await expect(employeeService.getEmployees()).rejects.toEqual({
-            message: 'Failed to fetch employees',
-            status: 500,
-            errors: { general: ['error'] },
-        });
-    });
-
-    it('getEmployeeById returns employee data', async () => {
-        employeeAPI.getEmployeeById.mockResolvedValue({
-            data: { employee: { id: 1, name: 'Emp 1' } },
-        });
-
-        const result = await employeeService.getEmployeeById(1);
-        expect(result).toEqual({ id: 1, name: 'Emp 1' });
+        await expect(employeeService.getEmployees()).rejects.toEqual(error);
     });
 
     it('createEmployee returns response data', async () => {

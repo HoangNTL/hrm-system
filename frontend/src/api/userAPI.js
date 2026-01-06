@@ -11,11 +11,6 @@ export const userAPI = {
     return response.data;
   },
 
-  async getUserStats() {
-    const response = await apiClient.get('/users/stats');
-    return response.data;
-  },
-
   async resetPassword(id) {
     const response = await apiClient.post(`/users/${id}/reset-password`);
     return response.data;
@@ -23,11 +18,6 @@ export const userAPI = {
 
   async toggleLock(id) {
     const response = await apiClient.patch(`/users/${id}/toggle-lock`);
-    return response.data;
-  },
-
-  async bulkDelete(ids) {
-    const response = await apiClient.post('/users/bulk-delete', { ids });
     return response.data;
   },
 

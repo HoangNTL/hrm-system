@@ -39,7 +39,8 @@ export default function ContractModal({
   const validateForm = () => {
     const errors = {};
     if (!formData.code?.trim()) errors.code = 'Contract code is required';
-    if (!formData.employee_id || Number(formData.employee_id) <= 0) errors.employee_id = 'Valid employee is required';
+    if (!formData.employee_id || Number(formData.employee_id) <= 0)
+      errors.employee_id = 'Valid employee is required';
     if (!formData.contract_type) errors.contract_type = 'Contract type is required';
     if (!formData.status) errors.status = 'Status is required';
     if (!formData.start_date) errors.start_date = 'Start date is required';
@@ -85,7 +86,6 @@ export default function ContractModal({
     } catch (error) {
       if (error.errors) setFieldErrors(error.errors);
       setGlobalError(error.message || `Failed to ${isEditMode ? 'update' : 'create'} contract`);
-      toast.error(error.message || `Failed to ${isEditMode ? 'update' : 'create'} contract`);
     } finally {
       setFormLoading(false);
     }

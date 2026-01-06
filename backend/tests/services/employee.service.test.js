@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../src/config/db.js', () => ({
+vi.mock('../../src/config/db.js', () => ({
   prisma: {
     $transaction: vi.fn(async (fn) => fn(prisma)),
     employee: {
@@ -17,7 +17,7 @@ vi.mock('../src/config/db.js', () => ({
   },
 }));
 
-vi.mock('../src/services/user.service.js', () => ({
+vi.mock('../../src/services/user.service.js', () => ({
   userService: {
     create: vi.fn(async ({ email, employee_id, role }) => ({
       user: { id: 99, email, role },
@@ -26,9 +26,9 @@ vi.mock('../src/services/user.service.js', () => ({
   },
 }));
 
-import { prisma } from '../src/config/db.js';
-import { userService } from '../src/services/user.service.js';
-import { employeeService } from '../src/services/employee.service.js';
+import { prisma } from '../../src/config/db.js';
+import { userService } from '../../src/services/user.service.js';
+import { employeeService } from '../../src/services/employee.service.js';
 
 beforeEach(() => vi.clearAllMocks());
 

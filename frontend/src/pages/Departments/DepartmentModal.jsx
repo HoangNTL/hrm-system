@@ -101,7 +101,6 @@ export default function DepartmentModal({
       }
 
       setGlobalError(error.message || `Failed to ${isEditMode ? 'update' : 'create'} department`);
-      toast.error(error.message || `Failed to ${isEditMode ? 'update' : 'create'} department`);
     } finally {
       setFormLoading(false);
     }

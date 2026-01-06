@@ -1,6 +1,7 @@
 import attendanceService from '../services/attendance.service.js';
 import logger from '../utils/logger.js';
 import { prisma } from '../config/db.js';
+import { ErrorMessages } from '../utils/errorMessages.js';
 
 // Convert to function-based handlers with named exports
 export const getShifts = async (req, res) => {
@@ -323,8 +324,7 @@ export const update = async (req, res) => {
     logger.error('Update attendance error:', error);
     return res.status(500).json({
       success: false,
-      message: error.message || 'Lỗi khi cập nhật chấm công',
-      error: error.message,
+      message: ErrorMessages.ATTENDANCE.UPDATE_FAILED,
     });
   }
 };
@@ -352,8 +352,7 @@ export const remove = async (req, res) => {
     logger.error('Delete attendance error:', error);
     return res.status(500).json({
       success: false,
-      message: error.message || 'Lỗi khi xóa bản ghi chấm công',
-      error: error.message,
+      message: ErrorMessages.ATTENDANCE.DELETE_FAILED,
     });
   }
 };

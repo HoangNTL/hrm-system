@@ -3,13 +3,11 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import Sidebar from './SideBar';
 import Header from './Header/index';
+import PageErrorBoundary from '@/components/PageErrorBoundary';
 import { useTheme } from '@hooks/useTheme';
 import { selectSidebarCollapsed, toggleSidebar } from '@/store/slices/uiSlice';
 import { useEffect } from 'react';
-import {
-  refreshAccessTokenAsync,
-  selectAuthInitialized,
-} from '@/store/slices/authSlice';
+import { refreshAccessTokenAsync, selectAuthInitialized } from '@/store/slices/authSlice';
 
 function MainLayout() {
   const dispatch = useDispatch();
@@ -43,7 +41,9 @@ function MainLayout() {
 
           {/* Page Content */}
           <main className="flex-1 overflow-y-auto p-6" role="main">
-            <Outlet />
+            <PageErrorBoundary>
+              <Outlet />
+            </PageErrorBoundary>
           </main>
         </div>
       </div>

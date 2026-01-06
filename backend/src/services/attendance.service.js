@@ -220,7 +220,6 @@ const attendanceService = {
       return {
         valid: false,
         message: 'Lỗi khi check-in. Vui lòng thử lại',
-        error: error.message,
       };
     }
   },
@@ -294,7 +293,6 @@ const attendanceService = {
       return {
         valid: false,
         message: 'Lỗi khi check-out. Vui lòng thử lại',
-        error: error.message,
       };
     }
   },

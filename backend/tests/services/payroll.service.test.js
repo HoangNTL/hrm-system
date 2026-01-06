@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock prisma used by payroll service
-vi.mock('../src/config/db.js', () => ({
+vi.mock('../../src/config/db.js', () => ({
     prisma: {
         contract: {
             findFirst: vi.fn(),
@@ -39,8 +39,8 @@ vi.mock('exceljs', () => ({
     },
 }));
 
-import { prisma } from '../src/config/db.js';
-import payrollService from '../src/services/payroll.service.js';
+import { prisma } from '../../src/config/db.js';
+import payrollService from '../../src/services/payroll.service.js';
 
 beforeEach(() => {
     vi.clearAllMocks();

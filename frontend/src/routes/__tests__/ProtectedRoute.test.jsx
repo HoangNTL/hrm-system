@@ -1,10 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import configureStore from 'redux-mock-store';
+// Simple mock for redux-mock-store to avoid external dependency in tests
+const mockStore = (initialState) => ({
+  getState: () => initialState,
+  subscribe: () => () => {},
+  dispatch: () => {},
+});
 import ProtectedRoute from '../ProtectedRoute.jsx';
-
-const mockStore = configureStore([]);
 
 function renderWithStoreAndRouter(storeState, route = '/') {
   const store = mockStore(storeState);

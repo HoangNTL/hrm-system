@@ -96,17 +96,12 @@ export default function PositionModal({
     } catch (error) {
       console.error(`${isEditMode ? 'Update' : 'Create'} position error:`, error);
 
-      // Xử lý lỗi từ backend nếu có format errors
-      if (error.response?.data?.errors) {
-        setFieldErrors(error.response.data.errors);
-      } else {
-        const message =
-          error.response?.data?.message ||
-          error.message ||
-          `Failed to ${isEditMode ? 'update' : 'create'} position`;
-        setGlobalError(message);
-        toast.error(message);
+      // Handle errors from API (axios interceptor formats them)
+      if (error.errors) {
+        setFieldErrors(error.errors);
       }
+
+      setGlobalError(error.message || `Failed to ${isEditMode ? 'update' : 'create'} position`);
     } finally {
       setFormLoading(false);
     }

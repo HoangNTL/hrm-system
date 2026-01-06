@@ -123,7 +123,6 @@ export default function EmployeeModal({
       }
 
       setGlobalError(error.message || `Failed to ${isEditMode ? 'update' : 'create'} employee`);
-      toast.error(error.message || `Failed to ${isEditMode ? 'update' : 'create'} employee`);
     } finally {
       setFormLoading(false);
     }

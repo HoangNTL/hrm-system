@@ -6,11 +6,6 @@ export const shiftAPI = {
     return response.data;
   },
 
-  async getShiftById(id) {
-    const response = await apiClient.get(`/shifts/${id}`);
-    return response.data;
-  },
-
   async createShift(shiftData) {
     const response = await apiClient.post('/shifts', shiftData);
     return response.data;
