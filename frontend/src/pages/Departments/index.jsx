@@ -102,7 +102,7 @@ function DepartmentsPage() {
         isOpen={isModalOpen}
         onClose={handleModalClose}
         onSuccess={handleModalSuccess}
-  departmentToEdit={selectedDepartment}
+        departmentToEdit={selectedDepartment}
         initialFormData={modalFormData}
         onFormDataChange={handleFormDataChange}
       />
