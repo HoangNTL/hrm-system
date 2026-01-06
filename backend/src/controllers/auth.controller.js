@@ -3,11 +3,13 @@ import response from '../utils/response.js';
 import ApiError from '../utils/ApiError.js';
 import { ERROR_CODES } from '../utils/errorCodes.js';
 
+const isProd = process.env.NODE_ENV === 'production';
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
+  secure: isProd, // In production, cookies should be secure (HTTPS)
+  sameSite: isProd ? 'none' : 'lax', // Allow cross-site cookies in prod; lax in dev
   maxAge: 7 * 24 * 60 * 60 * 1000,
+  path: '/',
 };
 
 /**
@@ -37,7 +39,7 @@ export const login = async (req, res, next) => {
  * @access  Public
  * @returns {Object} message
  */
-export const logout = async (req, res) => {
+export const logout = async (req, res, next) => {
   try {
     const result = await authService.logout(req.user?.id);
 
@@ -58,10 +60,17 @@ export const logout = async (req, res) => {
  */
 export const refreshToken = async (req, res, next) => {
   try {
-    // get refresh token from cookie
-    const token = req.cookies?.refreshToken;
+    // get refresh token from cookie or header/body as fallback
+    const token =
+      req.cookies?.refreshToken ||
+      req.headers['x-refresh-token'] ||
+      (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.slice(7) : null) ||
+      req.body?.refreshToken;
 
-    if (!token) throw new ApiError(ERROR_CODES.UNAUTHORIZED, 'No refresh token provided');
+    // Avoid noisy error logs for expected auth failures: respond directly
+    if (!token) {
+      return response.fail(res, ERROR_CODES.UNAUTHORIZED, 'No refresh token provided');
+    }
 
     const result = await authService.refreshToken(token);
 

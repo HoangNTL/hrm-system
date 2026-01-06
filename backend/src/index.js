@@ -16,6 +16,10 @@ const PORT = process.env.PORT;
 //   cert: fs.readFileSync(path.join(process.cwd(), 'certs', 'localhost.pem')),
 // };
 
+if (process.env.NODE_ENV !== 'production') {
+  import('dotenv/config');
+}
+
 const server = app.listen(PORT, () => {
   logger.info(`Server is running on http://localhost:${PORT}`);
 });

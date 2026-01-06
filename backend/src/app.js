@@ -18,25 +18,25 @@ const app = express();
 
 const FRONTEND_ORIGIN = process.env.FRONTEND_URL || 'http://localhost:5173';
 const corsOrigins = [
-    FRONTEND_ORIGIN,
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:3000',
+  FRONTEND_ORIGIN,
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
 ];
 
 app.use(
-    cors({
-        origin: (origin, callback) => {
-            if (!origin || corsOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error('Not allowed by CORS'));
-            }
-        },
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization'],
-    }),
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || corsOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-refresh-token'],
+  }),
 );
 
 // Middleware
@@ -46,7 +46,7 @@ app.use(cookieParser());
 
 // Routes
 app.get('/', (req, res) => {
-    res.send('HRM System API is running');
+  res.send('HRM System API is running');
 });
 
 app.use('/api/auth', authRoutes);
