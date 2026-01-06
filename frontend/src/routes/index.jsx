@@ -1,24 +1,24 @@
 import { createBrowserRouter } from 'react-router-dom';
-import MainLayout from '@/components/MainLayout/index';
+import MainLayout from '@/components/MainLayout';
 import LoginPage from '@/pages/auth/LoginPage';
-import DashboardPage from '@/pages/dashboard/index';
-import EmployeesPage from '@/pages/employees/index';
-import DepartmentsPage from '@/pages/departments/index';
-import ContractsPage from '@/pages/contracts/index';
-import UsersPage from '@/pages/users/index';
-import AttendancePage from '@/pages/attendance/index';
-import AttendanceHistoryPage from '@/pages/attendanceHistory/index';
-import PayrollPage from '@/pages/payroll/index';
+import DashboardPage from '@/pages/dashboard';
+import EmployeesPage from '@/pages/employees';
+import DepartmentsPage from '@/pages/departments';
+import ContractsPage from '@/pages/contracts';
+import UsersPage from '@/pages/users';
+import AttendancePage from '@/pages/attendance';
+import AttendanceHistoryPage from '@/pages/attendanceHistory';
+import PayrollPage from '@/pages/payroll';
 import ProtectedRoute from './ProtectedRoute';
-import NotFoundPage from '@/pages/notFound/index';
-import PositionsPage from '@/pages/positions/index';
-import ShiftsPage from '@/pages/shifts/index';
-import ReportsPage from '@/pages/reports/index';
-import UserProfilePage from '@/pages/userProfile/index';
-import AccessDeniedPage from '@/pages/accessDenied/index';
+import NotFoundPage from '@/pages/notFound';
+import PositionsPage from '@/pages/positions';
+import ShiftsPage from '@/pages/shifts';
+import ReportsPage from '@/pages/reports';
+import UserProfilePage from '@/pages/userProfile';
+import AccessDeniedPage from '@/pages/accessDenied';
 import AppErrorBoundary from './AppErrorBoundary';
-import AttendanceRequestsPage from '@/pages/attendanceRequests/index';
-import ApproveAttendanceRequestsPage from '@/pages/approveAttendanceRequests/index';
+import AttendanceRequestsPage from '@/pages/attendanceRequests';
+import ApproveAttendanceRequestsPage from '@/pages/approveAttendanceRequests';
 
 export const router = createBrowserRouter([
   {
