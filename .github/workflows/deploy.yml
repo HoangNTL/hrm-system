@@ -51,12 +51,12 @@ jobs:
       - name: Run tests (backend)
         run: |
           cd backend
-          npx vitest run
+          npm test
 
       - name: Run tests (frontend)
         run: |
           cd frontend
-          npx vitest run
+          npm test
 
       # Deploy step: Gửi request tới Render để trigger deploy (dùng Webhook hoặc API)
       - name: Deploy Backend to Render
