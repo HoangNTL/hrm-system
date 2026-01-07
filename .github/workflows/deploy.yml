@@ -1,0 +1,46 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies (backend)
+        run: |
+          cd backend
+          npm install
+
+      - name: Install dependencies (frontend)
+        run: |
+          cd frontend
+          npm install
+
+      - name: Run tests (backend)
+        run: |
+          cd backend
+          npm test
+
+      - name: Run tests (frontend)
+        run: |
+          cd frontend
+          npm test
+
+      # Deploy step: Gửi request tới Render để trigger deploy (dùng Webhook hoặc API)
+      - name: Deploy Backend to Render
+        run: curl -X POST "${{ secrets.RENDER_BACKEND_WEBHOOK }}"
+
+      - name: Deploy Frontend to Render
+        run: curl -X POST "${{ secrets.RENDER_FRONTEND_WEBHOOK }}"
