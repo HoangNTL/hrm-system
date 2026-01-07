@@ -95,7 +95,7 @@ export default function UserQuickViewModal({ isOpen, onClose, user }) {
               Account Status
             </label>
             <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
-              user.is_locked 
+              user.is_locked
                 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
                 : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
             }`}>

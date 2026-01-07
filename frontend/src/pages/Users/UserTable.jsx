@@ -1,153 +1,169 @@
-import { useCallback } from 'react';
-import Table from '@components/ui/Table';
-import Pagination from '@components/ui/Pagination';
+import Button from '@components/ui/Button';
 import Icon from '@components/ui/Icon';
-import { format } from 'date-fns';
+import SearchBar from '@components/ui/SearchBar';
+import Select from '@components/ui/Select';
 
-export default function UserTable({
-  users = [],
-  loading = false,
-  pagination = { page: 1, limit: 10, total: 0, totalPages: 1 },
-  onPageChange,
-  selectedUsers = [],
-  onRowSelect,
-  onRowDoubleClick,
-  onSelectAll,
-}) {
-  const formatDate = (date) => {
-    if (!date) return <span className="text-secondary-500 dark:text-secondary-400 italic">Never</span>;
-    return format(new Date(date), 'MMM dd, yyyy HH:mm');
-  };
+import UserTable from './UserTable';
+import UserModal from './UserModal';
+import UserQuickViewModal from './UserQuickViewModal';
+import { useUsersPage } from './useUsersPage';
 
-  const getRoleBadge = (role) => {
-    const badges = {
-      ADMIN: { color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300', icon: 'shield' },
-      HR: { color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300', icon: 'users' },
-      STAFF: { color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300', icon: 'user' },
-    };
-    return badges[role] || badges.STAFF;
-  };
+function UsersPage() {
+  const {
+    // state
+    users,
+    employeesWithoutUser,
+    loading,
+    search,
+    roleFilter,
+    pagination,
+    selectedUsers,
+    isModalOpen,
+    isQuickViewOpen,
+    quickViewUser,
+    resetPasswordLoading,
+    toggleLockLoading,
+    hasActiveFilters,
+    roleOptions,
+  // statusFilter and statusOptions removed per requirement
 
-  // Status badges (locked/new/reset required) đã được yêu cầu bỏ nên không còn sử dụng ở bảng
-
-  const handleRowClick = useCallback((user) => {
-    onRowSelect?.(user);
-  }, [onRowSelect]);
-
-  const handleRowDoubleClickInternal = useCallback((user) => {
-    onRowDoubleClick?.(user);
-  }, [onRowDoubleClick]);
-
-  const handleCheckboxChange = useCallback((user, e) => {
-    e.stopPropagation();
-    onRowSelect?.(user);
-  }, [onRowSelect]);
-
-  const handleSelectAllChange = useCallback((e) => {
-    onSelectAll?.(e.target.checked);
-  }, [onSelectAll]);
-
-  const isSelected = useCallback((user) => {
-    return selectedUsers.some((u) => u.id === user.id);
-  }, [selectedUsers]);
-
-  const allSelected = users.length > 0 && selectedUsers.length === users.length;
-  const someSelected = selectedUsers.length > 0 && selectedUsers.length < users.length;
-
-  const columns = [
-    {
-      label: (
-        <input
-          type="checkbox"
-          checked={allSelected}
-          ref={(input) => {
-            if (input) {
-              input.indeterminate = someSelected;
-            }
-          }}
-          onChange={handleSelectAllChange}
-          className="w-4 h-4 rounded border-secondary-300 dark:border-secondary-600 text-primary-600 focus:ring-primary-500 dark:bg-secondary-800"
-        />
-      ),
-      key: 'checkbox',
-      render: (_cell, user) => (
-        <input
-          type="checkbox"
-          checked={isSelected(user)}
-          onChange={(e) => handleCheckboxChange(user, e)}
-          className="w-4 h-4 rounded border-secondary-300 dark:border-secondary-600 text-primary-600 focus:ring-primary-500 dark:bg-secondary-800"
-        />
-      ),
-      width: '50px',
-    },
-    {
-      label: '#',
-      key: 'index',
-      render: (_cell, _user, index) => (
-        <span className="font-medium text-secondary-900 dark:text-secondary-100">
-          {(pagination.page - 1) * pagination.limit + index + 1}
-        </span>
-      ),
-      width: '60px',
-    },
-    {
-      label: 'Email',
-      key: 'email',
-      render: (cell) => (
-        <span className="font-medium text-secondary-900 dark:text-secondary-100">{cell}</span>
-      ),
-    },
-    {
-      label: 'Role',
-      key: 'role',
-      render: (cell) => {
-        const badge = getRoleBadge(cell);
-        return (
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${badge.color}`}>
-            <Icon name={badge.icon} className="w-3.5 h-3.5" />
-            {cell}
-          </span>
-        );
-      },
-    },
-    {
-      label: 'Employee',
-      key: 'employee',
-      render: (cell) => cell ? (
-        <div>
-          <div className="font-medium text-secondary-900 dark:text-secondary-100">{cell.full_name}</div>
-          <div className="text-xs text-secondary-600 dark:text-secondary-400">{cell.email}</div>
-        </div>
-      ) : (
-        <span className="text-secondary-500 dark:text-secondary-400 italic text-sm">Not linked</span>
-      ),
-    },
-    {
-      label: 'Last Login',
-      key: 'last_login_at',
-      render: (cell) => (
-        <span className="text-sm text-secondary-700 dark:text-secondary-300">
-          {formatDate(cell)}
-        </span>
-      ),
-    },
-  ];
+    // handlers
+    handleSearch,
+    handleRoleFilterChange,
+    handleClearFilters,
+    handlePageChange,
+    handleRowSelect,
+    handleSelectAll,
+    handleRowDoubleClick,
+  handleAdd,
+    handleResetPassword,
+    handleToggleLock,
+    handleModalSuccess,
+    handleModalClose,
+    handleQuickViewClose,
+  } = useUsersPage();
 
   return (
-    <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 overflow-hidden">
-      <Table
-        columns={columns}
-        data={users}
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-heading font-bold text-secondary-900 dark:text-secondary-50">
+            Users
+          </h1>
+          <p className="text-body text-secondary-600 dark:text-secondary-400 mt-2">
+            Manage user accounts, roles, and security settings
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={handleResetPassword}
+            variant="outline"
+            disabled={selectedUsers.length !== 1 || resetPasswordLoading}
+            className="inline-flex items-center"
+          >
+            <Icon name="key" className="w-5 h-5 mr-2" />
+            {resetPasswordLoading ? 'Resetting...' : 'Reset Password'}
+          </Button>
+          <Button
+            onClick={handleToggleLock}
+            variant="outline"
+            disabled={selectedUsers.length === 0 || toggleLockLoading}
+            className="inline-flex items-center"
+          >
+            {selectedUsers.length > 0 && (() => {
+              const lockedCount = selectedUsers.filter(u => u.is_locked).length;
+              const shouldUnlock = lockedCount > selectedUsers.length / 2;
+              return (
+                <>
+                  <Icon
+                    name={shouldUnlock ? 'unlock' : 'lock'}
+                    className="w-5 h-5 mr-2"
+                  />
+                  {toggleLockLoading ? 'Processing...' : (
+                    shouldUnlock
+                      ? `Unlock${selectedUsers.length > 1 ? ' All' : ''}`
+                      : `Lock${selectedUsers.length > 1 ? ' All' : ''}`
+                  )}
+                </>
+              );
+            })()}
+            {selectedUsers.length === 0 && (
+              <>
+                <Icon name="lock" className="w-5 h-5 mr-2" />
+                Lock
+              </>
+            )}
+          </Button>
+          <Button onClick={handleAdd} variant="primary" className="inline-flex items-center">
+            <Icon name="plus" className="w-5 h-5 mr-2" />
+            Add
+          </Button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 p-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-4">
+          <div className="flex-1">
+            <SearchBar
+              value={search}
+              onChange={handleSearch}
+              placeholder="Search by email..."
+            />
+          </div>
+          <div className="w-full md:w-40">
+            <Select
+              value={roleFilter}
+              onChange={handleRoleFilterChange}
+              options={roleOptions}
+            />
+          </div>
+          {/* Status filter removed as requested */}
+          <Button
+            onClick={handleClearFilters}
+            variant="outline"
+            disabled={!hasActiveFilters}
+            className="inline-flex items-center whitespace-nowrap"
+          >
+            <Icon name="x" className="w-4 h-4 mr-2" />
+            Clear Filters
+          </Button>
+          <div className="text-sm text-secondary-600 dark:text-secondary-400 whitespace-nowrap">
+            {pagination.total} users
+          </div>
+        </div>
+      </div>
+
+      {/* Users Table */}
+      <UserTable
+        users={users}
         loading={loading}
-        onRowClick={handleRowClick}
-        onRowDoubleClick={handleRowDoubleClickInternal}
+        pagination={pagination}
+        onPageChange={handlePageChange}
+        selectedUsers={selectedUsers}
+        onRowSelect={handleRowSelect}
+        onRowDoubleClick={handleRowDoubleClick}
+        onSelectAll={handleSelectAll}
       />
-      <Pagination
-        currentPage={pagination.page}
-        totalPages={pagination.totalPages}
-        onPageChange={onPageChange}
-        totalItems={pagination.total}
+
+      {/* Modals */}
+      <UserModal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        onSuccess={handleModalSuccess}
+        userToEdit={null}
+        employees={employeesWithoutUser}
       />
+
+      <UserQuickViewModal
+        isOpen={isQuickViewOpen}
+        onClose={handleQuickViewClose}
+        user={quickViewUser}
+      />
+
     </div>
   );
 }
+
+export default UsersPage;
