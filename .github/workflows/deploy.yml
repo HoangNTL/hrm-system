@@ -27,6 +27,9 @@ jobs:
           node-version: '20'
 
 
+      - name: Clean npm cache
+        run: npm cache clean --force
+
       - name: Install dependencies (backend)
         run: |
           cd backend
@@ -51,7 +54,7 @@ jobs:
       - name: Run tests (backend)
         run: |
           cd backend
-          npx vitest run
+          npm test
 
       # - name: Run tests (frontend)
       #   run: |
