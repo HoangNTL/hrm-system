@@ -13,5 +13,4 @@ export const sidebarMenuItems = [
   { id: 'approve-attendance-requests', label: 'Approve Requests', path: '/approve-attendance-requests', icon: 'check-circle', roles: ['ADMIN', 'HR'] },
   { id: 'payroll', label: 'Payroll', path: '/payroll', icon: 'circle-dollar-sign', roles: ['ADMIN', 'HR', 'STAFF'] },
   { id: 'reports', label: 'Reports', path: '/reports', icon: 'chart-column-big', roles: ['ADMIN', 'HR'] },
-  { id: 'settings', label: 'Settings', path: '/settings', icon: 'settings', roles: ['ADMIN'] },
 ];

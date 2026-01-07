@@ -5,7 +5,6 @@ import Select from '@components/ui/Select';
 
 import UserTable from './UserTable';
 import UserModal from './UserModal';
-import UserQuickViewModal from './UserQuickViewModal';
 import { useUsersPage } from './useUsersPage';
 
 function UsersPage() {
@@ -158,16 +157,8 @@ function UsersPage() {
         isOpen={isModalOpen}
         onClose={handleModalClose}
         onSuccess={handleModalSuccess}
-        userToEdit={null}
         employees={employeesWithoutUser}
       />
-
-      <UserQuickViewModal
-        isOpen={isQuickViewOpen}
-        onClose={handleQuickViewClose}
-        user={quickViewUser}
-      />
-
     </div>
   );
 }
