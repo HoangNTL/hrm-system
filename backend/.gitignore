@@ -46,4 +46,4 @@ Thumbs.db
 /src/generated/prisma
 
 # SSL certificates
-*.pem
+# *.pem
