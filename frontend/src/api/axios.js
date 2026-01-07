@@ -1,9 +1,15 @@
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
-let accessToken = null;
+let accessToken = localStorage.getItem('accessToken') || null;
 
 export function setAccessToken(token) {
-  accessToken = token || null;
+    accessToken = token || null;
+    if (token) {
+        localStorage.setItem('accessToken', token);
+    } else {
+        localStorage.removeItem('accessToken');
+    }
 }
 
 // Create axios instance with default config
@@ -73,10 +79,10 @@ apiClient.interceptors.response.use(
                 const response = await apiClient.post('/auth/refresh-token');
 
                 console.log('Refresh response:', response.data);
-                
+
                 const newAccessToken = response.data?.data?.accessToken;
                 console.log('New access token:', newAccessToken ? 'obtained' : 'not found');
-                
+
                 if (newAccessToken) {
                   // Update axios-level token
                   setAccessToken(newAccessToken);
@@ -91,6 +97,7 @@ apiClient.interceptors.response.use(
             } catch (refreshError) {
                 // Refresh failed - logout user
                 console.error('Refresh token failed: ', refreshError);
+                toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
                 window.location.href = '/login';
                 return Promise.reject(refreshError);
             }
