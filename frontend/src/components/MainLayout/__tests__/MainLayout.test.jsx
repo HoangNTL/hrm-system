@@ -14,7 +14,7 @@ describe('MainLayout', () => {
   it('renders Sidebar, Header and main content outlet', () => {
     const store = mockStore({
       ui: { sidebarCollapsed: false },
-      auth: { initialized: true },
+      auth: { initialized: true, isAuthenticated: true },
       user: { user: { name: 'Test User', role: 'admin' } },
     });
 

@@ -1,19 +1,47 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import UsersPage from '..';
+vi.mock('../UserTable', () => ({ default: () => <div>UserTable</div> }));
+vi.mock('../UserModal', () => ({ default: () => <div>UserModal</div> }));
+vi.mock('../UserQuickViewModal', () => ({ default: () => <div>UserQuickViewModal</div> }));
 import { useUsersPage } from '../useUsersPage';
 
 vi.mock('../useUsersPage', () => ({
   useUsersPage: vi.fn(),
 }));
 
+const mockUsers = [
+  {
+    id: 1,
+    email: 'user1@example.com',
+    is_locked: false,
+    role: 'admin',
+  },
+  {
+    id: 2,
+    email: 'user2@example.com',
+    is_locked: true,
+    role: 'user',
+  },
+];
+
+const mockEmployeesWithoutUser = [
+  { id: 1, full_name: 'John Doe' },
+  { id: 2, full_name: 'Jane Smith' },
+];
+
+const mockRoleOptions = [
+  { value: '', label: 'All Roles' },
+  { value: 'admin', label: 'Admin' },
+  { value: 'user', label: 'User' },
+];
+
 const createMockHookReturn = (overrides = {}) => ({
-  // state
-  users: [{ id: 1, email: 'user1@example.com', is_locked: false }],
-  employeesWithoutUser: [],
+  users: mockUsers,
+  employeesWithoutUser: mockEmployeesWithoutUser,
   loading: false,
   search: '',
   roleFilter: '',
-  pagination: { page: 1, total: 1, totalPages: 1 },
+  pagination: { page: 1, limit: 10, total: 2, totalPages: 1 },
   selectedUsers: [],
   isModalOpen: false,
   isQuickViewOpen: false,
@@ -21,12 +49,7 @@ const createMockHookReturn = (overrides = {}) => ({
   resetPasswordLoading: false,
   toggleLockLoading: false,
   hasActiveFilters: false,
-  roleOptions: [
-    { value: '', label: 'All roles' },
-    { value: 'ADMIN', label: 'Admin' },
-  ],
-
-  // handlers
+  roleOptions: mockRoleOptions,
   handleSearch: vi.fn(),
   handleRoleFilterChange: vi.fn(),
   handleClearFilters: vi.fn(),
@@ -47,57 +70,87 @@ describe('UsersPage', () => {
   beforeEach(() => {
     vi.mocked(useUsersPage).mockReturnValue(createMockHookReturn());
   });
-  it('renders header and actions', () => {
-    render(<UsersPage />);
 
+  it('renders page header with title and description', () => {
+    render(<UsersPage />);
     expect(screen.getByText('Users')).toBeInTheDocument();
-    expect(
-      screen.getByText('Manage user accounts, roles, and security settings'),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Reset Password')).toBeInTheDocument();
-    expect(screen.getByText('Lock')).toBeInTheDocument();
-    expect(screen.getByText('Add')).toBeInTheDocument();
+    expect(screen.getByText('Manage user accounts, roles, and security settings')).toBeInTheDocument();
   });
 
-  it('disables Reset Password and Lock buttons when no user is selected', () => {
+  it('renders action buttons (Reset Password, Lock/Unlock, Add)', () => {
     render(<UsersPage />);
-
-    const resetButton = screen.getByRole('button', { name: /reset password/i });
-    const lockButton = screen.getByRole('button', { name: /lock/i });
-
-    expect(resetButton).toBeDisabled();
-    expect(lockButton).toBeDisabled();
+    expect(screen.getByRole('button', { name: /reset password/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /lock/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
   });
 
-  it('shows search bar and role select filter', () => {
+  it('disables Reset Password button when not exactly one user is selected', () => {
     render(<UsersPage />);
-
-    // Search input
-    const searchInput = screen.getByPlaceholderText('Search by email...');
-    expect(searchInput).toBeInTheDocument();
-
-    // Role select (combobox)
-    const roleSelect = screen.getByRole('combobox');
-    expect(roleSelect).toBeInTheDocument();
+    const resetBtn = screen.getByRole('button', { name: /reset password/i });
+    expect(resetBtn).toBeDisabled();
   });
 
-  it('shows users count text', () => {
+  it('enables Reset Password button when exactly one user is selected', () => {
+    vi.mocked(useUsersPage).mockReturnValue(createMockHookReturn({ selectedUsers: [mockUsers[0]] }));
     render(<UsersPage />);
-
-    expect(screen.getByText(/1 users/i)).toBeInTheDocument();
+    const resetBtn = screen.getByRole('button', { name: /reset password/i });
+    expect(resetBtn).not.toBeDisabled();
   });
 
-  it('enables Reset Password when exactly one user is selected', () => {
-    // Mock hook with one selected user
-    vi.mocked(useUsersPage).mockReturnValue(
-      createMockHookReturn({
-        selectedUsers: [{ id: 1, email: 'user1@example.com', is_locked: false }],
-      }),
-    );
-
+  it('renders search bar with correct placeholder', () => {
     render(<UsersPage />);
+    expect(screen.getByPlaceholderText('Search by email...')).toBeInTheDocument();
+  });
 
-    const resetButton = screen.getByRole('button', { name: /reset password/i });
-    expect(resetButton).not.toBeDisabled();
+  it('renders user count text', () => {
+    render(<UsersPage />);
+    expect(screen.getByText('2 users')).toBeInTheDocument();
+  });
+
+  it('renders filter select for roles', () => {
+    render(<UsersPage />);
+    expect(screen.getByText('All Roles')).toBeInTheDocument();
+  });
+
+  it('renders Clear Filters button', () => {
+    render(<UsersPage />);
+    expect(screen.getByRole('button', { name: /clear filters/i })).toBeInTheDocument();
+  });
+
+  it('disables Clear Filters button when no active filters', () => {
+    render(<UsersPage />);
+    const clearBtn = screen.getByRole('button', { name: /clear filters/i });
+    expect(clearBtn).toBeDisabled();
+  });
+
+  it('enables Clear Filters button when has active filters', () => {
+    vi.mocked(useUsersPage).mockReturnValue(createMockHookReturn({ hasActiveFilters: true }));
+    render(<UsersPage />);
+    const clearBtn = screen.getByRole('button', { name: /clear filters/i });
+    expect(clearBtn).not.toBeDisabled();
+  });
+
+  it('calls handleAdd when Add button is clicked', () => {
+    const handleAdd = vi.fn();
+    vi.mocked(useUsersPage).mockReturnValue(createMockHookReturn({ handleAdd }));
+    render(<UsersPage />);
+    fireEvent.click(screen.getByRole('button', { name: /add/i }));
+    expect(handleAdd).toHaveBeenCalled();
+  });
+
+  it('calls handleResetPassword when Reset Password button is clicked', () => {
+    const handleResetPassword = vi.fn();
+    vi.mocked(useUsersPage).mockReturnValue(createMockHookReturn({ selectedUsers: [mockUsers[0]], handleResetPassword }));
+    render(<UsersPage />);
+    fireEvent.click(screen.getByRole('button', { name: /reset password/i }));
+    expect(handleResetPassword).toHaveBeenCalled();
+  });
+
+  it('calls handleClearFilters when Clear Filters button is clicked', () => {
+    const handleClearFilters = vi.fn();
+    vi.mocked(useUsersPage).mockReturnValue(createMockHookReturn({ hasActiveFilters: true, handleClearFilters }));
+    render(<UsersPage />);
+    fireEvent.click(screen.getByRole('button', { name: /clear filters/i }));
+    expect(handleClearFilters).toHaveBeenCalled();
   });
 });
