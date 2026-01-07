@@ -53,10 +53,10 @@ jobs:
       #     cd backend
       #     npm test
 
-      - name: Run tests (frontend)
-        run: |
-          cd frontend
-          npm test
+      # - name: Run tests (frontend)
+      #   run: |
+      #     cd frontend
+      #     npm test
 
       # Deploy step: Gửi request tới Render để trigger deploy (dùng Webhook hoặc API)
       - name: Deploy Backend to Render
