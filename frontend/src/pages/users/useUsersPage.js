@@ -213,13 +213,13 @@ export function useUsersPage() {
 
     // handlers
     handleSearch,
-  handleRoleFilterChange,
+    handleRoleFilterChange,
     handleClearFilters,
     handlePageChange,
     handleRowSelect,
     handleSelectAll,
-  handleRowDoubleClick,
-  handleAdd,
+    handleRowDoubleClick,
+    handleAdd,
     handleResetPassword,
     handleToggleLock,
     handleModalSuccess,

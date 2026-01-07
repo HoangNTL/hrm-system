@@ -35,7 +35,7 @@ function UsersPage() {
     handleRowSelect,
     handleSelectAll,
     handleRowDoubleClick,
-  handleAdd,
+    handleAdd,
     handleResetPassword,
     handleToggleLock,
     handleModalSuccess,
@@ -56,6 +56,7 @@ function UsersPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+
           <Button
             onClick={handleResetPassword}
             variant="outline"
@@ -65,6 +66,8 @@ function UsersPage() {
             <Icon name="key" className="w-5 h-5 mr-2" />
             {resetPasswordLoading ? 'Resetting...' : 'Reset Password'}
           </Button>
+
+
           <Button
             onClick={handleToggleLock}
             variant="outline"
@@ -95,10 +98,13 @@ function UsersPage() {
               </>
             )}
           </Button>
+
+
           <Button onClick={handleAdd} variant="primary" className="inline-flex items-center">
             <Icon name="plus" className="w-5 h-5 mr-2" />
             Add
           </Button>
+
         </div>
       </div>
 
