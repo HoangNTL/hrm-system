@@ -18,15 +18,27 @@ jobs:
         with:
           node-version: '20'
 
+
       - name: Install dependencies (backend)
         run: |
           cd backend
           npm install
 
+      - name: Generate Prisma Client (backend)
+        run: |
+          cd backend
+          npx prisma generate
+
+      - name: Run Prisma Migrate (backend)
+        run: |
+          cd backend
+          npx prisma migrate deploy
+
       - name: Install dependencies (frontend)
         run: |
           cd frontend
           npm install
+
 
       - name: Run tests (backend)
         run: |
