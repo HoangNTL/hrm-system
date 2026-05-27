@@ -5,6 +5,11 @@ import { prisma } from '../config/db.js';
 import { tokenService } from './token.service.js';
 import ApiError from '../utils/ApiError.js';
 import { ERROR_CODES } from '../utils/errorCodes.js';
+import {
+  getRefreshTokenExpiryDate,
+  hashRefreshToken,
+  refreshTokenMatchesHash,
+} from '../utils/refreshToken.js';
 
 export const authService = {
   async login(email, password) {
@@ -79,8 +84,31 @@ export const authService = {
       throw new ApiError(ERROR_CODES.FORBIDDEN, 'Invalid or expired refresh token');
     }
 
-    const user = await this._findUser(payload.id);
+    if (!payload?.id) {
+      throw new ApiError(ERROR_CODES.FORBIDDEN, 'Invalid or expired refresh token');
+    }
+
+    const user = await this._findUserWithRefreshToken(payload.id);
     if (!user) throw new ApiError(ERROR_CODES.NOT_FOUND, 'User not found');
+
+    if (user.is_locked || user.is_deleted) {
+      await this._clearRefreshToken(user.id);
+      throw new ApiError(ERROR_CODES.FORBIDDEN, 'Refresh token has been revoked');
+    }
+
+    if (!user.refresh_token_hash || !user.refresh_token_expires_at) {
+      throw new ApiError(ERROR_CODES.FORBIDDEN, 'Refresh token has been revoked');
+    }
+
+    if (new Date(user.refresh_token_expires_at).getTime() <= Date.now()) {
+      await this._clearRefreshToken(user.id);
+      throw new ApiError(ERROR_CODES.FORBIDDEN, 'Invalid or expired refresh token');
+    }
+
+    if (!refreshTokenMatchesHash(user.refresh_token_hash, token)) {
+      await this._clearRefreshToken(user.id);
+      throw new ApiError(ERROR_CODES.FORBIDDEN, 'Refresh token has been revoked');
+    }
 
     // generate new tokens
     const accessToken = tokenService.generateAccessToken(user);
@@ -96,18 +124,45 @@ export const authService = {
 
   // _helpers
   async _saveRefreshToken(userId, refreshToken) {
-    // refresh_token column đã bị drop khỏi bảng users,
-    // không còn lưu refresh token trong DB nữa.
-    return;
+    const refreshTokenHash = hashRefreshToken(refreshToken);
+    const refreshTokenExpiresAt = getRefreshTokenExpiryDate();
+
+    await prisma.$executeRaw`
+      UPDATE "users"
+      SET
+        "refresh_token_hash" = ${refreshTokenHash},
+        "refresh_token_expires_at" = ${refreshTokenExpiresAt}
+      WHERE "id" = ${userId}
+    `;
   },
 
   async _clearRefreshToken(userId) {
-    // Không còn cột refresh_token, nên không cần clear trong DB.
-    return;
+    await prisma.$executeRaw`
+      UPDATE "users"
+      SET
+        "refresh_token_hash" = NULL,
+        "refresh_token_expires_at" = NULL
+      WHERE "id" = ${userId}
+    `;
   },
 
-  async _findUser(userId) {
-    return await prisma.user.findUnique({ where: { id: userId } });
+  async _findUserWithRefreshToken(userId) {
+    const rows = await prisma.$queryRaw`
+      SELECT
+        "id",
+        "email",
+        "role",
+        "employee_id",
+        "is_locked",
+        "is_deleted",
+        "refresh_token_hash",
+        "refresh_token_expires_at"
+      FROM "users"
+      WHERE "id" = ${userId}
+      LIMIT 1
+    `;
+
+    return rows[0] ?? null;
   },
 
   async changePassword(userId, newPassword, currentPassword = null) {

@@ -1,16 +1,14 @@
 import { authService } from '../services/auth.service.js';
 import response from '../utils/response.js';
-import ApiError from '../utils/ApiError.js';
 import { ERROR_CODES } from '../utils/errorCodes.js';
+import { getRefreshTokenCookieOptions } from '../utils/refreshToken.js';
 
-const isProd = process.env.NODE_ENV === 'production';
-const cookieOptions = {
-  httpOnly: true,
-  secure: isProd, // In production, cookies should be secure (HTTPS)
-  sameSite: isProd ? 'none' : 'lax', // Allow cross-site cookies in prod; lax in dev
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-  path: '/',
-};
+function clearRefreshTokenCookie(res) {
+  res.clearCookie('refreshToken', {
+    ...getRefreshTokenCookieOptions(),
+    maxAge: 0,
+  });
+}
 
 /**
  * @route   POST /api/auth/login
@@ -25,7 +23,7 @@ export const login = async (req, res, next) => {
     const result = await authService.login(email, password);
 
     // set refresh token in cookie
-    res.cookie('refreshToken', result.refreshToken, cookieOptions);
+    res.cookie('refreshToken', result.refreshToken, getRefreshTokenCookieOptions());
 
     return response.success(res, result, 'Login successful', 200);
   } catch (error) {
@@ -44,7 +42,7 @@ export const logout = async (req, res, next) => {
     const result = await authService.logout(req.user?.id);
 
     // clear refresh token cookie
-    res.clearCookie('refreshToken', { ...cookieOptions, maxAge: 0 });
+    clearRefreshTokenCookie(res);
 
     return response.success(res, result, 'Logout successful', 200);
   } catch (error) {
@@ -76,11 +74,14 @@ export const refreshToken = async (req, res, next) => {
 
     // set new refresh token in cookie if provided
     if (result.refreshToken) {
-      res.cookie('refreshToken', result.refreshToken, cookieOptions);
+      res.cookie('refreshToken', result.refreshToken, getRefreshTokenCookieOptions());
     }
 
     return response.success(res, result, 'Token refreshed successfully', 200);
   } catch (error) {
+    if ([ERROR_CODES.UNAUTHORIZED, ERROR_CODES.FORBIDDEN].includes(error?.status)) {
+      clearRefreshTokenCookie(res);
+    }
     next(error);
   }
 };

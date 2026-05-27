@@ -2,21 +2,27 @@ import { prisma } from '../config/db.js';
 import ApiError from '../utils/ApiError.js';
 import response from '../utils/response.js';
 import attendanceService from '../services/attendance.service.js';
+import { HR_ADMIN_ROLES } from '../utils/roles.js';
+
+async function resolveEmployeeIdFromUser(user) {
+  let employeeId = user?.employee_id;
+
+  if (!employeeId && user?.id) {
+    const userRecord = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { employee_id: true },
+    });
+    employeeId = userRecord?.employee_id || null;
+  }
+
+  return employeeId;
+}
 
 // Nhân viên tạo đơn xin sửa chấm công
 export const createRequest = async (req, res, next) => {
   try {
     const { attendanceId, requestType, reason, newCheckIn, newCheckOut, requestedDate } = req.body;
-    let employeeId = req.user.employee_id;
-
-    // Fallback: nếu token không có employee_id, lấy từ user table
-    if (!employeeId && req.user?.id) {
-      const userRecord = await prisma.user.findUnique({
-        where: { id: req.user.id },
-        select: { employee_id: true },
-      });
-      employeeId = userRecord?.employee_id || null;
-    }
+    const employeeId = await resolveEmployeeIdFromUser(req.user);
 
     if (!employeeId) {
       throw new ApiError(400, 'Không tìm thấy employee_id cho user');
@@ -67,16 +73,7 @@ export const createRequest = async (req, res, next) => {
 // Nhân viên xem danh sách đơn của mình
 export const getMyRequests = async (req, res, next) => {
   try {
-    let employeeId = req.user.employee_id;
-
-    // Fallback: nếu token không có employee_id, lấy từ user table
-    if (!employeeId && req.user?.id) {
-      const userRecord = await prisma.user.findUnique({
-        where: { id: req.user.id },
-        select: { employee_id: true },
-      });
-      employeeId = userRecord?.employee_id || null;
-    }
+    const employeeId = await resolveEmployeeIdFromUser(req.user);
 
     if (!employeeId) {
       throw new ApiError(400, 'User không có employee record');
@@ -165,6 +162,10 @@ export const approveRequest = async (req, res, next) => {
       throw new ApiError(404, 'Không tìm thấy đơn');
     }
 
+    if (request.is_deleted) {
+      throw new ApiError(404, 'Không tìm thấy đơn');
+    }
+
     if (request.status !== 'pending') {
       throw new ApiError(400, 'Đơn này không ở trạng thái pending');
     }
@@ -191,7 +192,11 @@ export const approveRequest = async (req, res, next) => {
             include: { shift: true }
           });
 
-          if (attendance?.shift) {
+          if (!attendance || attendance.is_deleted) {
+            throw new ApiError(404, 'Không tìm thấy bản ghi chấm công');
+          }
+
+          if (attendance.shift) {
             const { lateMinutes, earlyMinutes } = await attendanceService.calculateLateEarlyMinutes(
               attendance.shift_id,
               updateData.check_in || attendance.check_in,
@@ -264,6 +269,7 @@ export const approveRequest = async (req, res, next) => {
               where: {
                 employee_id: request.employee_id,
                 date: attendanceDate,
+                is_deleted: false,
               }
             });
 
@@ -283,6 +289,7 @@ export const approveRequest = async (req, res, next) => {
               where: {
                 employee_id: request.employee_id,
                 date: attendanceDate,
+                is_deleted: false,
               }
             });
 
@@ -367,6 +374,10 @@ export const rejectRequest = async (req, res, next) => {
       throw new ApiError(404, 'Không tìm thấy đơn');
     }
 
+    if (request.is_deleted) {
+      throw new ApiError(404, 'Không tìm thấy đơn');
+    }
+
     if (request.status !== 'pending') {
       throw new ApiError(400, 'Đơn này không ở trạng thái pending');
     }
@@ -406,6 +417,23 @@ export const getRequest = async (req, res, next) => {
 
     if (!request) {
       throw new ApiError(404, 'Không tìm thấy đơn');
+    }
+
+    if (request.is_deleted) {
+      throw new ApiError(404, 'Không tìm thấy đơn');
+    }
+
+    const isPrivilegedUser = HR_ADMIN_ROLES.includes(req.user?.role);
+    if (!isPrivilegedUser) {
+      const employeeId = await resolveEmployeeIdFromUser(req.user);
+
+      if (!employeeId) {
+        throw new ApiError(401, 'Unauthorized');
+      }
+
+      if (request.employee_id !== employeeId) {
+        throw new ApiError(403, 'Bạn không có quyền xem đơn này');
+      }
     }
 
     response.success(res, request, 'Lấy chi tiết đơn thành công');

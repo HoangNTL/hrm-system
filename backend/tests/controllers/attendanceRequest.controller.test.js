@@ -441,12 +441,13 @@ describe('AttendanceRequest Controller', () => {
     });
 
     describe('getRequest', () => {
-        it('should get request by id successfully', async () => {
-            const req = mockRequest({}, {}, { id: '1' }, { id: 1 });
+        it('should get request by id successfully for request owner', async () => {
+            const req = mockRequest({}, {}, { id: '1' }, { id: 1, employee_id: 5, role: 'STAFF' });
             const res = mockResponse();
 
             const request = {
                 id: 1,
+                employee_id: 5,
                 request_type: 'correction',
                 status: 'pending',
                 employee: { full_name: 'John', email: 'john@test.com' },
@@ -463,8 +464,27 @@ describe('AttendanceRequest Controller', () => {
             expect(response.success).toHaveBeenCalledWith(res, request, 'Lấy chi tiết đơn thành công');
         });
 
+        it('should allow HR/Admin to view any request', async () => {
+            const req = mockRequest({}, {}, { id: '1' }, { id: 10, role: 'HR' });
+            const res = mockResponse();
+
+            const request = {
+                id: 1,
+                employee_id: 5,
+                request_type: 'correction',
+                status: 'pending',
+                employee: { full_name: 'John', email: 'john@test.com' },
+            };
+
+            prisma.attendanceRequest.findUnique.mockResolvedValue(request);
+
+            await getRequest(req, res, mockNext);
+
+            expect(response.success).toHaveBeenCalledWith(res, request, 'Lấy chi tiết đơn thành công');
+        });
+
         it('should call next with error when request not found', async () => {
-            const req = mockRequest({}, {}, { id: '999' }, { id: 1 });
+            const req = mockRequest({}, {}, { id: '999' }, { id: 1, employee_id: 5, role: 'STAFF' });
             const res = mockResponse();
 
             prisma.attendanceRequest.findUnique.mockResolvedValue(null);
@@ -475,6 +495,26 @@ describe('AttendanceRequest Controller', () => {
             const error = mockNext.mock.calls[0][0];
             expect(error).toBeInstanceOf(ApiError);
             expect(error.status).toBe(404);
+        });
+
+        it('should forbid non-owner staff from viewing another employee request', async () => {
+            const req = mockRequest({}, {}, { id: '1' }, { id: 1, employee_id: 99, role: 'STAFF' });
+            const res = mockResponse();
+
+            prisma.attendanceRequest.findUnique.mockResolvedValue({
+                id: 1,
+                employee_id: 5,
+                request_type: 'correction',
+                status: 'pending',
+                employee: { full_name: 'John', email: 'john@test.com' },
+            });
+
+            await getRequest(req, res, mockNext);
+
+            expect(mockNext).toHaveBeenCalled();
+            const error = mockNext.mock.calls[0][0];
+            expect(error).toBeInstanceOf(ApiError);
+            expect(error.status).toBe(403);
         });
     });
 });

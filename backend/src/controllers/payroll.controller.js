@@ -1,21 +1,33 @@
 import payrollService from '../services/payroll.service.js';
 import logger from '../utils/logger.js';
 import { ErrorMessages } from '../utils/errorMessages.js';
+import { UserRole } from '../utils/roles.js';
+import { parsePagination } from '../utils/sanitizeQuery.js';
 
 // Convert to function-based handlers with named exports
 export const getMonthly = async (req, res) => {
   try {
     const year = parseInt(req.query.year) || new Date().getFullYear();
     const month = parseInt(req.query.month) || new Date().getMonth() + 1;
+    const { page, limit, search } = parsePagination(req.query);
     const deptIdRaw = req.query.departmentId;
     const departmentId =
       deptIdRaw && deptIdRaw !== '' && !isNaN(parseInt(deptIdRaw))
         ? parseInt(deptIdRaw)
         : null;
 
-    console.log('Payroll request:', { year, month, departmentId, deptIdRaw });
-    const data = await payrollService.getMonthlyPayroll(year, month, departmentId);
-    return res.status(200).json({ success: true, data });
+    console.log('Payroll request:', { year, month, departmentId, deptIdRaw, page, limit, search });
+    const result = await payrollService.getMonthlyPayroll(year, month, {
+      departmentId,
+      search,
+      page,
+      limit,
+    });
+    return res.status(200).json({
+      success: true,
+      data: result.data,
+      pagination: result.pagination,
+    });
   } catch (error) {
     logger.error('Get monthly payroll error:', error);
     return res
@@ -27,7 +39,7 @@ export const getMonthly = async (req, res) => {
 export const getPayslip = async (req, res) => {
   try {
     const employeeId =
-      req.user.role === 'STAFF' ? req.user.employee_id : parseInt(req.query.employeeId);
+      req.user.role === UserRole.STAFF ? req.user.employee_id : parseInt(req.query.employeeId);
     if (!employeeId)
       return res.status(400).json({ success: false, message: 'employeeId required' });
     const year = parseInt(req.query.year) || new Date().getFullYear();
@@ -47,13 +59,14 @@ export const exportMonthly = async (req, res) => {
   try {
     const year = parseInt(req.query.year) || new Date().getFullYear();
     const month = parseInt(req.query.month) || new Date().getMonth() + 1;
+    const search = (req.query.search || '').trim();
     const deptIdRaw = req.query.departmentId;
     const departmentId =
       deptIdRaw && deptIdRaw !== '' && !isNaN(parseInt(deptIdRaw))
         ? parseInt(deptIdRaw)
         : null;
 
-    const buffer = await payrollService.exportMonthlyPayroll(year, month, departmentId);
+    const buffer = await payrollService.exportMonthlyPayroll(year, month, departmentId, search);
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

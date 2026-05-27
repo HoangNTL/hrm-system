@@ -99,12 +99,12 @@ export const contractService = {
   },
 
   async getById(id) {
-    const contract = await prisma.contract.findUnique({
-      where: { id },
+    const contract = await prisma.contract.findFirst({
+      where: { id, is_deleted: false },
       select: contractSelect,
     });
 
-    if (!contract || contract.is_deleted) {
+    if (!contract) {
       throw new ApiError(ERROR_CODES.NOT_FOUND, 'Contract not found');
     }
 

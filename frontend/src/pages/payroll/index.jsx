@@ -6,6 +6,8 @@ import Select from '@components/ui/Select';
 import Button from '@components/ui/Button';
 import Icon from '@components/ui/Icon';
 import Input from '@components/ui/Input';
+import SearchBar from '@components/ui/SearchBar';
+import Pagination from '@components/ui/Pagination';
 import { useHRPayrollPage, useStaffPayslip } from './usePayrollPage';
 
 function HRPayrollView() {
@@ -13,13 +15,17 @@ function HRPayrollView() {
     year,
     month,
     departmentId,
+    search,
     departments,
     rows,
     loading,
     totalNet,
+    pagination,
     setYear,
     setMonth,
     setDepartmentId,
+    handleSearchChange,
+    handlePageChange,
     handleExport,
   } = useHRPayrollPage();
 
@@ -65,6 +71,14 @@ function HRPayrollView() {
           ]}
           className="min-w-[200px]"
         />
+
+        <div className="min-w-[240px]">
+          <SearchBar
+            value={search}
+            onChange={handleSearchChange}
+            placeholder="Search employee"
+          />
+        </div>
 
         <Button
           variant="outline"
@@ -152,8 +166,15 @@ function HRPayrollView() {
           />
 
           <div className="p-3 text-right font-bold text-secondary-900 dark:text-secondary-50 bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700">
-            Total net pay: {totalNet.toLocaleString()}
+            Current page net pay: {totalNet.toLocaleString()}
           </div>
+
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.total}
+            onPageChange={handlePageChange}
+          />
         </div>
       )}
     </div>

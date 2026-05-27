@@ -228,9 +228,7 @@ export function useEmployeesPage() {
     try {
       const ids = selectedEmployees.map((e) => e.id);
 
-      for (const id of ids) {
-        await employeeService.deleteEmployee(id);
-      }
+      await Promise.all(ids.map((id) => employeeService.deleteEmployee(id)));
 
       toast.success(`${ids.length} employee(s) deleted successfully`);
       setIsDeleteModalOpen(false);

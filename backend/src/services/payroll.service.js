@@ -3,6 +3,13 @@ import ExcelJS from 'exceljs';
 
 const STANDARD_MONTHLY_HOURS = 160; // simple baseline for hourly rate
 
+const EMPTY_TOTALS = {
+  totalHours: 0,
+  lateMinutes: 0,
+  absentCount: 0,
+  lateCount: 0,
+};
+
 // Convert class-based service to function/object-based for consistency
 const payrollService = {
   async getLatestActiveContract(employeeId) {
@@ -41,8 +48,8 @@ const payrollService = {
   },
 
   async getPayslip(employeeId, year, month) {
-    const employee = await prisma.employee.findUnique({
-      where: { id: employeeId },
+    const employee = await prisma.employee.findFirst({
+      where: { id: employeeId, is_deleted: false },
       include: { department: true, position: true },
     });
     if (!employee) return null;
@@ -61,9 +68,9 @@ const payrollService = {
         id: employee.id,
         full_name: employee.full_name,
         email: employee.email,
-        department: employee.department ? { 
+        department: employee.department ? {
           id: employee.department.id,
-          name: employee.department.name 
+          name: employee.department.name
         } : null,
         position: employee.position ? {
           id: employee.position.id,
@@ -80,7 +87,118 @@ const payrollService = {
     };
   },
 
-  async getMonthlyPayroll(year, month, departmentId = null) {
+  _buildPayrollRow(employee, contract, totals, year, month) {
+    const salary = contract?.salary ? parseFloat(contract.salary) : 0;
+    const hourlyRate = salary > 0 ? salary / STANDARD_MONTHLY_HOURS : 0;
+    const gross = +(hourlyRate * totals.totalHours).toFixed(2);
+    const deductions = 0;
+    const net = +(gross - deductions).toFixed(2);
+
+    return {
+      employee: {
+        id: employee.id,
+        full_name: employee.full_name,
+        email: employee.email,
+        department: employee.department ? {
+          id: employee.department.id,
+          name: employee.department.name,
+        } : null,
+        position: employee.position ? {
+          id: employee.position.id,
+          name: employee.position.name,
+        } : null,
+      },
+      period: { year, month },
+      contract: contract ? {
+        id: contract.id,
+        code: contract.code,
+        salary,
+      } : null,
+      totals,
+      hourlyRate: +hourlyRate.toFixed(2),
+      gross,
+      deductions,
+      net,
+    };
+  },
+
+  async _buildMonthlyPayrollRows({ employees, year, month }) {
+    if (employees.length === 0) {
+      return [];
+    }
+
+    const employeeIds = employees.map((employee) => employee.id);
+    const start = new Date(year, month - 1, 1, 12, 0, 0, 0);
+    const end = new Date(year, month, 0, 12, 0, 0, 0);
+
+    const [contracts, attendances] = await Promise.all([
+      prisma.contract.findMany({
+        where: {
+          employee_id: { in: employeeIds },
+          is_deleted: false,
+          status: 'active',
+        },
+        select: {
+          id: true,
+          code: true,
+          salary: true,
+          employee_id: true,
+          start_date: true,
+        },
+        orderBy: [{ employee_id: 'asc' }, { start_date: 'desc' }],
+      }),
+      prisma.attendance.findMany({
+        where: {
+          employee_id: { in: employeeIds },
+          date: { gte: start, lte: end },
+          is_deleted: false,
+        },
+        select: {
+          employee_id: true,
+          work_hours: true,
+          late_minutes: true,
+          status: true,
+        },
+      }),
+    ]);
+
+    const contractByEmployee = new Map();
+    contracts.forEach((contract) => {
+      if (!contractByEmployee.has(contract.employee_id)) {
+        contractByEmployee.set(contract.employee_id, contract);
+      }
+    });
+
+    const totalsByEmployee = new Map();
+    attendances.forEach((attendance) => {
+      const current = totalsByEmployee.get(attendance.employee_id) || { ...EMPTY_TOTALS };
+      current.totalHours += parseFloat(attendance.work_hours || 0);
+      current.lateMinutes += attendance.late_minutes || 0;
+      if (attendance.status === 'absent') current.absentCount += 1;
+      if (attendance.status === 'late') current.lateCount += 1;
+      totalsByEmployee.set(attendance.employee_id, current);
+    });
+
+    return employees.map((employee) =>
+      this._buildPayrollRow(
+        employee,
+        contractByEmployee.get(employee.id) || null,
+        totalsByEmployee.get(employee.id) || { ...EMPTY_TOTALS },
+        year,
+        month,
+      ),
+    );
+  },
+
+  async getMonthlyPayroll(year, month, options = {}) {
+    const {
+      departmentId = null,
+      search = '',
+      page = 1,
+      limit = 50,
+      paginate = true,
+    } = options;
+
     const employeeWhere = { is_deleted: false };
     if (departmentId && !isNaN(departmentId)) {
       employeeWhere.department_id = parseInt(departmentId);
@@ -89,23 +207,60 @@ const payrollService = {
       console.log('No department filter applied');
     }
 
-    const employees = await prisma.employee.findMany({
-      where: employeeWhere,
-      include: { department: true },
-    });
-    console.log(`Found ${employees.length} employees for payroll`);
-
-    const rows = [];
-    for (const emp of employees) {
-      const payslip = await this.getPayslip(emp.id, year, month);
-      rows.push(payslip);
+    if (search && String(search).trim()) {
+      const searchValue = String(search).trim();
+      employeeWhere.OR = [
+        { full_name: { contains: searchValue, mode: 'insensitive' } },
+        { email: { contains: searchValue, mode: 'insensitive' } },
+      ];
     }
 
-    return rows;
+    const skip = (page - 1) * limit;
+
+    const employeeQuery = {
+      where: employeeWhere,
+      include: { department: true, position: true },
+      orderBy: { id: 'desc' },
+    };
+
+    const [employees, total] = await Promise.all([
+      prisma.employee.findMany(
+        paginate
+          ? {
+              ...employeeQuery,
+              skip,
+              take: limit,
+            }
+          : employeeQuery,
+      ),
+      paginate ? prisma.employee.count({ where: employeeWhere }) : Promise.resolve(null),
+    ]);
+
+    console.log(`Found ${employees.length} employees for payroll`);
+
+    const rows = await this._buildMonthlyPayrollRows({ employees, year, month });
+
+    if (!paginate) {
+      return rows;
+    }
+
+    return {
+      data: rows,
+      pagination: {
+        page,
+        limit,
+        total: total ?? rows.length,
+        total_pages: Math.max(Math.ceil((total ?? rows.length) / limit), 1),
+      },
+    };
   },
 
-  async exportMonthlyPayroll(year, month, departmentId = null) {
-    const rows = await this.getMonthlyPayroll(year, month, departmentId);
+  async exportMonthlyPayroll(year, month, departmentId = null, search = '') {
+    const rows = await this.getMonthlyPayroll(year, month, {
+      departmentId,
+      search,
+      paginate: false,
+    });
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet(
       `Payroll_${year}_${String(month).padStart(2, '0')}`

@@ -126,9 +126,7 @@ export function usePositionsPage() {
     try {
       const ids = selectedPositions.map((p) => p.id);
 
-      for (const id of ids) {
-        await positionService.deletePosition(id);
-      }
+      await Promise.all(ids.map((id) => positionService.deletePosition(id)));
 
       toast.success(`${ids.length} position(s) deleted successfully`);
       setIsDeleteModalOpen(false);

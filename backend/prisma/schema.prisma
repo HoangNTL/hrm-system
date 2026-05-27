@@ -15,6 +15,8 @@ model User {
   is_locked            Boolean   @default(false)
   must_change_password Boolean   @default(true)
   last_login_at        DateTime?
+  refresh_token_hash   String?
+  refresh_token_expires_at DateTime?
 
   created_at DateTime  @default(now())
   updated_at DateTime  @updatedAt
@@ -25,6 +27,7 @@ model User {
   employee    Employee? @relation(fields: [employee_id], references: [id])
   reviewed_requests AttendanceRequest[]
 
+  @@index([is_deleted])
   @@map("users")
 }
 
@@ -52,6 +55,8 @@ model Employee {
   position            Position?   @relation(fields: [position_id], references: [id])
   user_account        User?
 
+  @@index([is_deleted])
+  @@index([department_id, is_deleted])
   @@map("employees")
 }
 
@@ -101,6 +106,7 @@ model Contract {
   employee_id   Int
   employee      Employee       @relation(fields: [employee_id], references: [id])
 
+  @@index([employee_id, status, is_deleted])
   @@map("contracts")
 }
 
@@ -174,6 +180,8 @@ model Attendance {
   shift         Shift    @relation(fields: [shift_id], references: [id])
 
   @@unique([employee_id, date, shift_id])
+  @@index([employee_id, date, is_deleted])
+  @@index([status, date, is_deleted])
   @@map("attendances")
 }
 
@@ -198,5 +206,8 @@ model AttendanceRequest {
   employee        Employee @relation(fields: [employee_id], references: [id])
   reviewer        User?    @relation(fields: [reviewed_by], references: [id])
 
+  @@index([employee_id, is_deleted])
+  @@index([status, requested_date, is_deleted])
+  @@index([requested_date])
   @@map("attendance_requests")
 }

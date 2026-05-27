@@ -46,11 +46,12 @@ export const positionService = {
   },
 
   async getById(id) {
-    const position = await prisma.position.findUnique({
-      where: { id }, select: positionSelect
+    const position = await prisma.position.findFirst({
+      where: { id, is_deleted: false },
+      select: positionSelect
     });
 
-    if (!position || position.is_deleted) {
+    if (!position) {
       throw new ApiError(ERROR_CODES.NOT_FOUND, 'Position not found');
     }
 

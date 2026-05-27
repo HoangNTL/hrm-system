@@ -43,7 +43,7 @@ describe('verifyToken middleware', () => {
       expect(mockNext).toHaveBeenCalledTimes(1);
       const error = mockNext.mock.calls[0][0];
       expect(error).toBeInstanceOf(ApiError);
-      expect(error.status).toBe(ERROR_CODES.FORBIDDEN);
+      expect(error.status).toBe(ERROR_CODES.UNAUTHORIZED);
     });
 
     it('should call next with ApiError when authorization header has no token', () => {
@@ -70,7 +70,7 @@ describe('verifyToken middleware', () => {
   });
 
   describe('when token is invalid or expired', () => {
-    it('should call next with ApiError FORBIDDEN when token verification fails', () => {
+    it('should call next with ApiError UNAUTHORIZED when token verification fails', () => {
       const req = mockRequest({ authorization: 'Bearer invalid-token' });
       const res = mockResponse();
 
@@ -84,7 +84,7 @@ describe('verifyToken middleware', () => {
       expect(mockNext).toHaveBeenCalledTimes(1);
       const error = mockNext.mock.calls[0][0];
       expect(error).toBeInstanceOf(ApiError);
-      expect(error.status).toBe(ERROR_CODES.FORBIDDEN);
+      expect(error.status).toBe(ERROR_CODES.UNAUTHORIZED);
       expect(error.message).toBe('Invalid or expired token');
     });
 
@@ -103,7 +103,7 @@ describe('verifyToken middleware', () => {
       expect(mockNext).toHaveBeenCalledTimes(1);
       const error = mockNext.mock.calls[0][0];
       expect(error).toBeInstanceOf(ApiError);
-      expect(error.status).toBe(ERROR_CODES.FORBIDDEN);
+      expect(error.status).toBe(ERROR_CODES.UNAUTHORIZED);
     });
   });
 
@@ -148,42 +148,61 @@ describe('verifyToken middleware', () => {
 
 describe('verifyRole middleware', () => {
   describe('when user is not authenticated', () => {
-    it('should throw ApiError UNAUTHORIZED when req.user is undefined', () => {
+    it('should call next with ApiError UNAUTHORIZED when req.user is undefined', () => {
       const req = mockRequest({}, undefined);
       const res = mockResponse();
       const middleware = verifyRole(['ADMIN']);
 
-      expect(() => middleware(req, res, mockNext)).toThrow(ApiError);
-      expect(() => middleware(req, res, mockNext)).toThrow('Unauthorized');
+      middleware(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalledTimes(1);
+      const error = mockNext.mock.calls[0][0];
+      expect(error).toBeInstanceOf(ApiError);
+      expect(error.status).toBe(ERROR_CODES.UNAUTHORIZED);
+      expect(error.message).toBe('Unauthorized');
     });
 
-    it('should throw ApiError UNAUTHORIZED when req.user is null', () => {
+    it('should call next with ApiError UNAUTHORIZED when req.user is null', () => {
       const req = mockRequest({}, null);
       const res = mockResponse();
       const middleware = verifyRole(['ADMIN']);
 
-      expect(() => middleware(req, res, mockNext)).toThrow(ApiError);
+      middleware(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalledTimes(1);
+      const error = mockNext.mock.calls[0][0];
+      expect(error).toBeInstanceOf(ApiError);
+      expect(error.status).toBe(ERROR_CODES.UNAUTHORIZED);
     });
   });
 
   describe('when user has insufficient permissions', () => {
-    it('should throw ApiError FORBIDDEN when user role is not in allowed roles', () => {
+    it('should call next with ApiError FORBIDDEN when user role is not in allowed roles', () => {
       const req = mockRequest({});
       req.user = { id: 1, role: 'STAFF' };
       const res = mockResponse();
       const middleware = verifyRole(['ADMIN', 'HR']);
 
-      expect(() => middleware(req, res, mockNext)).toThrow(ApiError);
-      expect(() => middleware(req, res, mockNext)).toThrow('Insufficient permissions');
+      middleware(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalledTimes(1);
+      const error = mockNext.mock.calls[0][0];
+      expect(error).toBeInstanceOf(ApiError);
+      expect(error.status).toBe(ERROR_CODES.FORBIDDEN);
+      expect(error.message).toBe('Insufficient permissions');
     });
 
-    it('should throw ApiError FORBIDDEN when roles array is empty and user exists', () => {
+    it('should call next with ApiError FORBIDDEN when roles array is empty and user exists', () => {
       const req = mockRequest({});
       req.user = { id: 1, role: 'ADMIN' };
       const res = mockResponse();
       const middleware = verifyRole([]);
 
-      expect(() => middleware(req, res, mockNext)).toThrow('Insufficient permissions');
+      middleware(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalledTimes(1);
+      const error = mockNext.mock.calls[0][0];
+      expect(error.message).toBe('Insufficient permissions');
     });
   });
 
@@ -235,7 +254,11 @@ describe('verifyRole middleware', () => {
       const res = mockResponse();
       const middleware = verifyRole(['ADMIN']); // uppercase
 
-      expect(() => middleware(req, res, mockNext)).toThrow('Insufficient permissions');
+      middleware(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalledTimes(1);
+      const error = mockNext.mock.calls[0][0];
+      expect(error.message).toBe('Insufficient permissions');
     });
 
     it('should handle user with undefined role', () => {
@@ -244,7 +267,11 @@ describe('verifyRole middleware', () => {
       const res = mockResponse();
       const middleware = verifyRole(['ADMIN']);
 
-      expect(() => middleware(req, res, mockNext)).toThrow('Insufficient permissions');
+      middleware(req, res, mockNext);
+
+      expect(mockNext).toHaveBeenCalledTimes(1);
+      const error = mockNext.mock.calls[0][0];
+      expect(error.message).toBe('Insufficient permissions');
     });
   });
 });

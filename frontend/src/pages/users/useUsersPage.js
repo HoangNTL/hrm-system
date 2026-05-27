@@ -154,12 +154,11 @@ export function useUsersPage() {
     try {
       const lockedCount = selectedUsers.filter((u) => u.is_locked).length;
       const shouldUnlock = lockedCount > selectedUsers.length / 2;
+      const usersToToggle = selectedUsers.filter(
+        (user) => (shouldUnlock && user.is_locked) || (!shouldUnlock && !user.is_locked),
+      );
 
-      for (const user of selectedUsers) {
-        if ((shouldUnlock && user.is_locked) || (!shouldUnlock && !user.is_locked)) {
-          await userService.toggleLock(user.id);
-        }
-      }
+      await Promise.all(usersToToggle.map((user) => userService.toggleLock(user.id)));
 
       const action = shouldUnlock ? 'unlocked' : 'locked';
       toast.success(`${selectedUsers.length} user(s) ${action} successfully`);

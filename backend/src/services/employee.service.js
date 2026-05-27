@@ -132,12 +132,12 @@ export const employeeService = {
   },
 
   async getById(id) {
-    const employee = await prisma.employee.findUnique({
-      where: { id },
+    const employee = await prisma.employee.findFirst({
+      where: { id, is_deleted: false },
       select: employeeSelect,
     });
 
-    if (!employee || employee.is_deleted) {
+    if (!employee) {
       throw new ApiError(ERROR_CODES.NOT_FOUND, 'Employee not found');
     }
 

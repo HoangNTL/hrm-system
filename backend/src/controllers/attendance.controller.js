@@ -2,6 +2,7 @@ import attendanceService from '../services/attendance.service.js';
 import logger from '../utils/logger.js';
 import { prisma } from '../config/db.js';
 import { ErrorMessages } from '../utils/errorMessages.js';
+import { UserRole } from '../utils/roles.js';
 
 // Convert to function-based handlers with named exports
 export const getShifts = async (req, res) => {
@@ -37,7 +38,7 @@ export const checkIn = async (req, res) => {
       });
     }
 
-    if (userRole === 'STAFF' && parseInt(employeeId) !== req.user.employee_id) {
+    if (userRole === UserRole.STAFF && parseInt(employeeId) !== req.user.employee_id) {
       return res.status(403).json({
         success: false,
         message: 'Bạn không có quyền check-in cho nhân viên khác',
@@ -88,7 +89,7 @@ export const checkOut = async (req, res) => {
       });
     }
 
-    if (userRole === 'STAFF' && parseInt(employeeId) !== req.user.employee_id) {
+    if (userRole === UserRole.STAFF && parseInt(employeeId) !== req.user.employee_id) {
       return res.status(403).json({
         success: false,
         message: 'Bạn không có quyền check-out cho nhân viên khác',
@@ -130,7 +131,7 @@ export const getTodayStatus = async (req, res) => {
     const shiftId = req.query.shiftId ? parseInt(req.query.shiftId) : null;
     const userRole = req.user.role;
 
-    if (userRole === 'STAFF' && parseInt(employeeId) !== req.user.employee_id) {
+    if (userRole === UserRole.STAFF && parseInt(employeeId) !== req.user.employee_id) {
       return res.status(403).json({
         success: false,
         message: 'Bạn không có quyền xem thông tin này',

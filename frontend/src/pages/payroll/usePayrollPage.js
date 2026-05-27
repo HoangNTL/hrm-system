@@ -6,9 +6,16 @@ export function useHRPayrollPage() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [departmentId, setDepartmentId] = useState('');
+  const [search, setSearch] = useState('');
   const [departments, setDepartments] = useState([]);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 25,
+    total: 0,
+    totalPages: 1,
+  });
 
   // Load departments once
   useEffect(() => {
@@ -34,12 +41,24 @@ export function useHRPayrollPage() {
     setLoading(true);
     try {
       const deptId = departmentId && departmentId !== '' ? parseInt(departmentId) : undefined;
-      const resp = await payrollAPI.getMonthly(year, month, deptId);
-      setRows(resp.data || resp || []);
+      const resp = await payrollAPI.getMonthly({
+        year,
+        month,
+        departmentId: deptId,
+        search: search.trim(),
+        page: pagination.page,
+        limit: pagination.limit,
+      });
+      setRows(resp.data || []);
+      setPagination((prev) => ({
+        ...prev,
+        total: resp.pagination?.total || 0,
+        totalPages: resp.pagination?.total_pages || 1,
+      }));
     } finally {
       setLoading(false);
     }
-  }, [year, month, departmentId]);
+  }, [year, month, departmentId, search, pagination.page, pagination.limit]);
 
   useEffect(() => {
     fetchData();
@@ -50,32 +69,54 @@ export function useHRPayrollPage() {
     [rows],
   );
 
+  const handleSearchChange = useCallback((value) => {
+    setSearch(value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  }, []);
+
+  const handlePageChange = useCallback((newPage) => {
+    setPagination((prev) => ({ ...prev, page: newPage }));
+  }, []);
+
   const handleExport = useCallback(async () => {
     const deptId = departmentId && departmentId !== '' ? parseInt(departmentId) : undefined;
-    const blob = await payrollAPI.exportMonthly(year, month, deptId);
+    const blob = await payrollAPI.exportMonthly(year, month, deptId, search.trim());
     const url = window.URL.createObjectURL(new Blob([blob]));
     const a = document.createElement('a');
     a.href = url;
     a.download = `Payroll_${year}_${String(month).padStart(2, '0')}.xlsx`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [year, month, departmentId]);
+  }, [year, month, departmentId, search]);
 
   return {
     // state
     year,
     month,
     departmentId,
+    search,
     departments,
     rows,
     loading,
     totalNet,
+    pagination,
 
     // setters / handlers
-    setYear,
-    setMonth,
-    setDepartmentId,
+    setYear: (value) => {
+      setYear(value);
+      setPagination((prev) => ({ ...prev, page: 1 }));
+    },
+    setMonth: (value) => {
+      setMonth(value);
+      setPagination((prev) => ({ ...prev, page: 1 }));
+    },
+    setDepartmentId: (value) => {
+      setDepartmentId(value);
+      setPagination((prev) => ({ ...prev, page: 1 }));
+    },
     fetchData,
+    handleSearchChange,
+    handlePageChange,
     handleExport,
   };
 }

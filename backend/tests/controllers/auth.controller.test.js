@@ -244,6 +244,7 @@ describe('Auth Controller', () => {
       await refreshToken(req, res, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith(error);
+      expect(res.clearCookie).toHaveBeenCalledWith('refreshToken', expect.objectContaining({ httpOnly: true }));
     });
   });
 

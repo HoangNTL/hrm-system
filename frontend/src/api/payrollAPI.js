@@ -1,9 +1,18 @@
 import apiClient from './axios';
 
 export const payrollAPI = {
-  async getMonthly(year, month, departmentId) {
-    const params = { year, month };
-    if (departmentId) params.departmentId = departmentId;
+  async getMonthly(yearOrOptions, month, departmentId) {
+    const isOptionsObject =
+      typeof yearOrOptions === 'object' && yearOrOptions !== null;
+
+    const params = isOptionsObject
+      ? { ...yearOrOptions }
+      : { year: yearOrOptions, month };
+
+    if (!isOptionsObject && departmentId) {
+      params.departmentId = departmentId;
+    }
+
     const res = await apiClient.get('/payroll/monthly', { params });
     return res.data;
   },
@@ -15,9 +24,10 @@ export const payrollAPI = {
     return res.data;
   },
 
-  async exportMonthly(year, month, departmentId) {
+  async exportMonthly(year, month, departmentId, search = '') {
     const params = { year, month };
     if (departmentId) params.departmentId = departmentId;
+    if (search) params.search = search;
     const res = await apiClient.get('/payroll/export', {
       params,
       responseType: 'blob',

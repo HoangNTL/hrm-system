@@ -43,13 +43,35 @@ describe('userService.create', () => {
         await expect(userService.create({ email: 'a@b.com' })).rejects.toMatchObject({ status: 409 });
     });
 
-    it('normalizes role HR->MANAGER and returns created user', async () => {
+    it('accepts HR as a valid role and persists it unchanged', async () => {
         prisma.user.findUnique.mockResolvedValue(null);
-        prisma.user.create.mockResolvedValue({ id: 2, email: 'a@b.com', role: 'MANAGER' });
+        prisma.user.create.mockResolvedValue({ id: 2, email: 'a@b.com', role: 'HR' });
 
         const res = await userService.create({ email: 'a@b.com', role: 'HR', password: 'P@ssw0rd' });
         expect(res.user).toMatchObject({ id: 2, email: 'a@b.com' });
-        expect(prisma.user.create.mock.calls[0][0].data.role).toBe('MANAGER');
+        expect(prisma.user.create.mock.calls[0][0].data.role).toBe('HR');
+    });
+
+    it('accepts ADMIN role', async () => {
+        prisma.user.findUnique.mockResolvedValue(null);
+        prisma.user.create.mockResolvedValue({ id: 3, email: 'admin@b.com', role: 'ADMIN' });
+
+        const res = await userService.create({ email: 'admin@b.com', role: 'ADMIN', password: 'P@ssw0rd' });
+        expect(res.user).toMatchObject({ id: 3, email: 'admin@b.com', role: 'ADMIN' });
+    });
+
+    it('accepts STAFF role by default', async () => {
+        prisma.user.findUnique.mockResolvedValue(null);
+        prisma.user.create.mockResolvedValue({ id: 4, email: 'staff@b.com', role: 'STAFF' });
+
+        const res = await userService.create({ email: 'staff@b.com', password: 'P@ssw0rd' });
+        expect(res.user).toMatchObject({ id: 4, email: 'staff@b.com', role: 'STAFF' });
+    });
+
+    it('throws on invalid role', async () => {
+        prisma.user.findUnique.mockResolvedValue(null);
+        await expect(userService.create({ email: 'a@b.com', role: 'MANAGER', password: 'P@ssw0rd' }))
+            .rejects.toMatchObject({ status: 400, message: 'Invalid role' });
     });
 });
 
@@ -92,5 +114,10 @@ describe('userService.getAll', () => {
         expect(args.where.OR).toBeTruthy();
         expect(args.where.role).toBe('STAFF');
         expect(args.where.is_deleted).toBe(false); // from default
+    });
+
+    it('throws on invalid role filter', async () => {
+        await expect(userService.getAll({ role: 'manager' }))
+            .rejects.toMatchObject({ status: 400, message: 'Invalid role' });
     });
 });

@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { prisma } from '../config/db.js';
 import ApiError from '../utils/ApiError.js';
 import { ERROR_CODES } from '../utils/errorCodes.js';
+import { UserRole, normalizeUserRole, isValidUserRole } from '../utils/roles.js';
 
 // standardized select fields for user (Prisma fields only, no methods)
 const userSelect = {
@@ -34,7 +35,7 @@ const userSelect = {
 
 class UserService {
   async getCurrentProfile(userId) {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.findFirst({
       where: { id: userId, is_deleted: false },
       select: {
         id: true,
@@ -69,7 +70,10 @@ class UserService {
   }
 
   async updateCurrentProfile(userId, { full_name, phone, address, gender, dob }) {
-    const user = await prisma.user.findUnique({ where: { id: userId, is_deleted: false } });
+    const user = await prisma.user.findFirst({
+      where: { id: userId, is_deleted: false },
+      select: { id: true, employee_id: true },
+    });
     if (!user) {
       throw new ApiError(ERROR_CODES.NOT_FOUND, 'User not found');
     }
@@ -126,7 +130,11 @@ export const userService = {
 
     // Role filter
     if (role && role.trim()) {
-      where.role = role.toUpperCase();
+      const normalizedRole = normalizeUserRole(role);
+      if (!isValidUserRole(normalizedRole)) {
+        throw new ApiError(ERROR_CODES.BAD_REQUEST, 'Invalid role');
+      }
+      where.role = normalizedRole;
     }
 
     // Status filter
@@ -190,11 +198,9 @@ export const userService = {
       throw new ApiError(ERROR_CODES.CONFLICT, 'Email already exists');
     }
 
-    // Normalize and validate role enum
-    let normalizedRole = String(role || 'STAFF').toUpperCase();
-    if (normalizedRole === 'HR') normalizedRole = 'MANAGER';
-    const validRoles = ['ADMIN', 'MANAGER', 'STAFF'];
-    if (!validRoles.includes(normalizedRole)) {
+    // Normalize and validate role enum against Prisma schema
+    const normalizedRole = normalizeUserRole(role, UserRole.STAFF);
+    if (!isValidUserRole(normalizedRole)) {
       throw new ApiError(ERROR_CODES.BAD_REQUEST, 'Invalid role');
     }
 

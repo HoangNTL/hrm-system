@@ -305,13 +305,12 @@ const attendanceService = {
     // Set date at noon to avoid timezone conversion issues
     today.setHours(12, 0, 0, 0);
     if (shiftId) {
-      return prisma.attendance.findUnique({
+      return prisma.attendance.findFirst({
         where: {
-          employee_id_date_shift_id: {
-            employee_id: employeeId,
-            date: today,
-            shift_id: shiftId,
-          },
+          employee_id: employeeId,
+          date: today,
+          shift_id: shiftId,
+          is_deleted: false,
         },
         include: { shift: true },
       });
@@ -499,7 +498,7 @@ const attendanceService = {
       include: { shift: true },
     });
 
-    if (!attendance) {
+    if (!attendance || attendance.is_deleted) {
       throw new Error('Không tìm thấy bản ghi chấm công');
     }
 
@@ -578,7 +577,7 @@ const attendanceService = {
       where: { id: attendanceId },
     });
 
-    if (!attendance) {
+    if (!attendance || attendance.is_deleted) {
       throw new Error('Không tìm thấy bản ghi chấm công');
     }
 

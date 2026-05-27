@@ -46,12 +46,12 @@ export const departmentService = {
   },
 
   async getById(id) {
-    const department = await prisma.department.findUnique({
-      where: { id },
+    const department = await prisma.department.findFirst({
+      where: { id, is_deleted: false },
       select: departmentSelect,
     });
 
-    if (!department || department.is_deleted) {
+    if (!department) {
       throw new ApiError(ERROR_CODES.NOT_FOUND, 'Department not found');
     }
 

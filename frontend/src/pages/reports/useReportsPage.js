@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from '@/api/axios';
 import toast from 'react-hot-toast';
+import { fetchAllPaginatedItems, normalizePaginatedPayload } from '@/utils/paginatedFetch';
 
 const daysAgo = (n) => {
   const d = new Date();
@@ -63,33 +64,35 @@ export function useReportsPage() {
       const params = {
         fromDate: from.toISOString(),
         toDate: to.toISOString(),
-        page: 1,
-        limit: 1000,
       };
 
-      const [attResp, payrollResp, empResp] = await Promise.all([
-        axios.get('/attendance', { params }),
-        axios.get('/payroll/monthly', { params: { year: payrollYear, month: payrollMonth } }),
+      const [attRows, payrollRows, empResp] = await Promise.all([
+        fetchAllPaginatedItems(
+          (page, limit) =>
+            axios
+              .get('/attendance', {
+                params: { ...params, page, limit },
+              })
+              .then((res) => res.data),
+          { pageSize: 250 },
+        ),
+        fetchAllPaginatedItems(
+          (page, limit) =>
+            axios
+              .get('/payroll/monthly', {
+                params: { year: payrollYear, month: payrollMonth, page, limit },
+              })
+              .then((res) => res.data),
+          { pageSize: 100 },
+        ),
         axios.get('/employees', { params: { page: 1, limit: 1 } }),
       ]);
 
       console.log('API Responses:', {
-        attendance: attResp.data,
-        payroll: payrollResp.data,
+        attendanceCount: attRows.length,
+        payrollCount: payrollRows.length,
         employees: empResp.data
       });
-
-      const normalizeArr = (payload) => {
-        if (Array.isArray(payload?.data?.data)) return payload.data.data;
-        if (Array.isArray(payload?.data?.items)) return payload.data.items;
-        if (Array.isArray(payload?.data)) return payload.data;
-        if (Array.isArray(payload?.records)) return payload.records;
-        if (Array.isArray(payload)) return payload;
-        return [];
-      };
-
-      const attRows = normalizeArr(attResp.data) ?? [];
-      const payrollRows = normalizeArr(payrollResp.data) ?? [];
 
       console.log('Normalized data:', {
         attCount: attRows.length,
@@ -99,13 +102,8 @@ export function useReportsPage() {
       });
 
       // Employees total (try pagination total, fallback to length)
-      const empPayload = empResp?.data ?? {};
-      const empTotal = empPayload?.pagination?.total
-        ?? empPayload?.data?.pagination?.total
-        ?? empPayload?.total
-        ?? (Array.isArray(empPayload?.data) ? empPayload.data.length : 0)
-        ?? (Array.isArray(empPayload) ? empPayload.length : 0)
-        ?? 0;
+      const empPage = normalizePaginatedPayload(empResp?.data ?? {});
+      const empTotal = empPage.pagination.total || empPage.items.length;
 
       const totalAtt = attRows.length || 1;
       const lateCount = attRows.filter((r) => r.status === 'late').length;

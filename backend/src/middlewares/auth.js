@@ -13,7 +13,9 @@ export const verifyToken = (req, res, next) => {
     const authHeader = req.headers['authorization']; // Bearer <token>
     const token = authHeader && authHeader.split(' ')[1];
 
-    if (!token) throw new ApiError(ERROR_CODES.UNAUTHORIZED, 'No token provided');
+    if (!token) {
+      return next(new ApiError(ERROR_CODES.UNAUTHORIZED, 'No token provided'));
+    }
 
     // 2. Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -21,9 +23,9 @@ export const verifyToken = (req, res, next) => {
     // 3. Attach payload to req.user
     req.user = decoded; // { id, role }
 
-    next(); // proceed to controller
+    return next(); // proceed to controller
   } catch (err) {
-    next(new ApiError(ERROR_CODES.FORBIDDEN, 'Invalid or expired token'));
+    return next(new ApiError(ERROR_CODES.UNAUTHORIZED, 'Invalid or expired token'));
   }
 };
 
@@ -31,12 +33,14 @@ export const verifyToken = (req, res, next) => {
 // roles: ADMIN, HR, STAFF
 export const verifyRole = (roles = []) => {
   return (req, res, next) => {
-    if (!req.user) throw new ApiError(ERROR_CODES.UNAUTHORIZED, 'Unauthorized');
-
-    if (!roles.includes(req.user.role)) {
-      throw new ApiError(ERROR_CODES.FORBIDDEN, 'Insufficient permissions');
+    if (!req.user) {
+      return next(new ApiError(ERROR_CODES.UNAUTHORIZED, 'Unauthorized'));
     }
 
-    next();
+    if (!roles.includes(req.user.role)) {
+      return next(new ApiError(ERROR_CODES.FORBIDDEN, 'Insufficient permissions'));
+    }
+
+    return next();
   };
 };

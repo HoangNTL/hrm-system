@@ -134,9 +134,9 @@ export function useShiftsPage() {
 
     setDeleteLoading(true);
     try {
-      for (const shift of selectedShifts) {
-        await shiftService.deleteShift(shift.id);
-      }
+      await Promise.all(
+        selectedShifts.map((shift) => shiftService.deleteShift(shift.id)),
+      );
       toast.success(
         selectedShifts.length === 1
           ? 'Shift deleted successfully'

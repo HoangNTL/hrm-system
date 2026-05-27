@@ -9,10 +9,13 @@ import {
   getEmployeesForSelectWithoutUser,
   getEmployeesForSelectWithUser,
 } from '../controllers/employee.controller.js';
+import { verifyToken, verifyRole } from '../middlewares/auth.js';
+import { HR_ADMIN_ROLES } from '../utils/roles.js';
 
 const router = express.Router();
 
 // Employee routes
+router.use(verifyToken, verifyRole(HR_ADMIN_ROLES));
 router.get('/', getEmployees);
 router.get('/select/list', getEmployeesForSelect);
 router.get('/select/without-user', getEmployeesForSelectWithoutUser);

@@ -83,8 +83,8 @@ export const shiftService = {
   },
 
   async getById(id) {
-    const shift = await prisma.shift.findUnique({
-      where: { id },
+    const shift = await prisma.shift.findFirst({
+      where: { id, is_deleted: false },
       select: shiftSelect,
     });
 

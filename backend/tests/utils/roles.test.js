@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { UserRole } from '../../src/utils/roles.js';
+import { UserRole, USER_ROLES, HR_ADMIN_ROLES, normalizeUserRole, isValidUserRole } from '../../src/utils/roles.js';
 
 describe('roles utility - UserRole', () => {
     describe('UserRole enum values', () => {
@@ -51,6 +51,33 @@ describe('roles utility - UserRole', () => {
             const allRoles = Object.values(UserRole);
             expect(allRoles.includes('ADMIN')).toBe(true);
             expect(allRoles.includes('INVALID')).toBe(false);
+        });
+    });
+
+    describe('role helpers', () => {
+        it('should expose all valid roles', () => {
+            expect(USER_ROLES).toEqual(['ADMIN', 'HR', 'STAFF']);
+        });
+
+        it('should expose HR/Admin role group', () => {
+            expect(HR_ADMIN_ROLES).toEqual(['ADMIN', 'HR']);
+        });
+
+        it('should normalize role input to uppercase', () => {
+            expect(normalizeUserRole('hr')).toBe('HR');
+            expect(normalizeUserRole(' admin ')).toBe('ADMIN');
+        });
+
+        it('should default missing role to STAFF', () => {
+            expect(normalizeUserRole(undefined)).toBe('STAFF');
+            expect(normalizeUserRole('')).toBe('STAFF');
+        });
+
+        it('should validate only schema roles', () => {
+            expect(isValidUserRole('ADMIN')).toBe(true);
+            expect(isValidUserRole('HR')).toBe(true);
+            expect(isValidUserRole('STAFF')).toBe(true);
+            expect(isValidUserRole('MANAGER')).toBe(false);
         });
     });
 });
