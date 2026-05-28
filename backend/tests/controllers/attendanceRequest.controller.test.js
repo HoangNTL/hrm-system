@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock prisma
-vi.mock('../../src/config/db.js', () => ({
+vi.mock('../../src/config/database.js', () => ({
     prisma: {
         user: {
             findUnique: vi.fn(),
@@ -26,14 +26,14 @@ vi.mock('../../src/config/db.js', () => ({
 }));
 
 // Mock attendance service
-vi.mock('../../src/services/attendance.service.js', () => ({
+vi.mock('../../src/modules/attendance/attendance.service.js', () => ({
     default: {
         calculateLateEarlyMinutes: vi.fn(),
     },
 }));
 
 // Mock response utility
-vi.mock('../../src/utils/response.js', () => ({
+vi.mock('../../src/shared/utils/response.js', () => ({
     default: {
         success: vi.fn((res, data, message) => {
             res.status(200).json({ ok: true, message, data });
@@ -46,8 +46,8 @@ vi.mock('../../src/utils/response.js', () => ({
     },
 }));
 
-import { prisma } from '../../src/config/db.js';
-import response from '../../src/utils/response.js';
+import { prisma } from '../../src/config/database.js';
+import response from '../../src/shared/utils/response.js';
 import {
     createRequest,
     getMyRequests,
@@ -55,7 +55,7 @@ import {
     approveRequest,
     rejectRequest,
     getRequest,
-} from '../../src/controllers/attendanceRequest.controller.js';
+} from '../../src/modules/attendance-requests/attendanceRequest.controller.js';
 import ApiError from '../../src/utils/ApiError.js';
 
 // Mock request, response, next

@@ -1,13 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../src/config/db.js', () => ({
+vi.mock('../../src/config/database.js', () => ({
   prisma: {
     user: {
       findUnique: vi.fn(),
       update: vi.fn(),
     },
-    $queryRaw: vi.fn(),
-    $executeRaw: vi.fn(),
   },
 }));
 
@@ -24,21 +22,26 @@ vi.mock('jsonwebtoken', () => ({
   },
 }));
 
-vi.mock('../../src/services/token.service.js', () => ({
-  tokenService: {
-    generateAccessToken: vi.fn(),
-    generateRefreshToken: vi.fn(),
-  },
-}));
+vi.mock('../../src/shared/utils/token.js', async () => {
+  const actual = await vi.importActual('../../src/shared/utils/token.js');
+
+  return {
+    ...actual,
+    tokenService: {
+      generateAccessToken: vi.fn(),
+      generateRefreshToken: vi.fn(),
+    },
+  };
+});
 
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../../src/config/db.js';
-import { authService } from '../../src/services/auth.service.js';
-import { tokenService } from '../../src/services/token.service.js';
+import { prisma } from '../../src/config/database.js';
+import { authService } from '../../src/modules/auth/auth.service.js';
+import { tokenService } from '../../src/shared/utils/token.js';
 import ApiError from '../../src/utils/ApiError.js';
 import { ERROR_CODES } from '../../src/utils/errorCodes.js';
-import { hashRefreshToken } from '../../src/utils/refreshToken.js';
+import { hashRefreshToken } from '../../src/shared/utils/token.js';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -52,14 +55,14 @@ beforeEach(() => {
 
 describe('authService.login', () => {
   it('throws BAD_REQUEST when missing email or password', async () => {
-    await expect(authService.login('', 'pass')).rejects.toBeInstanceOf(ApiError);
-    await expect(authService.login('a@b.com', '')).rejects.toBeInstanceOf(ApiError);
+    await expect(authService.login({ email: '', password: 'pass' })).rejects.toBeInstanceOf(ApiError);
+    await expect(authService.login({ email: 'a@b.com', password: '' })).rejects.toBeInstanceOf(ApiError);
   });
 
   it('throws UNAUTHORIZED when user not found', async () => {
     prisma.user.findUnique.mockResolvedValue(null);
 
-    await expect(authService.login('a@b.com', 'pass')).rejects.toMatchObject({
+    await expect(authService.login({ email: 'a@b.com', password: 'pass' })).rejects.toMatchObject({
       status: ERROR_CODES.UNAUTHORIZED,
     });
   });
@@ -73,7 +76,7 @@ describe('authService.login', () => {
     });
     bcrypt.compare.mockResolvedValue(false);
 
-    await expect(authService.login('a@b.com', 'pass')).rejects.toMatchObject({
+    await expect(authService.login({ email: 'a@b.com', password: 'pass' })).rejects.toMatchObject({
       status: ERROR_CODES.UNAUTHORIZED,
     });
   });
@@ -87,7 +90,7 @@ describe('authService.login', () => {
     });
     bcrypt.compare.mockResolvedValue(true);
 
-    await expect(authService.login('a@b.com', 'pass')).rejects.toMatchObject({
+    await expect(authService.login({ email: 'a@b.com', password: 'pass' })).rejects.toMatchObject({
       status: ERROR_CODES.FORBIDDEN,
     });
   });
@@ -105,11 +108,10 @@ describe('authService.login', () => {
 
     prisma.user.findUnique.mockResolvedValue(user);
     prisma.user.update.mockResolvedValue({});
-    prisma.$executeRaw.mockResolvedValue(1);
     bcrypt.compare.mockResolvedValue(true);
     tokenService.generateRefreshToken.mockReturnValue('issued-refresh-token');
 
-    const res = await authService.login('a@b.com', 'pass');
+    const res = await authService.login({ email: 'a@b.com', password: 'pass' });
 
     expect(res).toMatchObject({
       accessToken: 'access-token',
@@ -120,7 +122,13 @@ describe('authService.login', () => {
       where: { id: 1 },
       data: { last_login_at: expect.any(Date) },
     });
-    expect(prisma.$executeRaw).toHaveBeenCalledTimes(1);
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: expect.objectContaining({
+        refresh_token_hash: expect.any(String),
+        refresh_token_expires_at: expect.any(Date),
+      }),
+    });
   });
 });
 
@@ -143,7 +151,7 @@ describe('authService.refreshToken', () => {
 
   it('throws NOT_FOUND when user missing', async () => {
     jwt.verify.mockReturnValue({ id: 1 });
-    prisma.$queryRaw.mockResolvedValue([]);
+    prisma.user.findUnique.mockResolvedValue(null);
 
     await expect(authService.refreshToken('ok')).rejects.toMatchObject({
       status: ERROR_CODES.NOT_FOUND,
@@ -152,17 +160,15 @@ describe('authService.refreshToken', () => {
 
   it('rejects refresh when no stored refresh token exists', async () => {
     jwt.verify.mockReturnValue({ id: 1 });
-    prisma.$queryRaw.mockResolvedValue([
-      {
-        id: 1,
-        role: 'STAFF',
-        employee_id: 10,
-        is_locked: false,
-        is_deleted: false,
-        refresh_token_hash: null,
-        refresh_token_expires_at: null,
-      },
-    ]);
+    prisma.user.findUnique.mockResolvedValue({
+      id: 1,
+      role: 'STAFF',
+      employee_id: 10,
+      is_locked: false,
+      is_deleted: false,
+      refresh_token_hash: null,
+      refresh_token_expires_at: null,
+    });
 
     await expect(authService.refreshToken('ok')).rejects.toMatchObject({
       status: ERROR_CODES.FORBIDDEN,
@@ -172,63 +178,60 @@ describe('authService.refreshToken', () => {
 
   it('rejects expired stored refresh token and clears it', async () => {
     jwt.verify.mockReturnValue({ id: 1 });
-    prisma.$queryRaw.mockResolvedValue([
-      {
-        id: 1,
-        role: 'STAFF',
-        employee_id: 10,
-        is_locked: false,
-        is_deleted: false,
-        refresh_token_hash: hashRefreshToken('expired-token'),
-        refresh_token_expires_at: new Date(Date.now() - 1000),
-      },
-    ]);
-    prisma.$executeRaw.mockResolvedValue(1);
+    prisma.user.findUnique.mockResolvedValue({
+      id: 1,
+      role: 'STAFF',
+      employee_id: 10,
+      is_locked: false,
+      is_deleted: false,
+      refresh_token_hash: hashRefreshToken('expired-token'),
+      refresh_token_expires_at: new Date(Date.now() - 1000),
+    });
 
     await expect(authService.refreshToken('expired-token')).rejects.toMatchObject({
       status: ERROR_CODES.FORBIDDEN,
       message: 'Invalid or expired refresh token',
     });
-    expect(prisma.$executeRaw).toHaveBeenCalledTimes(1);
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { refresh_token_hash: null, refresh_token_expires_at: null },
+    });
   });
 
   it('rejects reused or old refresh tokens and revokes the session', async () => {
     jwt.verify.mockReturnValue({ id: 1 });
-    prisma.$queryRaw.mockResolvedValue([
-      {
-        id: 1,
-        role: 'STAFF',
-        employee_id: 10,
-        is_locked: false,
-        is_deleted: false,
-        refresh_token_hash: hashRefreshToken('current-refresh-token'),
-        refresh_token_expires_at: new Date(Date.now() + 60_000),
-      },
-    ]);
-    prisma.$executeRaw.mockResolvedValue(1);
+    prisma.user.findUnique.mockResolvedValue({
+      id: 1,
+      role: 'STAFF',
+      employee_id: 10,
+      is_locked: false,
+      is_deleted: false,
+      refresh_token_hash: hashRefreshToken('current-refresh-token'),
+      refresh_token_expires_at: new Date(Date.now() + 60_000),
+    });
 
     await expect(authService.refreshToken('old-refresh-token')).rejects.toMatchObject({
       status: ERROR_CODES.FORBIDDEN,
       message: 'Refresh token has been revoked',
     });
-    expect(prisma.$executeRaw).toHaveBeenCalledTimes(1);
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { refresh_token_hash: null, refresh_token_expires_at: null },
+    });
   });
 
   it('returns new tokens and rotates the stored refresh token when valid', async () => {
     jwt.verify.mockReturnValue({ id: 1 });
-    prisma.$queryRaw.mockResolvedValue([
-      {
-        id: 1,
-        email: 'a@b.com',
-        role: 'STAFF',
-        employee_id: 10,
-        is_locked: false,
-        is_deleted: false,
-        refresh_token_hash: hashRefreshToken('valid-refresh-token'),
-        refresh_token_expires_at: new Date(Date.now() + 60_000),
-      },
-    ]);
-    prisma.$executeRaw.mockResolvedValue(1);
+    prisma.user.findUnique.mockResolvedValue({
+      id: 1,
+      email: 'a@b.com',
+      role: 'STAFF',
+      employee_id: 10,
+      is_locked: false,
+      is_deleted: false,
+      refresh_token_hash: hashRefreshToken('valid-refresh-token'),
+      refresh_token_expires_at: new Date(Date.now() + 60_000),
+    });
     tokenService.generateRefreshToken.mockReturnValue('rotated-refresh-token');
 
     const res = await authService.refreshToken('valid-refresh-token');
@@ -240,7 +243,13 @@ describe('authService.refreshToken', () => {
     expect(tokenService.generateAccessToken).toHaveBeenCalledWith(
       expect.objectContaining({ id: 1, role: 'STAFF', employee_id: 10 }),
     );
-    expect(prisma.$executeRaw).toHaveBeenCalledTimes(1);
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: expect.objectContaining({
+        refresh_token_hash: expect.any(String),
+        refresh_token_expires_at: expect.any(Date),
+      }),
+    });
   });
 });
 
@@ -252,21 +261,24 @@ describe('authService.logout', () => {
   });
 
   it('clears the stored refresh token on success', async () => {
-    prisma.$executeRaw.mockResolvedValue(1);
+    prisma.user.update.mockResolvedValue({});
 
     const res = await authService.logout(1);
 
     expect(res).toBeNull();
-    expect(prisma.$executeRaw).toHaveBeenCalledTimes(1);
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { refresh_token_hash: null, refresh_token_expires_at: null },
+    });
   });
 });
 
 describe('authService.changePassword', () => {
   it('validates required fields', async () => {
-    await expect(authService.changePassword(null, 'new')).rejects.toMatchObject({
+    await expect(authService.changePassword({ userId: null, newPassword: 'new' })).rejects.toMatchObject({
       status: ERROR_CODES.BAD_REQUEST,
     });
-    await expect(authService.changePassword(1, '')).rejects.toMatchObject({
+    await expect(authService.changePassword({ userId: 1, newPassword: '' })).rejects.toMatchObject({
       status: ERROR_CODES.BAD_REQUEST,
     });
   });
@@ -274,7 +286,7 @@ describe('authService.changePassword', () => {
   it('throws NOT_FOUND if user missing', async () => {
     prisma.user.findUnique.mockResolvedValue(null);
 
-    await expect(authService.changePassword(1, 'new', 'old')).rejects.toMatchObject({
+    await expect(authService.changePassword({ userId: 1, newPassword: 'new', currentPassword: 'old' })).rejects.toMatchObject({
       status: ERROR_CODES.NOT_FOUND,
     });
   });
@@ -287,7 +299,7 @@ describe('authService.changePassword', () => {
     });
     bcrypt.compare.mockResolvedValue(false);
 
-    await expect(authService.changePassword(1, 'new', 'wrong')).rejects.toMatchObject({
+    await expect(authService.changePassword({ userId: 1, newPassword: 'new', currentPassword: 'wrong' })).rejects.toMatchObject({
       status: ERROR_CODES.UNAUTHORIZED,
     });
   });
@@ -301,7 +313,7 @@ describe('authService.changePassword', () => {
     bcrypt.hash.mockResolvedValue('hashed');
     prisma.user.update.mockResolvedValue({});
 
-    const res = await authService.changePassword(1, 'new');
+    const res = await authService.changePassword({ userId: 1, newPassword: 'new' });
 
     expect(res).toEqual({ success: true, must_change_password: false });
     expect(prisma.user.update).toHaveBeenCalledWith({

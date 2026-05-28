@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../../src/config/db.js', () => ({
+vi.mock('../../src/config/database.js', () => ({
     prisma: {
         shift: {
             findMany: vi.fn(),
@@ -12,8 +12,8 @@ vi.mock('../../src/config/db.js', () => ({
     },
 }));
 
-import { prisma } from '../../src/config/db.js';
-import { shiftService } from '../../src/services/shift.service.js';
+import { prisma } from '../../src/config/database.js';
+import { shiftService } from '../../src/modules/shifts/shift.service.js';
 
 beforeEach(() => {
     vi.clearAllMocks();

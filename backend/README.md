@@ -214,4 +214,4 @@ Unit tests mock database (`prisma`), `bcrypt`, `jsonwebtoken`, and the token ser
 ### Notes
 
 - The Express app is exported from `src/app.js` so tests can import it without starting the server.
-- The server bootstrap remains in `src/index.js`.
+- The server bootstrap lives in `src/server.js`.

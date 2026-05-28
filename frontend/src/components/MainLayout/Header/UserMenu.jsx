@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '@components/ui/Icon';
 import { logoutAsync } from '@/store/slices/authSlice';
 import { selectUser, updateUser } from '@/store/slices/userSlice';
-import { userService } from '@/services/userService';
-import authService from '@/services/authService';
+import { authAPI } from '@/features/auth/api/auth.api';
+import { userAPI } from '@/features/users/api/user.api';
 
 function UserMenu() {
   const dispatch = useDispatch();
@@ -53,10 +53,10 @@ function UserMenu() {
   const loadProfile = async () => {
     try {
       setLoadingProfile(true);
-      const res = await userService.getMe();
-      setProfile(res?.data || res);
-      if (res?.employee) {
-        dispatch(updateUser({ employee: res.employee }));
+      const data = await userAPI.getCurrentUserProfile();
+      setProfile(data);
+      if (data?.employee) {
+        dispatch(updateUser({ employee: data.employee }));
       }
     } catch (error) {
       setMessage(error.message || 'Failed to load profile');
@@ -100,7 +100,10 @@ function UserMenu() {
     try {
       setPwdLoading(true);
       const currentPwd = requiresCurrentPwd ? pwdForm.currentPassword : null;
-      await authService.changePassword(pwdForm.newPassword, currentPwd);
+      await authAPI.changePassword({
+        newPassword: pwdForm.newPassword,
+        ...(currentPwd && { currentPassword: currentPwd }),
+      });
       setMessage('✓ Password updated successfully');
       setTimeout(() => {
         setShowPassword(false);

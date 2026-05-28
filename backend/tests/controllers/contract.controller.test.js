@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock contract service
-vi.mock('../../src/services/contract.service.js', () => ({
+vi.mock('../../src/modules/contracts/contract.service.js', () => ({
     contractService: {
         getAll: vi.fn(),
         getById: vi.fn(),
@@ -12,7 +12,7 @@ vi.mock('../../src/services/contract.service.js', () => ({
 }));
 
 // Mock response utility
-vi.mock('../../src/utils/response.js', () => ({
+vi.mock('../../src/shared/utils/response.js', () => ({
     default: {
         success: vi.fn((res, data, message, status) => {
             res.status(status).json({ ok: true, status, message, data });
@@ -34,15 +34,15 @@ vi.mock('../../src/utils/sanitizeQuery.js', () => ({
     })),
 }));
 
-import { contractService } from '../../src/services/contract.service.js';
-import response from '../../src/utils/response.js';
+import { contractService } from '../../src/modules/contracts/contract.service.js';
+import response from '../../src/shared/utils/response.js';
 import {
     getContracts,
     getContractById,
     createContract,
     updateContract,
     deleteContract,
-} from '../../src/controllers/contract.controller.js';
+} from '../../src/modules/contracts/contract.controller.js';
 import ApiError from '../../src/utils/ApiError.js';
 import { ERROR_CODES } from '../../src/utils/errorCodes.js';
 

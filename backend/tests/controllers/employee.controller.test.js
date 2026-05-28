@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock employee service
-vi.mock('../../src/services/employee.service.js', () => ({
+vi.mock('../../src/modules/employees/employee.service.js', () => ({
     employeeService: {
         getAll: vi.fn(),
         getById: vi.fn(),
@@ -15,7 +15,7 @@ vi.mock('../../src/services/employee.service.js', () => ({
 }));
 
 // Mock response utility
-vi.mock('../../src/utils/response.js', () => ({
+vi.mock('../../src/shared/utils/response.js', () => ({
     default: {
         success: vi.fn((res, data, message, status) => {
             res.status(status).json({ ok: true, status, message, data });
@@ -37,8 +37,8 @@ vi.mock('../../src/utils/sanitizeQuery.js', () => ({
     })),
 }));
 
-import { employeeService } from '../../src/services/employee.service.js';
-import response from '../../src/utils/response.js';
+import { employeeService } from '../../src/modules/employees/employee.service.js';
+import response from '../../src/shared/utils/response.js';
 import {
     getEmployees,
     getEmployeeById,
@@ -48,7 +48,7 @@ import {
     getEmployeesForSelect,
     getEmployeesForSelectWithoutUser,
     getEmployeesForSelectWithUser,
-} from '../../src/controllers/employee.controller.js';
+} from '../../src/modules/employees/employee.controller.js';
 import ApiError from '../../src/utils/ApiError.js';
 import { ERROR_CODES } from '../../src/utils/errorCodes.js';
 

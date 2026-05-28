@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock logger
-vi.mock('../../src/utils/logger.js', () => ({
+vi.mock('../../src/shared/utils/logger.js', () => ({
   default: {
     error: vi.fn(),
     info: vi.fn(),
@@ -10,7 +10,7 @@ vi.mock('../../src/utils/logger.js', () => ({
 }));
 
 // Mock response utility
-vi.mock('../../src/utils/response.js', () => ({
+vi.mock('../../src/shared/utils/response.js', () => ({
   default: {
     fail: vi.fn((res, status, message, errors) => {
       res.status(status).json({
@@ -25,9 +25,9 @@ vi.mock('../../src/utils/response.js', () => ({
   },
 }));
 
-import { errorHandler } from '../../src/middlewares/errorHandler.js';
-import logger from '../../src/utils/logger.js';
-import response from '../../src/utils/response.js';
+import { errorHandler } from '../../src/shared/middlewares/error.middleware.js';
+import logger from '../../src/shared/utils/logger.js';
+import response from '../../src/shared/utils/response.js';
 import ApiError from '../../src/utils/ApiError.js';
 import { ERROR_CODES } from '../../src/utils/errorCodes.js';
 import { ErrorMessages } from '../../src/utils/errorMessages.js';

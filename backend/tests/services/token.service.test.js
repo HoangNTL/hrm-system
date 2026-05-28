@@ -7,7 +7,7 @@ vi.mock('jsonwebtoken', () => ({
 }));
 
 import jwt from 'jsonwebtoken';
-import { tokenService } from '../../src/services/token.service.js';
+import { tokenService } from '../../src/shared/utils/token.js';
 
 beforeEach(() => {
   vi.clearAllMocks();

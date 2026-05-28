@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock attendance service
-vi.mock('../../src/services/attendance.service.js', () => ({
+vi.mock('../../src/modules/attendance/attendance.service.js', () => ({
     default: {
         checkIn: vi.fn(),
         checkOut: vi.fn(),
@@ -18,7 +18,7 @@ vi.mock('../../src/services/attendance.service.js', () => ({
 }));
 
 // Mock prisma
-vi.mock('../../src/config/db.js', () => ({
+vi.mock('../../src/config/database.js', () => ({
     prisma: {
         shift: {
             findMany: vi.fn(),
@@ -27,15 +27,15 @@ vi.mock('../../src/config/db.js', () => ({
 }));
 
 // Mock logger
-vi.mock('../../src/utils/logger.js', () => ({
+vi.mock('../../src/shared/utils/logger.js', () => ({
     default: {
         error: vi.fn(),
         info: vi.fn(),
     },
 }));
 
-import attendanceService from '../../src/services/attendance.service.js';
-import { prisma } from '../../src/config/db.js';
+import attendanceService from '../../src/modules/attendance/attendance.service.js';
+import { prisma } from '../../src/config/database.js';
 import {
     getShifts,
     checkIn,
@@ -46,7 +46,7 @@ import {
     getAll,
     update,
     remove,
-} from '../../src/controllers/attendance.controller.js';
+} from '../../src/modules/attendance/attendance.controller.js';
 
 // Mock request, response
 const mockRequest = (body = {}, query = {}, params = {}, user = {}) => ({

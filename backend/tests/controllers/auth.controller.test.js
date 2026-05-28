@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock auth service
-vi.mock('../../src/services/auth.service.js', () => ({
+vi.mock('../../src/modules/auth/auth.service.js', () => ({
   authService: {
     login: vi.fn(),
     logout: vi.fn(),
@@ -11,7 +11,7 @@ vi.mock('../../src/services/auth.service.js', () => ({
 }));
 
 // Mock response utility
-vi.mock('../../src/utils/response.js', () => ({
+vi.mock('../../src/shared/utils/response.js', () => ({
   default: {
     success: vi.fn((res, data, message, status) => {
       res.status(status).json({ ok: true, status, message, data });
@@ -24,18 +24,19 @@ vi.mock('../../src/utils/response.js', () => ({
   },
 }));
 
-import { authService } from '../../src/services/auth.service.js';
-import response from '../../src/utils/response.js';
-import { login, logout, refreshToken, changePassword } from '../../src/controllers/auth.controller.js';
+import { authService } from '../../src/modules/auth/auth.service.js';
+import response from '../../src/shared/utils/response.js';
+import { login, logout, refreshToken, changePassword } from '../../src/modules/auth/auth.controller.js';
 import ApiError from '../../src/utils/ApiError.js';
 import { ERROR_CODES } from '../../src/utils/errorCodes.js';
 
 // Mock request, response, next
-const mockRequest = (body = {}, user = null, cookies = {}, headers = {}) => ({
+const mockRequest = (body = {}, user = null, cookies = {}, headers = {}, validated = {}) => ({
   body,
   user,
   cookies,
   headers,
+  validated,
 });
 
 const mockResponse = () => {
@@ -57,7 +58,13 @@ beforeEach(() => {
 describe('Auth Controller', () => {
   describe('login', () => {
     it('should login successfully and set refresh token cookie', async () => {
-      const req = mockRequest({ email: 'test@example.com', password: 'password123' });
+      const req = mockRequest(
+        { email: 'test@example.com', password: 'password123' },
+        null,
+        {},
+        {},
+        { loginBody: { email: 'test@example.com', password: 'password123' } },
+      );
       const res = mockResponse();
 
       const loginResult = {
@@ -70,13 +77,22 @@ describe('Auth Controller', () => {
 
       await login(req, res, mockNext);
 
-      expect(authService.login).toHaveBeenCalledWith('test@example.com', 'password123');
+      expect(authService.login).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        password: 'password123',
+      });
       expect(res.cookie).toHaveBeenCalledWith('refreshToken', 'refresh-token', expect.any(Object));
       expect(response.success).toHaveBeenCalledWith(res, loginResult, 'Login successful', 200);
     });
 
     it('should call next with error when login fails', async () => {
-      const req = mockRequest({ email: 'test@example.com', password: 'wrongpassword' });
+      const req = mockRequest(
+        { email: 'test@example.com', password: 'wrongpassword' },
+        null,
+        {},
+        {},
+        { loginBody: { email: 'test@example.com', password: 'wrongpassword' } },
+      );
       const res = mockResponse();
 
       const error = new ApiError(ERROR_CODES.UNAUTHORIZED, 'Invalid credentials');
@@ -88,7 +104,13 @@ describe('Auth Controller', () => {
     });
 
     it('should call next with error when email is missing', async () => {
-      const req = mockRequest({ password: 'password123' });
+      const req = mockRequest(
+        { password: 'password123' },
+        null,
+        {},
+        {},
+        { loginBody: { password: 'password123' } },
+      );
       const res = mockResponse();
 
       const error = new ApiError(ERROR_CODES.BAD_REQUEST, 'Email is required');
@@ -214,7 +236,12 @@ describe('Auth Controller', () => {
 
       await refreshToken(req, res, mockNext);
 
-      expect(response.fail).toHaveBeenCalledWith(res, ERROR_CODES.UNAUTHORIZED, 'No refresh token provided');
+      expect(response.fail).toHaveBeenCalledWith(
+        res,
+        ERROR_CODES.UNAUTHORIZED,
+        'No refresh token provided',
+        undefined,
+      );
       expect(authService.refreshToken).not.toHaveBeenCalled();
     });
 
@@ -252,7 +279,10 @@ describe('Auth Controller', () => {
     it('should change password successfully', async () => {
       const req = mockRequest(
         { currentPassword: 'oldpass', newPassword: 'newpass123' },
-        { id: 1 }
+        { id: 1 },
+        {},
+        {},
+        { changePasswordBody: { currentPassword: 'oldpass', newPassword: 'newpass123' } },
       );
       const res = mockResponse();
 
@@ -261,14 +291,21 @@ describe('Auth Controller', () => {
 
       await changePassword(req, res, mockNext);
 
-      expect(authService.changePassword).toHaveBeenCalledWith(1, 'newpass123', 'oldpass');
+      expect(authService.changePassword).toHaveBeenCalledWith({
+        userId: 1,
+        currentPassword: 'oldpass',
+        newPassword: 'newpass123',
+      });
       expect(response.success).toHaveBeenCalledWith(res, changeResult, 'Password updated successfully', 200);
     });
 
     it('should handle user not authenticated', async () => {
       const req = mockRequest(
         { currentPassword: 'oldpass', newPassword: 'newpass123' },
-        null
+        null,
+        {},
+        {},
+        { changePasswordBody: { currentPassword: 'oldpass', newPassword: 'newpass123' } },
       );
       const res = mockResponse();
 
@@ -277,14 +314,21 @@ describe('Auth Controller', () => {
 
       await changePassword(req, res, mockNext);
 
-      expect(authService.changePassword).toHaveBeenCalledWith(undefined, 'newpass123', 'oldpass');
+      expect(authService.changePassword).toHaveBeenCalledWith({
+        userId: undefined,
+        currentPassword: 'oldpass',
+        newPassword: 'newpass123',
+      });
       expect(mockNext).toHaveBeenCalledWith(error);
     });
 
     it('should call next with error when current password is wrong', async () => {
       const req = mockRequest(
         { currentPassword: 'wrongpass', newPassword: 'newpass123' },
-        { id: 1 }
+        { id: 1 },
+        {},
+        {},
+        { changePasswordBody: { currentPassword: 'wrongpass', newPassword: 'newpass123' } },
       );
       const res = mockResponse();
 
@@ -299,7 +343,10 @@ describe('Auth Controller', () => {
     it('should call next with error when new password is invalid', async () => {
       const req = mockRequest(
         { currentPassword: 'oldpass', newPassword: '123' },
-        { id: 1 }
+        { id: 1 },
+        {},
+        {},
+        { changePasswordBody: { currentPassword: 'oldpass', newPassword: '123' } },
       );
       const res = mockResponse();
 

@@ -1,5 +1,5 @@
-import { prisma } from '../src/config/db.js';
-import logger from '../src/utils/logger.js';
+import { prisma } from '../src/config/database.js';
+import logger from '../src/shared/utils/logger.js';
 import bcrypt from 'bcrypt';
 
 async function main() {

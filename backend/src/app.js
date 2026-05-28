@@ -1,43 +1,21 @@
 import express from 'express';
-import cors from 'cors';
 import cookieParser from 'cookie-parser';
 
-import authRoutes from './routes/auth.routes.js';
-import userRoutes from './routes/user.routes.js';
-import employeeRoutes from './routes/employee.routes.js';
-import departmentRoutes from './routes/department.routes.js';
-import positionRoutes from './routes/position.routes.js';
-import contractRoutes from './routes/contract.routes.js';
-import attendanceRoutes from './routes/attendance.routes.js';
-import attendanceRequestRoutes from './routes/attendanceRequest.routes.js';
-import payrollRoutes from './routes/payroll.routes.js';
-import shiftRoutes from './routes/shift.routes.js';
-import { errorHandler } from './middlewares/errorHandler.js';
+import { createCorsMiddleware } from './config/cors.js';
+import authRoutes from './modules/auth/auth.route.js';
+import userRoutes from './modules/users/user.route.js';
+import employeeRoutes from './modules/employees/employee.route.js';
+import departmentRoutes from './modules/departments/department.route.js';
+import positionRoutes from './modules/positions/position.route.js';
+import contractRoutes from './modules/contracts/contract.route.js';
+import attendanceRoutes from './modules/attendance/attendance.route.js';
+import attendanceRequestRoutes from './modules/attendance-requests/attendanceRequest.route.js';
+import payrollRoutes from './modules/payroll/payroll.route.js';
+import shiftRoutes from './modules/shifts/shift.route.js';
+import { errorHandler } from './shared/middlewares/error.middleware.js';
 
 const app = express();
-
-const FRONTEND_ORIGIN = process.env.FRONTEND_URL || 'http://localhost:5173';
-const corsOrigins = [
-  FRONTEND_ORIGIN,
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:3000',
-];
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || corsOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-refresh-token'],
-  }),
-);
+app.use(createCorsMiddleware());
 
 // Middleware
 app.use(express.json());

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { UserRole, USER_ROLES, HR_ADMIN_ROLES, normalizeUserRole, isValidUserRole } from '../../src/utils/roles.js';
+import { UserRole, USER_ROLES, HR_ADMIN_ROLES, normalizeUserRole, isValidUserRole } from '../../src/shared/constants/roles.js';
 
 describe('roles utility - UserRole', () => {
     describe('UserRole enum values', () => {

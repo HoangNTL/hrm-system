@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock payroll service
-vi.mock('../../src/services/payroll.service.js', () => ({
+vi.mock('../../src/modules/payroll/payroll.service.js', () => ({
     default: {
         getMonthlyPayroll: vi.fn(),
         getPayslip: vi.fn(),
@@ -10,15 +10,15 @@ vi.mock('../../src/services/payroll.service.js', () => ({
 }));
 
 // Mock logger
-vi.mock('../../src/utils/logger.js', () => ({
+vi.mock('../../src/shared/utils/logger.js', () => ({
     default: {
         error: vi.fn(),
         info: vi.fn(),
     },
 }));
 
-import payrollService from '../../src/services/payroll.service.js';
-import { getMonthly, getPayslip, exportMonthly } from '../../src/controllers/payroll.controller.js';
+import payrollService from '../../src/modules/payroll/payroll.service.js';
+import { getMonthly, getPayslip, exportMonthly } from '../../src/modules/payroll/payroll.controller.js';
 import { ErrorMessages } from '../../src/utils/errorMessages.js';
 
 // Mock request, response

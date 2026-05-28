@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock position service
-vi.mock('../../src/services/position.service.js', () => ({
+vi.mock('../../src/modules/positions/position.service.js', () => ({
     positionService: {
         getAll: vi.fn(),
         getById: vi.fn(),
@@ -12,7 +12,7 @@ vi.mock('../../src/services/position.service.js', () => ({
 }));
 
 // Mock response utility
-vi.mock('../../src/utils/response.js', () => ({
+vi.mock('../../src/shared/utils/response.js', () => ({
     default: {
         success: vi.fn((res, data, message, status) => {
             res.status(status).json({ ok: true, status, message, data });
@@ -34,15 +34,15 @@ vi.mock('../../src/utils/sanitizeQuery.js', () => ({
     })),
 }));
 
-import { positionService } from '../../src/services/position.service.js';
-import response from '../../src/utils/response.js';
+import { positionService } from '../../src/modules/positions/position.service.js';
+import response from '../../src/shared/utils/response.js';
 import {
     getPositions,
     getPositionById,
     createPosition,
     updatePosition,
     deletePosition,
-} from '../../src/controllers/position.controller.js';
+} from '../../src/modules/positions/position.controller.js';
 import ApiError from '../../src/utils/ApiError.js';
 import { ERROR_CODES } from '../../src/utils/errorCodes.js';
 

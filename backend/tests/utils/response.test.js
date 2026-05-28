@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import response from '../../src/utils/response.js';
+import response from '../../src/shared/utils/response.js';
 
 describe('response utility', () => {
     let mockRes;

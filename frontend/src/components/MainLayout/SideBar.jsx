@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import Icon from "@components/ui/Icon";
 import reactLogo from "@assets/react.svg";
-import { sidebarMenuItems } from "@constants/menuItems";
+import { sidebarMenuItems } from "@/routes/navigationItems.js";
 import { useSelector } from "react-redux";
 import { selectUser } from "@/store/slices/userSlice";
 import Tooltip from "@components/ui/Tooltip";

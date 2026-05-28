@@ -1,0 +1,18 @@
+export const AppRoutes = {
+  LOGIN: '/login',
+  DASHBOARD: '/dashboard',
+  USERS: '/users',
+  EMPLOYEES: '/employees',
+  DEPARTMENTS: '/departments',
+  POSITIONS: '/positions',
+  CONTRACTS: '/contracts',
+  SHIFTS: '/shifts',
+  PAYROLL: '/payroll',
+  ATTENDANCE: '/attendance',
+  ATTENDANCE_HISTORY: '/attendance-history',
+  ATTENDANCE_REQUESTS: '/attendance-requests',
+  APPROVE_ATTENDANCE_REQUESTS: '/approve-attendance-requests',
+  REPORTS: '/reports',
+  MY_PROFILE: '/my-profile',
+  ACCESS_DENIED: '/access-denied',
+};

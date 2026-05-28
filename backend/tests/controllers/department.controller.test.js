@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock department service
-vi.mock('../../src/services/department.service.js', () => ({
+vi.mock('../../src/modules/departments/department.service.js', () => ({
     departmentService: {
         getAll: vi.fn(),
         getById: vi.fn(),
@@ -12,7 +12,7 @@ vi.mock('../../src/services/department.service.js', () => ({
 }));
 
 // Mock response utility
-vi.mock('../../src/utils/response.js', () => ({
+vi.mock('../../src/shared/utils/response.js', () => ({
     default: {
         success: vi.fn((res, data, message, status) => {
             res.status(status).json({ ok: true, status, message, data });
@@ -34,15 +34,15 @@ vi.mock('../../src/utils/sanitizeQuery.js', () => ({
     })),
 }));
 
-import { departmentService } from '../../src/services/department.service.js';
-import response from '../../src/utils/response.js';
+import { departmentService } from '../../src/modules/departments/department.service.js';
+import response from '../../src/shared/utils/response.js';
 import {
     getDepartments,
     getDepartmentById,
     createDepartment,
     updateDepartment,
     deleteDepartment,
-} from '../../src/controllers/department.controller.js';
+} from '../../src/modules/departments/department.controller.js';
 import ApiError from '../../src/utils/ApiError.js';
 import { ERROR_CODES } from '../../src/utils/errorCodes.js';
 

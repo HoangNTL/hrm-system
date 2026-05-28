@@ -1,12 +1,12 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/server.js",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "start": "node src/index.js",
-    "dev": "nodemon --watch src src/index.js",
+    "start": "node src/server.js",
+    "dev": "nodemon --watch src src/server.js",
     "format": "prettier --write .",
     "seed": "node prisma/seed.js"
   },

@@ -8,7 +8,7 @@ vi.mock('jsonwebtoken', () => ({
 }));
 
 import jwt from 'jsonwebtoken';
-import { verifyToken, verifyRole } from '../../src/middlewares/auth.js';
+import { verifyToken, verifyRole } from '../../src/shared/middlewares/auth.middleware.js';
 import ApiError from '../../src/utils/ApiError.js';
 import { ERROR_CODES } from '../../src/utils/errorCodes.js';
 

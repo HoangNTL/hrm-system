@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock shift service
-vi.mock('../../src/services/shift.service.js', () => ({
+vi.mock('../../src/modules/shifts/shift.service.js', () => ({
     shiftService: {
         getAll: vi.fn(),
         getById: vi.fn(),
@@ -12,7 +12,7 @@ vi.mock('../../src/services/shift.service.js', () => ({
 }));
 
 // Mock response utility
-vi.mock('../../src/utils/response.js', () => ({
+vi.mock('../../src/shared/utils/response.js', () => ({
     default: {
         success: vi.fn((res, data, message, status) => {
             res.status(status).json({ ok: true, status, message, data });
@@ -34,15 +34,15 @@ vi.mock('../../src/utils/sanitizeQuery.js', () => ({
     })),
 }));
 
-import { shiftService } from '../../src/services/shift.service.js';
-import response from '../../src/utils/response.js';
+import { shiftService } from '../../src/modules/shifts/shift.service.js';
+import response from '../../src/shared/utils/response.js';
 import {
     getShifts,
     getShiftById,
     createShift,
     updateShift,
     deleteShift,
-} from '../../src/controllers/shift.controller.js';
+} from '../../src/modules/shifts/shift.controller.js';
 import ApiError from '../../src/utils/ApiError.js';
 import { ERROR_CODES } from '../../src/utils/errorCodes.js';
 

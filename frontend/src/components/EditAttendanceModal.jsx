@@ -3,7 +3,7 @@ import Icon from '@components/ui/Icon';
 import Button from '@components/ui/Button';
 import Input from '@components/ui/Input';
 import Textarea from '@components/ui/Textarea';
-import { attendanceRequestAPI } from '@/api/attendanceRequestAPI';
+import { attendanceRequestAPI } from '@/features/attendance-requests/api/attendanceRequest.api';
 
 export default function EditAttendanceModal({ isOpen, onClose, attendanceRecord, onSuccess }) {
   const [requestType, setRequestType] = useState('forgot_checkout');

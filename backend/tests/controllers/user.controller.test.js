@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock user service
-vi.mock('../../src/services/user.service.js', () => ({
+vi.mock('../../src/modules/users/user.service.js', () => ({
     userService: {
         getAll: vi.fn(),
         create: vi.fn(),
@@ -15,7 +15,7 @@ vi.mock('../../src/services/user.service.js', () => ({
 }));
 
 // Mock response utility
-vi.mock('../../src/utils/response.js', () => ({
+vi.mock('../../src/shared/utils/response.js', () => ({
     default: {
         success: vi.fn((res, data, message, status) => {
             res.status(status).json({ ok: true, status, message, data });
@@ -37,8 +37,8 @@ vi.mock('../../src/utils/sanitizeQuery.js', () => ({
     })),
 }));
 
-import { userService } from '../../src/services/user.service.js';
-import response from '../../src/utils/response.js';
+import { userService } from '../../src/modules/users/user.service.js';
+import response from '../../src/shared/utils/response.js';
 import {
     getUsers,
     createUser,
@@ -48,7 +48,7 @@ import {
     bulkDeleteUsers,
     getCurrentUser,
     updateCurrentUser,
-} from '../../src/controllers/user.controller.js';
+} from '../../src/modules/users/user.controller.js';
 import ApiError from '../../src/utils/ApiError.js';
 import { ERROR_CODES } from '../../src/utils/errorCodes.js';
 

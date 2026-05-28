@@ -1,56 +1,10 @@
-export function normalizePaginatedPayload(payload) {
-  const root = payload ?? {};
-  const data = root?.data ?? root;
+export { normalizeFlexiblePaginatedPayload as normalizePaginatedPayload } from '@/shared/api/pagination';
 
-  let items = [];
-  if (Array.isArray(data?.data)) items = data.data;
-  else if (Array.isArray(data?.items)) items = data.items;
-  else if (Array.isArray(data?.records)) items = data.records;
-  else if (Array.isArray(data?.requests)) items = data.requests;
-  else if (Array.isArray(data)) items = data;
-
-  const pagination = data?.pagination || root?.pagination || {};
-  const totalPages =
-    data?.pages ||
-    pagination?.total_pages ||
-    root?.pages ||
-    root?.totalPages ||
-    1;
-
-  const page =
-    data?.page ||
-    pagination?.page ||
-    root?.page ||
-    1;
-
-  const total =
-    data?.total ||
-    pagination?.total ||
-    root?.total ||
-    items.length;
-
-  const limit =
-    data?.pageSize ||
-    data?.limit ||
-    pagination?.limit ||
-    root?.pageSize ||
-    root?.limit ||
-    items.length;
-
-  return {
-    items,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages,
-    },
-  };
-}
+import { normalizeFlexiblePaginatedPayload } from '@/shared/api/pagination';
 
 export async function fetchAllPaginatedItems(fetchPage, { pageSize = 200 } = {}) {
   const firstPayload = await fetchPage(1, pageSize);
-  const firstPage = normalizePaginatedPayload(firstPayload);
+  const firstPage = normalizeFlexiblePaginatedPayload(firstPayload, 1, pageSize);
   const totalPages = Math.max(firstPage.pagination.totalPages || 1, 1);
 
   if (totalPages === 1) {
@@ -65,6 +19,8 @@ export async function fetchAllPaginatedItems(fetchPage, { pageSize = 200 } = {})
 
   return [
     ...firstPage.items,
-    ...remainingPages.flatMap((payload) => normalizePaginatedPayload(payload).items),
+    ...remainingPages.flatMap((payload, index) => (
+      normalizeFlexiblePaginatedPayload(payload, index + 2, pageSize).items
+    )),
   ];
 }

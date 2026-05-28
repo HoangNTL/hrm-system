@@ -39,8 +39,6 @@ export default defineConfig([
             ['@components', './src/components'],
             ['@pages', './src/pages'],
             ['@hooks', './src/hooks'],
-            ['@services', './src/services'],
-            ['@api', './src/api'],
             ['@assets', './src/assets'],
             ['@constants', './src/constants'],
             ['@context', './src/context'],
